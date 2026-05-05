@@ -4,6 +4,10 @@ const img = document.getElementById("img");
 const textBox = document.getElementById("textBox");
 const playBtn = document.getElementById("playBtn");
 
+const femaleBtn = document.getElementById("femaleBtn");
+const maleBtn = document.getElementById("maleBtn");
+const autoBtn = document.getElementById("autoBtn");
+
 // ===== IMAGE LOAD =====
 fileInput.addEventListener("change", function () {
   const file = fileInput.files[0];
@@ -23,14 +27,14 @@ function splitLines(text) {
 }
 
 // ===== COLORS =====
-const colors = [
-  "#ff4d4d",
-  "#ffd633",
-  "#66ff66",
-  "#66ccff",
-  "#ff66cc",
-  "#ffffff"
-];
+const colors = ["#ff4d4d","#ffd633","#66ff66","#66ccff","#ff66cc","#ffffff"];
+
+// ===== VOICE MODE =====
+let voiceMode = "female"; // default
+
+femaleBtn.onclick = () => voiceMode = "female";
+maleBtn.onclick = () => voiceMode = "male";
+autoBtn.onclick = () => voiceMode = "auto";
 
 // ===== MAIN =====
 let lines = [];
@@ -44,12 +48,9 @@ playBtn.addEventListener("click", function () {
     return;
   }
 
-  // UI hide
   fileInput.style.display = "none";
   textInput.style.display = "none";
   playBtn.style.display = "none";
-
-  // ❌ FULLSCREEN REMOVED (यही fix है)
 
   lines = splitLines(text);
   index = 0;
@@ -57,7 +58,7 @@ playBtn.addEventListener("click", function () {
   speakNext();
 });
 
-// ===== SPEAK FUNCTION =====
+// ===== SPEAK =====
 function speakNext() {
 
   if (index >= lines.length) return;
@@ -66,43 +67,50 @@ function speakNext() {
 
   // 🎨 MULTICOLOR TEXT
   const words = line.split(" ");
-
-  const colored = words.map((w, i) => {
-    const color = colors[i % colors.length];
-    return `<span style="color:${color}">${w}</span>`;
+  const colored = words.map((w,i)=>{
+    return `<span style="color:${colors[i % colors.length]}">${w}</span>`;
   }).join(" ");
 
   textBox.innerHTML = colored;
 
-  // ===== TTS =====
   speechSynthesis.cancel();
 
   const speech = new SpeechSynthesisUtterance(line);
 
   let voices = speechSynthesis.getVoices();
 
-  if (!voices.length) {
-    speechSynthesis.onvoiceschanged = () => {
-      voices = speechSynthesis.getVoices();
-      setVoiceAndSpeak();
-    };
+  function getVoice(type) {
+    if (type === "female") {
+      return voices.find(v => v.name.toLowerCase().includes("female"));
+    }
+    if (type === "male") {
+      return voices.find(v => v.name.toLowerCase().includes("male"));
+    }
+    return null;
+  }
+
+  let selectedVoice;
+
+  if (voiceMode === "auto") {
+    selectedVoice = index % 2 === 0 ? getVoice("female") : getVoice("male");
   } else {
-    setVoiceAndSpeak();
+    selectedVoice = getVoice(voiceMode);
   }
 
-  function setVoiceAndSpeak() {
-    const v = voices.find(v => v.lang.includes("hi")) || voices[0];
-    if (v) speech.voice = v;
-
-    speech.lang = "hi-IN";
-    speech.rate = 0.95;
-    speech.pitch = 1.1;
-
-    speech.onend = () => {
-      index++;
-      setTimeout(speakNext, 600);
-    };
-
-    speechSynthesis.speak(speech);
+  if (!selectedVoice) {
+    selectedVoice = voices.find(v => v.lang.includes("hi")) || voices[0];
   }
+
+  if (selectedVoice) speech.voice = selectedVoice;
+
+  speech.lang = "hi-IN";
+  speech.rate = 0.95;
+  speech.pitch = 1;
+
+  speech.onend = () => {
+    index++;
+    setTimeout(speakNext, 600);
+  };
+
+  speechSynthesis.speak(speech);
 }
