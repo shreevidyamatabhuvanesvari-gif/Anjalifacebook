@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reel Creator</title>
+
+<style>
+body {
+  margin: 0;
+  background: black;
+  font-family: sans-serif;
+}
+
+.container {
+  max-width: 420px;
+  margin: auto;
+  padding: 10px;
+}
+
+/* INPUTS */
+input, textarea {
+  width: 100%;
+  margin: 8px 0;
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 6px;
+  border: none;
+}
+
+/* PREVIEW AREA */
+.preview {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  background: black;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+/* IMAGE */
+.preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: none;
+}
+
+/* TEXT BOX */
+.text-box {
+  position: absolute;
+
+  /* 🔥 CENTER FIX */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  width: 90%;
+  padding: 20px;
+
+  /* 🔥 Background थोड़ा soft किया */
+  background: rgba(0,0,0,0.6);
+
+  color: white;
+  text-align: center;
+  font-size: 22px;
+  line-height: 1.7;
+
+  white-space: normal;
+  word-break: break-word;
+  border-radius: 12px;
+}
+
+/* PLAY BUTTON */
+.play-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 26px;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 50%;
+  background: white;
+  color: black;
+  cursor: pointer;
+  z-index: 2;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- IMAGE UPLOAD -->
+<input type="file" id="fileInput" accept="image/*">
+
+<!-- TEXT INPUT -->
+<textarea id="textInput" placeholder="यहाँ अपना लेख लिखें..."></textarea>
+
+<!-- PREVIEW -->
+<div class="preview">
+
+  <!-- IMAGE -->
+  <img id="img">
+
+  <!-- TEXT -->
+  <div class="text-box" id="textBox"></div>
+
+  <!-- PLAY BUTTON -->
+  <button id="playBtn" class="play-btn">▶</button>
+
+</div>
+
+</div>
+
+<!-- SCRIPT -->
+<script src="script.js"></script>
+
+</body>
+</html>
