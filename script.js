@@ -30,7 +30,7 @@ function splitLines(text) {
 const colors = ["#ff4d4d","#ffd633","#66ff66","#66ccff","#ff66cc","#ffffff"];
 
 // ===== VOICE MODE =====
-let voiceMode = "female"; // default
+let voiceMode = "female";
 
 femaleBtn.onclick = () => voiceMode = "female";
 maleBtn.onclick = () => voiceMode = "male";
@@ -58,7 +58,7 @@ playBtn.addEventListener("click", function () {
   speakNext();
 });
 
-// ===== SPEAK =====
+// ===== SPEAK FUNCTION =====
 function speakNext() {
 
   if (index >= lines.length) return;
@@ -79,26 +79,24 @@ function speakNext() {
 
   let voices = speechSynthesis.getVoices();
 
-  function getVoice(type) {
-    if (type === "female") {
-      return voices.find(v => v.name.toLowerCase().includes("female"));
-    }
-    if (type === "male") {
-      return voices.find(v => v.name.toLowerCase().includes("male"));
-    }
-    return null;
+  // 🔥 Hindi voices filter (FIXED LOGIC)
+  let hindiVoices = voices.filter(v => v.lang.includes("hi"));
+
+  // fallback
+  if (hindiVoices.length === 0) {
+    hindiVoices = voices;
   }
 
   let selectedVoice;
 
-  if (voiceMode === "auto") {
-    selectedVoice = index % 2 === 0 ? getVoice("female") : getVoice("male");
-  } else {
-    selectedVoice = getVoice(voiceMode);
-  }
-
-  if (!selectedVoice) {
-    selectedVoice = voices.find(v => v.lang.includes("hi")) || voices[0];
+  if (voiceMode === "female") {
+    selectedVoice = hindiVoices[0];
+  } 
+  else if (voiceMode === "male") {
+    selectedVoice = hindiVoices[1] || hindiVoices[0];
+  } 
+  else if (voiceMode === "auto") {
+    selectedVoice = hindiVoices[index % hindiVoices.length];
   }
 
   if (selectedVoice) speech.voice = selectedVoice;
