@@ -117,10 +117,15 @@ function speakNext() {
     speech.rate = 1;
   } 
   else if (voiceMode === "male") {
-    selectedVoice = maleVoice;
-    speech.pitch = 0.55;   // 🔥 deep
-    speech.rate = 0.85;    // 🔥 slow
-  } 
+  selectedVoice = hindiVoices.find(v => 
+    v.name.toLowerCase().includes("male") ||
+    v.name.toLowerCase().includes("india") ||
+    v.name.toLowerCase().includes("hi-in")
+  ) || hindiVoices[0];
+
+  speech.pitch = 0.45;   // 🔥 deeper
+  speech.rate = 0.8;     // 🔥 slower = smooth
+}
   else {
     selectedVoice = index % 2 === 0 ? femaleVoice : maleVoice;
     speech.pitch = index % 2 === 0 ? 1.25 : 0.55;
