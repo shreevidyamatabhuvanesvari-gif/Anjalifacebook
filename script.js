@@ -66,7 +66,7 @@ playBtn.addEventListener("click", function () {
   speakNext();
 });
 
-// ===== SPEAK =====
+// ===== SPEAK FUNCTION =====
 function speakNext() {
 
   if (index >= lines.length) return;
@@ -78,27 +78,41 @@ function speakNext() {
 
   const colored = words.map((w, i) => {
     const color = colors[i % colors.length];
-    return <span style="color:${color}">${w}</span>;
+    return `<span style="color:${color}">${w}</span>`;
   }).join(" ");
 
   textBox.innerHTML = colored;
 
+  // ===== TTS =====
   speechSynthesis.cancel();
 
   const speech = new SpeechSynthesisUtterance(line);
 
   let voices = speechSynthesis.getVoices();
-  const v = voices.find(v => v.lang.includes("hi")) || voices[0];
-  if (v) speech.voice = v;
 
-  speech.lang = "hi-IN";
-  speech.rate = 0.95;
-  speech.pitch = 1.1;
+  // Voice fallback (mobile fix)
+  if (!voices.length) {
+    speechSynthesis.onvoiceschanged = () => {
+      voices = speechSynthesis.getVoices();
+      setVoiceAndSpeak();
+    };
+  } else {
+    setVoiceAndSpeak();
+  }
 
-  speech.onend = () => {
-    index++;
-    setTimeout(speakNext, 600);
-  };
+  function setVoiceAndSpeak() {
+    const v = voices.find(v => v.lang.includes("hi")) || voices[0];
+    if (v) speech.voice = v;
 
-  speechSynthesis.speak(speech);
-    }
+    speech.lang = "hi-IN";
+    speech.rate = 0.95;
+    speech.pitch = 1.1;
+
+    speech.onend = () => {
+      index++;
+      setTimeout(speakNext, 600);
+    };
+
+    speechSynthesis.speak(speech);
+  }
+}
