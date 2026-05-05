@@ -96,17 +96,24 @@ function speakNext() {
   let selectedVoice;
 
   if (voiceMode === "female") {
-    selectedVoice = hindiVoices[0];
-    speech.pitch = 1.2; // female feel
-  } 
-  else if (voiceMode === "male") {
-    selectedVoice = hindiVoices[1] || hindiVoices[0];
-    speech.pitch = 0.8; // male feel
-  } 
-  else {
-    selectedVoice = hindiVoices[index % hindiVoices.length];
-    speech.pitch = index % 2 === 0 ? 1.2 : 0.8;
-  }
+  selectedVoice = hindiVoices[0];
+  speech.pitch = 1.2;
+  speech.rate = 1;
+} 
+else if (voiceMode === "male") {
+  selectedVoice = hindiVoices.find(v => 
+    v.name.toLowerCase().includes("male") ||
+    v.name.toLowerCase().includes("india")
+  ) || hindiVoices[1] || hindiVoices[0];
+
+  speech.pitch = 0.6;  // 🔥 deep voice
+  speech.rate = 0.85;  // 🔥 slow = heavy feel
+} 
+else {
+  selectedVoice = hindiVoices[index % hindiVoices.length];
+  speech.pitch = index % 2 === 0 ? 1.2 : 0.6;
+  speech.rate = 0.9;
+}
 
   if (selectedVoice) speech.voice = selectedVoice;
 
