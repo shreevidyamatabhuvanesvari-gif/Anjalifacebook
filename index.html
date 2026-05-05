@@ -130,16 +130,13 @@ input, textarea {
 
   <!-- VOICE BUTTONS -->
   <div class="voice-controls">
-    <button id="femaleBtn">👩</button>
-    <button id="maleBtn">👨</button>
-    <button id="autoBtn">Auto</button>
+  <button id="voiceToggle">🎤 Voice</button>
+
+  <div id="voiceOptions" style="display:none; margin-top:5px;">
+    <button onclick="setVoice('female')">👩 Female</button>
+    <button onclick="setVoice('male')">👨 Male</button>
+    <button onclick="setVoice('auto')">Auto</button>
   </div>
-
-  <!-- PLAY BUTTON -->
-  <button id="playBtn" class="play-btn">▶</button>
-
-</div>
-
 </div>
 
 <!-- SCRIPT -->
