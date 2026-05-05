@@ -10,18 +10,23 @@ body {
   margin: 0;
   background: black;
   font-family: sans-serif;
+  height: 100vh;
+  overflow: hidden;
 }
 
+/* FULL SCREEN CONTAINER */
 .container {
-  max-width: 420px;
-  margin: auto;
-  padding: 10px;
+  width: 100%;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
 }
 
 /* INPUTS */
 input, textarea {
-  width: 100%;
-  margin: 8px 0;
+  width: 90%;
+  margin: 10px auto;
+  display: block;
   padding: 10px;
   font-size: 16px;
   border-radius: 6px;
@@ -32,10 +37,9 @@ input, textarea {
 .preview {
   position: relative;
   width: 100%;
-  aspect-ratio: 9 / 16;
+  height: 100vh;
   background: black;
   overflow: hidden;
-  border-radius: 10px;
 }
 
 /* IMAGE */
@@ -50,7 +54,7 @@ input, textarea {
 .text-box {
   position: absolute;
 
-  /* 🔥 CENTER FIX */
+  /* CENTER */
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -58,7 +62,6 @@ input, textarea {
   width: 90%;
   padding: 20px;
 
-  /* 🔥 Background थोड़ा soft किया */
   background: rgba(0,0,0,0.6);
 
   color: white;
