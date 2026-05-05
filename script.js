@@ -87,48 +87,36 @@ function speakNext() {
 
   let voices = speechSynthesis.getVoices();
 
-  // ===== HINDI VOICES =====
+  // ===== FILTER VOICES =====
   let hindiVoices = voices.filter(v => v.lang.includes("hi"));
   if (hindiVoices.length === 0) hindiVoices = voices;
 
-  // ===== IMPROVED DETECTION =====
-  let femaleVoice = hindiVoices.find(v =>
-    v.name.toLowerCase().includes("female") ||
-    v.name.toLowerCase().includes("google हिन्दी") ||
-    v.name.toLowerCase().includes("hindi")
-  );
+  // ===== BEST FEMALE =====
+  let femaleVoice = hindiVoices[0];
 
-  let maleVoice = hindiVoices.find(v =>
-    v.name.toLowerCase().includes("male") ||
-    v.name.toLowerCase().includes("india") ||
-    v.name.toLowerCase().includes("en-in")
-  );
+  // ===== BEST MALE (Vivo optimized) =====
+  let maleVoice = voices.find(v => v.lang === "en-IN");
 
-  // fallback
-  if (!femaleVoice) femaleVoice = hindiVoices[0];
-  if (!maleVoice) maleVoice = hindiVoices[1] || hindiVoices[0];
+  if (!maleVoice) {
+    maleVoice = hindiVoices[1] || hindiVoices[0];
+  }
 
   let selectedVoice;
 
-  // ===== FINAL VOICE APPLY =====
+  // ===== APPLY VOICE =====
   if (voiceMode === "female") {
     selectedVoice = femaleVoice;
-    speech.pitch = 1.25;   // soft & clear
+    speech.pitch = 1.2;
     speech.rate = 1;
   } 
   else if (voiceMode === "male") {
-  selectedVoice = hindiVoices.find(v => 
-    v.name.toLowerCase().includes("male") ||
-    v.name.toLowerCase().includes("india") ||
-    v.name.toLowerCase().includes("hi-in")
-  ) || hindiVoices[0];
-
-  speech.pitch = 0.6;   // 🔥 deeper
-  speech.rate = 0.9;     // 🔥 slower = smooth
-}
+    selectedVoice = maleVoice;
+    speech.pitch = 0.5;   // 🔥 deep voice
+    speech.rate = 0.85;   // 🔥 smooth
+  } 
   else {
     selectedVoice = index % 2 === 0 ? femaleVoice : maleVoice;
-    speech.pitch = index % 2 === 0 ? 1.25 : 0.55;
+    speech.pitch = index % 2 === 0 ? 1.2 : 0.5;
     speech.rate = 0.9;
   }
 
