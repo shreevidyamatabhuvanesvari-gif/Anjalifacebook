@@ -54,7 +54,7 @@ playBtn.addEventListener("click", function () {
     return;
   }
 
-  // 🔥 UI hide
+  // UI hide
   fileInput.style.display = "none";
   textInput.style.display = "none";
   playBtn.style.display = "none";
@@ -87,38 +87,49 @@ function speakNext() {
 
   let voices = speechSynthesis.getVoices();
 
-  // Hindi voices
+  // ===== HINDI VOICES =====
   let hindiVoices = voices.filter(v => v.lang.includes("hi"));
-  if (hindiVoices.length === 0) {
-    hindiVoices = voices;
-  }
+  if (hindiVoices.length === 0) hindiVoices = voices;
+
+  // ===== IMPROVED DETECTION =====
+  let femaleVoice = hindiVoices.find(v =>
+    v.name.toLowerCase().includes("female") ||
+    v.name.toLowerCase().includes("google हिन्दी") ||
+    v.name.toLowerCase().includes("hindi")
+  );
+
+  let maleVoice = hindiVoices.find(v =>
+    v.name.toLowerCase().includes("male") ||
+    v.name.toLowerCase().includes("india") ||
+    v.name.toLowerCase().includes("en-in")
+  );
+
+  // fallback
+  if (!femaleVoice) femaleVoice = hindiVoices[0];
+  if (!maleVoice) maleVoice = hindiVoices[1] || hindiVoices[0];
 
   let selectedVoice;
 
+  // ===== FINAL VOICE APPLY =====
   if (voiceMode === "female") {
-  selectedVoice = hindiVoices[0];
-  speech.pitch = 1.2;
-  speech.rate = 1;
-} 
-else if (voiceMode === "male") {
-  selectedVoice = hindiVoices.find(v => 
-    v.name.toLowerCase().includes("male") ||
-    v.name.toLowerCase().includes("india")
-  ) || hindiVoices[1] || hindiVoices[0];
-
-  speech.pitch = 0.6;  // 🔥 deep voice
-  speech.rate = 0.85;  // 🔥 slow = heavy feel
-} 
-else {
-  selectedVoice = hindiVoices[index % hindiVoices.length];
-  speech.pitch = index % 2 === 0 ? 1.2 : 0.6;
-  speech.rate = 0.9;
-}
+    selectedVoice = femaleVoice;
+    speech.pitch = 1.25;   // soft & clear
+    speech.rate = 1;
+  } 
+  else if (voiceMode === "male") {
+    selectedVoice = maleVoice;
+    speech.pitch = 0.55;   // 🔥 deep
+    speech.rate = 0.85;    // 🔥 slow
+  } 
+  else {
+    selectedVoice = index % 2 === 0 ? femaleVoice : maleVoice;
+    speech.pitch = index % 2 === 0 ? 1.25 : 0.55;
+    speech.rate = 0.9;
+  }
 
   if (selectedVoice) speech.voice = selectedVoice;
 
   speech.lang = "hi-IN";
-  speech.rate = 0.95;
 
   speech.onend = () => {
     index++;
