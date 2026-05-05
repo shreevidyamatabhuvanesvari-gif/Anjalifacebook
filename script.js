@@ -22,15 +22,6 @@ function splitLines(text) {
     .filter(l => l.length > 0);
 }
 
-// ===== FULLSCREEN =====
-function openFullscreen() {
-  const el = document.querySelector(".preview");
-
-  if (el.requestFullscreen) el.requestFullscreen();
-  else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-  else if (el.msRequestFullscreen) el.msRequestFullscreen();
-}
-
 // ===== COLORS =====
 const colors = [
   "#ff4d4d",
@@ -58,7 +49,7 @@ playBtn.addEventListener("click", function () {
   textInput.style.display = "none";
   playBtn.style.display = "none";
 
-  openFullscreen();
+  // ❌ FULLSCREEN REMOVED (यही fix है)
 
   lines = splitLines(text);
   index = 0;
@@ -73,7 +64,7 @@ function speakNext() {
 
   const line = lines[index];
 
-  // 🎨 MULTICOLOR TEXT (FIXED)
+  // 🎨 MULTICOLOR TEXT
   const words = line.split(" ");
 
   const colored = words.map((w, i) => {
@@ -90,7 +81,6 @@ function speakNext() {
 
   let voices = speechSynthesis.getVoices();
 
-  // Voice fallback (mobile fix)
   if (!voices.length) {
     speechSynthesis.onvoiceschanged = () => {
       voices = speechSynthesis.getVoices();
