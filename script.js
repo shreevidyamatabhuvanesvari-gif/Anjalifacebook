@@ -123,8 +123,8 @@ function speakNext() {
     v.name.toLowerCase().includes("hi-in")
   ) || hindiVoices[0];
 
-  speech.pitch = 0.4;   // 🔥 deeper
-  speech.rate = 0.75;     // 🔥 slower = smooth
+  speech.pitch = 0.6;   // 🔥 deeper
+  speech.rate = 0.9;     // 🔥 slower = smooth
 }
   else {
     selectedVoice = index % 2 === 0 ? femaleVoice : maleVoice;
