@@ -73,6 +73,46 @@ textarea {
   z-index: 6;
 }
 
+/* WATERMARK BELOW TEXT BOX */
+.watermark {
+  position: absolute;
+  top: calc(50% + 140px);
+  left: 50%;
+  transform: translateX(-50%);
+
+  z-index: 7;
+
+  padding: 8px 18px;
+
+  background: rgba(0,0,0,0.55);
+
+  color: rgba(255,255,255,0.92);
+
+  font-size: 16px;
+  font-weight: bold;
+  font-style: italic;
+
+  border-radius: 25px;
+
+  border: 1px solid rgba(255,255,255,0.25);
+
+  letter-spacing: 1px;
+
+  text-shadow:
+    1px 1px 4px rgba(0,0,0,0.9);
+
+  box-shadow:
+    0 4px 10px rgba(0,0,0,0.35);
+
+  pointer-events: none;
+  user-select: none;
+
+  max-width: 80%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 /* PLAY BUTTON */
 .play-btn {
   position: absolute;
@@ -119,48 +159,6 @@ textarea {
   cursor: pointer;
   font-size: 14px;
 }
-
-/* FINAL WATERMARK */
-.watermark {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-
-  z-index: 9;
-
-  padding: 8px 16px;
-
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(4px);
-
-  color: rgba(255,255,255,0.92);
-
-  font-size: 15px;
-  font-weight: 700;
-  font-style: italic;
-
-  border-radius: 30px;
-
-  border: 1px solid rgba(255,255,255,0.25);
-
-  letter-spacing: 1px;
-
-  text-shadow:
-    1px 1px 4px rgba(0,0,0,0.9);
-
-  box-shadow:
-    0 4px 12px rgba(0,0,0,0.35);
-
-  pointer-events: none;
-  user-select: none;
-
-  max-width: 75%;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-
-  opacity: 0.95;
-}
 </style>
 </head>
 
@@ -186,7 +184,7 @@ textarea {
   <!-- TEXT -->
   <div class="text-box" id="textBox"></div>
 
-  <!-- PHOTO WATERMARK -->
+  <!-- WATERMARK BELOW TEXT -->
   <div id="watermark" class="watermark"></div>
 
   <!-- VOICE BUTTONS -->
