@@ -75,39 +75,62 @@ let index = 0;
 // ===== START RECORDING =====
 async function startRecording() {
 
-  const stream = await navigator.mediaDevices.getDisplayMedia({
-    video: true,
-    audio: true
-  });
+  try {
 
-  mediaRecorder = new MediaRecorder(stream);
-
-  recordedChunks = [];
-
-  mediaRecorder.ondataavailable = event => {
-
-    if (event.data.size > 0) {
-      recordedChunks.push(event.data);
-    }
-  };
-
-  mediaRecorder.onstop = () => {
-
-    const blob = new Blob(recordedChunks, {
-      type: "video/webm"
+    const stream = await navigator.mediaDevices.getDisplayMedia({
+      video: {
+        mediaSource: "screen"
+      },
+      audio: true
     });
 
-    const url = URL.createObjectURL(blob);
+    recordedChunks = [];
 
-    const a = document.createElement("a");
+    mediaRecorder = new MediaRecorder(stream, {
+      mimeType: "video/webm"
+    });
 
-    a.href = url;
-    a.download = "reel.webm";
+    mediaRecorder.ondataavailable = function (event) {
 
-    a.click();
-  };
+      if (event.data.size > 0) {
+        recordedChunks.push(event.data);
+      }
+    };
 
-  mediaRecorder.start();
+    mediaRecorder.onstop = function () {
+
+      const blob = new Blob(recordedChunks, {
+        type: "video/webm"
+      });
+
+      const videoURL = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+
+      a.style.display = "none";
+      a.href = videoURL;
+
+      a.download = "reel-video.webm";
+
+      document.body.appendChild(a);
+
+      a.click();
+
+      setTimeout(() => {
+
+        URL.revokeObjectURL(videoURL);
+        document.body.removeChild(a);
+
+      }, 100);
+    };
+
+    mediaRecorder.start();
+
+  } catch (err) {
+
+    alert("Recording permission allow करें");
+    console.log(err);
+  }
 }
 
 // ===== PLAY =====
@@ -146,8 +169,10 @@ playBtn.addEventListener("click", async function () {
 // ===== DOWNLOAD BUTTON =====
 downloadBtn.addEventListener("click", function () {
 
-  if (mediaRecorder &&
-      mediaRecorder.state !== "inactive") {
+  if (
+    mediaRecorder &&
+    mediaRecorder.state === "recording"
+  ) {
 
     mediaRecorder.stop();
   }
