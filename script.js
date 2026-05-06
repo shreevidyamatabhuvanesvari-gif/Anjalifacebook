@@ -1,24 +1,70 @@
-const fileInput = document.getElementById("fileInput");
-const textInput = document.getElementById("textInput");
-const img = document.getElementById("img");
-const textBox = document.getElementById("textBox");
-const playBtn = document.getElementById("playBtn");
+const fileInput =
+  document.getElementById(
+    "fileInput"
+  );
 
-const voiceToggle = document.getElementById("voiceToggle");
-const voiceOptions = document.getElementById("voiceOptions");
+const textInput =
+  document.getElementById(
+    "textInput"
+  );
+
+const img =
+  document.getElementById(
+    "img"
+  );
+
+const textBox =
+  document.getElementById(
+    "textBox"
+  );
+
+const playBtn =
+  document.getElementById(
+    "playBtn"
+  );
+
+const voiceToggle =
+  document.getElementById(
+    "voiceToggle"
+  );
+
+const voiceOptions =
+  document.getElementById(
+    "voiceOptions"
+  );
 
 // ✅ NEW
-const restartBtn = document.getElementById("restartBtn");
-const watermark = document.getElementById("watermark");
-const userName = document.getElementById("userName");
+const restartBtn =
+  document.getElementById(
+    "restartBtn"
+  );
+
+const watermark =
+  document.getElementById(
+    "watermark"
+  );
+
+const userName =
+  document.getElementById(
+    "userName"
+  );
 
 // ✅ DOWNLOAD
-const downloadBtn = document.getElementById("downloadBtn");
-const preview = document.getElementById("preview");
+const downloadBtn =
+  document.getElementById(
+    "downloadBtn"
+  );
+
+const preview =
+  document.getElementById(
+    "preview"
+  );
 
 // ✅ CANVAS
 const reelCanvas =
-  document.getElementById("reelCanvas");
+  document.getElementById(
+    "reelCanvas"
+  );
 
 let mediaRecorder;
 let recordedChunks = [];
@@ -67,7 +113,7 @@ const colors = [
 // ===== VOICE MODE =====
 let voiceMode = "female";
 
-// ===== VOICE MENU =====
+// ===== MENU =====
 voiceToggle.onclick = () => {
 
   voiceOptions.style.display =
@@ -101,7 +147,16 @@ async function startRecording() {
     startAudioEngine();
   }
 
-  // ✅ START CANVAS RECORDER
+  // ✅ START TTS AUDIO
+  if (
+    typeof startTTSAudio ===
+    "function"
+  ) {
+
+    startTTSAudio();
+  }
+
+  // ✅ START CANVAS
   if (
     typeof startCanvasRecording ===
     "function"
@@ -121,18 +176,21 @@ playBtn.addEventListener(
 
     if (!text) {
 
-      alert("पहले लेख लिखें");
+      alert(
+        "पहले लेख लिखें"
+      );
 
       return;
     }
 
-    // ✅ WATERMARK
+    // ===== WATERMARK =====
     watermark.innerText =
       userName.value
-        ? "© " + userName.value
+        ? "© " +
+          userName.value
         : "";
 
-    // ✅ HIDE UI
+    // ===== HIDE UI =====
     fileInput.style.display =
       "none";
 
@@ -144,14 +202,15 @@ playBtn.addEventListener(
 
     document.querySelector(
       ".voice-controls"
-    ).style.display = "none";
+    ).style.display =
+      "none";
 
-    // ===== SPLIT LINES =====
+    // ===== SPLIT =====
     lines = splitLines(text);
 
     index = 0;
 
-    // ✅ START TALKING EFFECT
+    // ===== TALKING EFFECT =====
     if (
       typeof startTalkingEffect ===
       "function"
@@ -160,20 +219,20 @@ playBtn.addEventListener(
       startTalkingEffect();
     }
 
-    // ✅ START RECORDING
+    // ===== RECORDING =====
     await startRecording();
 
-    // ✅ START SPEECH
+    // ===== SPEECH =====
     speakNext();
   }
 );
 
-// ===== DOWNLOAD BUTTON =====
+// ===== DOWNLOAD =====
 downloadBtn.addEventListener(
   "click",
   function () {
 
-    // ✅ STOP AUDIO
+    // ===== STOP AUDIO ENGINE =====
     if (
       typeof stopAudioEngine ===
       "function"
@@ -182,7 +241,16 @@ downloadBtn.addEventListener(
       stopAudioEngine();
     }
 
-    // ✅ STOP RECORDING
+    // ===== STOP TTS =====
+    if (
+      typeof stopTTSAudio ===
+      "function"
+    ) {
+
+      stopTTSAudio();
+    }
+
+    // ===== STOP RECORDER =====
     if (
       typeof stopCanvasRecording ===
       "function"
@@ -198,13 +266,12 @@ restartBtn.addEventListener(
   "click",
   function () {
 
-    // ✅ STOP SPEECH
+    // ===== STOP SPEECH =====
     speechSynthesis.cancel();
 
-    // ✅ RESET
     index = 0;
 
-    // ✅ RESTART AUDIO
+    // ===== RESET AUDIO =====
     if (
       typeof stopAudioEngine ===
       "function"
@@ -213,6 +280,15 @@ restartBtn.addEventListener(
       stopAudioEngine();
     }
 
+    if (
+      typeof stopTTSAudio ===
+      "function"
+    ) {
+
+      stopTTSAudio();
+    }
+
+    // ===== START AGAIN =====
     if (
       typeof startAudioEngine ===
       "function"
@@ -221,18 +297,27 @@ restartBtn.addEventListener(
       startAudioEngine();
     }
 
-    // ✅ START AGAIN
+    if (
+      typeof startTTSAudio ===
+      "function"
+    ) {
+
+      startTTSAudio();
+    }
+
     speakNext();
   }
 );
 
-// ===== SPEAK FUNCTION =====
+// ===== SPEAK =====
 function speakNext() {
 
   // ===== END =====
-  if (index >= lines.length) {
+  if (
+    index >= lines.length
+  ) {
 
-    // ✅ STOP AUDIO ENGINE
+    // ===== STOP AUDIO =====
     if (
       typeof stopAudioEngine ===
       "function"
@@ -241,7 +326,16 @@ function speakNext() {
       stopAudioEngine();
     }
 
-    // ✅ STOP RECORDING
+    // ===== STOP TTS =====
+    if (
+      typeof stopTTSAudio ===
+      "function"
+    ) {
+
+      stopTTSAudio();
+    }
+
+    // ===== STOP RECORDING =====
     if (
       typeof stopCanvasRecording ===
       "function"
@@ -256,7 +350,7 @@ function speakNext() {
   const line =
     lines[index];
 
-  // ===== MULTICOLOR TEXT =====
+  // ===== COLORFUL TEXT =====
   const words =
     line.split(" ");
 
@@ -266,9 +360,13 @@ function speakNext() {
       return `
         <span
         style="
-        color:${colors[
-          i % colors.length
-        ]}">
+        color:
+        ${
+          colors[
+            i %
+            colors.length
+          ]
+        }">
         ${w}
         </span>
       `;
@@ -356,22 +454,26 @@ function speakNext() {
 
   let selectedVoice;
 
-  // ===== FEMALE MODE =====
+  // ===== FEMALE =====
   if (
-    voiceMode === "female"
+    voiceMode ===
+    "female"
   ) {
 
     selectedVoice =
       femaleVoice;
 
-    speech.pitch = 1.12;
+    speech.pitch =
+      1.12;
 
-    speech.rate = 0.98;
+    speech.rate =
+      0.98;
 
-    speech.volume = 1;
+    speech.volume =
+      1;
   }
 
-  // ===== MALE MODE =====
+  // ===== MALE =====
   else if (
     voiceMode === "male"
   ) {
@@ -379,14 +481,17 @@ function speakNext() {
     selectedVoice =
       maleVoice;
 
-    speech.pitch = 0.72;
+    speech.pitch =
+      0.72;
 
-    speech.rate = 0.86;
+    speech.rate =
+      0.86;
 
-    speech.volume = 1;
+    speech.volume =
+      1;
   }
 
-  // ===== AUTO MODE =====
+  // ===== AUTO =====
   else {
 
     selectedVoice =
@@ -404,24 +509,25 @@ function speakNext() {
         ? 0.98
         : 0.86;
 
-    speech.volume = 1;
+    speech.volume =
+      1;
   }
 
-  // ===== APPLY VOICE =====
+  // ===== APPLY =====
   if (selectedVoice) {
 
     speech.voice =
       selectedVoice;
   }
 
-  speech.lang = "hi-IN";
+  speech.lang =
+    "hi-IN";
 
-  // ===== NEXT LINE =====
+  // ===== NEXT =====
   speech.onend = () => {
 
     index++;
 
-    // ✅ NATURAL PAUSE
     setTimeout(
       speakNext,
       850
