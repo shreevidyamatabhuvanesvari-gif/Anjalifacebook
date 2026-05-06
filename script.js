@@ -140,10 +140,24 @@ function speakNext() {
   // ===== FEMALE =====
   let femaleVoice = hindiVoices[0];
 
-  // ===== MALE =====
+  // ===== EXTRA NATURAL MALE =====
   let maleVoice = voices.find(v =>
-    v.lang === "en-IN"
+
+    v.name.toLowerCase().includes("male") ||
+    v.name.toLowerCase().includes("david") ||
+    v.name.toLowerCase().includes("google uk english male") ||
+    v.name.toLowerCase().includes("microsoft ravi") ||
+    v.name.toLowerCase().includes("microsoft heera")
+
   );
+
+  // ===== FALLBACK =====
+  if (!maleVoice) {
+
+    maleVoice = voices.find(v =>
+      v.lang.includes("hi")
+    );
+  }
 
   if (!maleVoice) {
 
@@ -159,16 +173,19 @@ function speakNext() {
 
     selectedVoice = femaleVoice;
 
-    speech.pitch = 1.2;
+    speech.pitch = 1.15;
     speech.rate = 1;
+    speech.volume = 1;
   }
 
   else if (voiceMode === "male") {
 
     selectedVoice = maleVoice;
 
-    speech.pitch = 0.5;
-    speech.rate = 0.85;
+    // ✅ EXTRA NATURAL MALE SETTINGS
+    speech.pitch = 0.82;
+    speech.rate = 0.92;
+    speech.volume = 1;
   }
 
   else {
@@ -180,10 +197,11 @@ function speakNext() {
 
     speech.pitch =
       index % 2 === 0
-        ? 1.2
-        : 0.5;
+        ? 1.15
+        : 0.82;
 
-    speech.rate = 0.9;
+    speech.rate = 0.92;
+    speech.volume = 1;
   }
 
   if (selectedVoice)
@@ -195,7 +213,8 @@ function speakNext() {
 
     index++;
 
-    setTimeout(speakNext, 600);
+    // ✅ SMOOTH NATURAL PAUSE
+    setTimeout(speakNext, 850);
   };
 
   speechSynthesis.speak(speech);
