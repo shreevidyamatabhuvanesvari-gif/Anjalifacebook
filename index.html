@@ -12,15 +12,19 @@ body {
   font-family: sans-serif;
   height: 100vh;
   overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* FULL SCREEN CONTAINER */
 .container {
   width: 100%;
+  max-width: 450px;
+  aspect-ratio: 9 / 16;
   height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  position: relative;
+  background: black;
 }
 
 /* INPUTS */
@@ -42,13 +46,11 @@ textarea {
   resize: vertical;
 }
 
-/* PREVIEW AREA 9:16 */
+/* PREVIEW AREA */
 .preview {
   position: relative;
   width: 100%;
-  max-width: 420px;
-  aspect-ratio: 9 / 16;
-  height: 100vh;
+  height: 100%;
   background: black;
   overflow: hidden;
 }
@@ -134,29 +136,21 @@ textarea {
   z-index: 10;
 }
 
-/* RESTART BUTTON CENTER */
+/* RESTART BUTTON */
 .restart-btn {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-
-  padding: 14px 22px;
-
+  padding: 14px 24px;
   border: none;
-  border-radius: 10px;
-
+  border-radius: 12px;
   background: rgba(255,255,255,0.95);
   color: black;
-
   cursor: pointer;
-
-  z-index: 12;
-
-  display: none;
-
+  z-index: 10;
   font-size: 18px;
-  font-weight: bold;
+  display: none;
 }
 
 /* VOICE BUTTONS */
@@ -261,7 +255,7 @@ playBtn.addEventListener("click", function () {
     document.documentElement.requestFullscreen();
   }
 
-  /* SHOW RESTART AFTER TEXT FINISH */
+  /* SHOW RESTART BUTTON AFTER TEXT COMPLETE */
   setTimeout(() => {
     restartBtn.style.display = "block";
   }, 5000);
@@ -270,9 +264,8 @@ playBtn.addEventListener("click", function () {
 
 /* RESTART BUTTON HIDE ON CLICK */
 restartBtn.addEventListener("click", function () {
-
   restartBtn.style.display = "none";
-
+  location.reload();
 });
 </script>
 
