@@ -10,6 +10,7 @@ canvas.height = 1920;
 let canvasRecorder;
 let canvasChunks = [];
 let canvasStream;
+let mergedStream;
 
 // ===== TALKING EFFECT =====
 let talkingAnimation;
@@ -40,7 +41,12 @@ function animateCanvas() {
 
   // ===== BLACK BG =====
   ctx.fillStyle = "black";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
 
   // ===== IMAGE =====
   if (img.complete && img.naturalWidth > 0) {
@@ -48,7 +54,9 @@ function animateCanvas() {
     // 🔥 BREATHING EFFECT
     const zoom =
       1 +
-      Math.sin(Date.now() * 0.0015) * 0.02;
+      Math.sin(
+        Date.now() * 0.0015
+      ) * 0.02;
 
     const imgWidth =
       canvas.width * zoom;
@@ -71,13 +79,13 @@ function animateCanvas() {
       imgHeight
     );
 
-    // ===== FAKE TALKING EFFECT =====
+    // ===== TALKING EFFECT =====
     mouthFrame += 0.35;
 
     const mouthMove =
       Math.sin(mouthFrame) * 10;
 
-    // 🔥 DARK LIP SHADOW
+    // 🔥 SHADOW
     ctx.fillStyle =
       "rgba(0,0,0,0.35)";
 
@@ -95,7 +103,7 @@ function animateCanvas() {
 
     ctx.fill();
 
-    // 🔥 RED INNER LIP
+    // 🔥 INNER LIP
     ctx.fillStyle =
       "rgba(255,70,70,0.22)";
 
@@ -293,13 +301,28 @@ function roundRect(
 // ===== START RECORDING =====
 function startCanvasRecording() {
 
-  // ✅ ONLY VIDEO
+  // ✅ START AUDIO ENGINE
+  startAudioEngine();
+
+  // ===== VIDEO STREAM =====
   canvasStream =
     canvas.captureStream(30);
 
+  // ===== AUDIO STREAM =====
+  const audioStream =
+    getAudioStream();
+
+  // ===== MERGED STREAM =====
+  mergedStream =
+    new MediaStream([
+      ...canvasStream.getVideoTracks(),
+
+      ...audioStream.getAudioTracks()
+    ]);
+
   canvasChunks = [];
 
-  // ✅ SAFE MIME TYPE
+  // ===== SAFE MIME =====
   let options = {};
 
   if (
@@ -328,12 +351,14 @@ function startCanvasRecording() {
       "video/webm";
   }
 
+  // ===== RECORDER =====
   canvasRecorder =
     new MediaRecorder(
-      canvasStream,
+      mergedStream,
       options
     );
 
+  // ===== DATA =====
   canvasRecorder.ondataavailable =
     function (e) {
 
@@ -343,8 +368,12 @@ function startCanvasRecording() {
       }
     };
 
+  // ===== STOP =====
   canvasRecorder.onstop =
     function () {
+
+      // ✅ STOP AUDIO ENGINE
+      stopAudioEngine();
 
       const blob =
         new Blob(
@@ -381,6 +410,7 @@ function startCanvasRecording() {
       }, 100);
     };
 
+  // ===== START =====
   canvasRecorder.start();
 }
 
