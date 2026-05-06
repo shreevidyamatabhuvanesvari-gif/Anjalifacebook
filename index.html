@@ -97,24 +97,29 @@ input, textarea {
   font-size: 14px;
 }
 
-/* ✅ WATERMARK STYLE */
+/* ✅ PROFESSIONAL WATERMARK */
 .watermark {
   position: absolute;
-  bottom: 20px;
-  right: 20px;
 
-  color: rgba(255,255,255,0.75);
+  bottom: 18px;
+  right: 18px;
 
-  font-size: 22px;
-  font-weight: bold;
+  color: rgba(255,255,255,0.55);
+
+  font-size: 18px;
+  font-weight: 600;
   font-style: italic;
 
+  letter-spacing: 1px;
+
   text-shadow:
-    2px 2px 6px rgba(0,0,0,0.8);
+    1px 1px 4px rgba(0,0,0,0.8);
 
   z-index: 9;
 
   pointer-events: none;
+
+  user-select: none;
 }
 </style>
 </head>
@@ -129,7 +134,7 @@ input, textarea {
 <!-- TEXT INPUT -->
 <textarea id="textInput" placeholder="यहाँ अपना लेख लिखें..."></textarea>
 
-<!-- ✅ WATERMARK INPUT -->
+<!-- WATERMARK INPUT -->
 <input type="text" id="userName" placeholder="Watermark Name">
 
 <!-- PREVIEW -->
