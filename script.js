@@ -16,6 +16,9 @@ const userName = document.getElementById("userName");
 const downloadBtn = document.getElementById("downloadBtn");
 const preview = document.getElementById("preview");
 
+// ✅ CANVAS
+const reelCanvas = document.getElementById("reelCanvas");
+
 let mediaRecorder;
 let recordedChunks = [];
 
@@ -75,61 +78,9 @@ let index = 0;
 // ===== START RECORDING =====
 async function startRecording() {
 
-  try {
+  if (typeof startCanvasRecording === "function") {
 
-    const stream = await navigator.mediaDevices.getDisplayMedia({
-      video: {
-        mediaSource: "screen"
-      },
-      audio: true
-    });
-
-    recordedChunks = [];
-
-    mediaRecorder = new MediaRecorder(stream, {
-      mimeType: "video/webm"
-    });
-
-    mediaRecorder.ondataavailable = function (event) {
-
-      if (event.data.size > 0) {
-        recordedChunks.push(event.data);
-      }
-    };
-
-    mediaRecorder.onstop = function () {
-
-      const blob = new Blob(recordedChunks, {
-        type: "video/webm"
-      });
-
-      const videoURL = URL.createObjectURL(blob);
-
-      const a = document.createElement("a");
-
-      a.style.display = "none";
-      a.href = videoURL;
-
-      a.download = "reel-video.webm";
-
-      document.body.appendChild(a);
-
-      a.click();
-
-      setTimeout(() => {
-
-        URL.revokeObjectURL(videoURL);
-        document.body.removeChild(a);
-
-      }, 100);
-    };
-
-    mediaRecorder.start();
-
-  } catch (err) {
-
-    alert("Recording permission allow करें");
-    console.log(err);
+    startCanvasRecording();
   }
 }
 
@@ -160,6 +111,12 @@ playBtn.addEventListener("click", async function () {
 
   index = 0;
 
+  // ✅ START CANVAS SYSTEM
+  if (typeof startTalkingEffect === "function") {
+
+    startTalkingEffect();
+  }
+
   // ✅ START RECORDING
   await startRecording();
 
@@ -169,12 +126,9 @@ playBtn.addEventListener("click", async function () {
 // ===== DOWNLOAD BUTTON =====
 downloadBtn.addEventListener("click", function () {
 
-  if (
-    mediaRecorder &&
-    mediaRecorder.state === "recording"
-  ) {
+  if (typeof stopCanvasRecording === "function") {
 
-    mediaRecorder.stop();
+    stopCanvasRecording();
   }
 });
 
@@ -194,10 +148,9 @@ function speakNext() {
   if (index >= lines.length) {
 
     // ✅ AUTO STOP RECORDING
-    if (mediaRecorder &&
-        mediaRecorder.state !== "inactive") {
+    if (typeof stopCanvasRecording === "function") {
 
-      mediaRecorder.stop();
+      stopCanvasRecording();
     }
 
     return;
