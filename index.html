@@ -161,6 +161,21 @@ textarea {
   z-index: 10;
 }
 
+/* DOWNLOAD BUTTON */
+.download-btn {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #00cc66;
+  color: white;
+  cursor: pointer;
+  z-index: 10;
+  font-weight: bold;
+}
+
 /* VOICE BUTTONS */
 .voice-controls {
   position: absolute;
@@ -199,7 +214,7 @@ textarea {
 <input type="text" id="userName" placeholder="Watermark Name">
 
 <!-- PREVIEW -->
-<div class="preview">
+<div class="preview" id="preview">
 
   <!-- IMAGE -->
   <img id="img">
@@ -241,6 +256,11 @@ textarea {
   <!-- RESTART BUTTON -->
   <button id="restartBtn" class="restart-btn">
     Restart
+  </button>
+
+  <!-- DOWNLOAD BUTTON -->
+  <button id="downloadBtn" class="download-btn">
+    ⬇ Download
   </button>
 
 </div>
