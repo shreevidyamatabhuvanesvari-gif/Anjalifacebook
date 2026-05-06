@@ -77,7 +77,7 @@ input, textarea {
   background: white;
   color: black;
   cursor: pointer;
-  z-index: 10; /* सबसे ऊपर */
+  z-index: 10;
 }
 
 /* VOICE BUTTONS */
@@ -96,6 +96,31 @@ input, textarea {
   cursor: pointer;
   font-size: 14px;
 }
+
+/* ✅ WATERMARK */
+.watermark {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  color: white;
+  font-size: 16px;
+  opacity: 0.7;
+  z-index: 9;
+}
+
+/* ✅ RESTART BUTTON */
+.restart-btn {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background: white;
+  color: black;
+  cursor: pointer;
+  z-index: 10;
+}
 </style>
 </head>
 
@@ -109,6 +134,9 @@ input, textarea {
 <!-- TEXT INPUT -->
 <textarea id="textInput" placeholder="यहाँ अपना लेख लिखें..."></textarea>
 
+<!-- ✅ USER NAME -->
+<input type="text" id="userName" placeholder="अपना नाम लिखें (Watermark)">
+
 <!-- PREVIEW -->
 <div class="preview">
 
@@ -118,19 +146,41 @@ input, textarea {
   <!-- TEXT -->
   <div class="text-box" id="textBox"></div>
 
+  <!-- ✅ WATERMARK -->
+  <div id="watermark" class="watermark"></div>
+
   <!-- VOICE BUTTONS -->
   <div class="voice-controls">
+
     <button id="voiceToggle">🎤 Voice</button>
 
     <div id="voiceOptions" style="display:none; margin-top:5px;">
-      <button onclick="setVoice('female')">👩 Female</button>
-      <button onclick="setVoice('male')">👨 Male</button>
-      <button onclick="setVoice('auto')">Auto</button>
+
+      <button onclick="setVoice('female')">
+        👩 Female
+      </button>
+
+      <button onclick="setVoice('male')">
+        👨 Male
+      </button>
+
+      <button onclick="setVoice('auto')">
+        Auto
+      </button>
+
     </div>
+
   </div>
 
-  <!-- 🔥 PLAY BUTTON (यही missing था) -->
-  <button id="playBtn" class="play-btn">▶</button>
+  <!-- PLAY BUTTON -->
+  <button id="playBtn" class="play-btn">
+    ▶
+  </button>
+
+  <!-- ✅ RESTART BUTTON -->
+  <button id="restartBtn" class="restart-btn">
+    Restart
+  </button>
 
 </div>
 
