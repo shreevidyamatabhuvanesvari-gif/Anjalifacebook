@@ -11,10 +11,6 @@ let canvasRecorder;
 let canvasChunks = [];
 let canvasStream;
 
-// ===== AUDIO =====
-let audioContext;
-let audioDestination;
-
 // ===== TALKING EFFECT =====
 let talkingAnimation;
 let mouthFrame = 0;
@@ -47,9 +43,9 @@ function animateCanvas() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   // ===== IMAGE =====
-  if (img.src) {
+  if (img.complete && img.naturalWidth > 0) {
 
-    // 🔥 BREATHING ZOOM EFFECT
+    // 🔥 BREATHING EFFECT
     const zoom =
       1 +
       Math.sin(Date.now() * 0.0015) * 0.02;
@@ -75,23 +71,23 @@ function animateCanvas() {
       imgHeight
     );
 
-    // ===== BETTER FAKE TALKING =====
-    mouthFrame += 0.22;
+    // ===== FAKE TALKING EFFECT =====
+    mouthFrame += 0.35;
 
     const mouthMove =
-      Math.sin(mouthFrame) * 12;
+      Math.sin(mouthFrame) * 10;
 
-    // 🔥 MOUTH SHADOW
+    // 🔥 DARK LIP SHADOW
     ctx.fillStyle =
-      "rgba(0,0,0,0.28)";
+      "rgba(0,0,0,0.35)";
 
     ctx.beginPath();
 
     ctx.ellipse(
       canvas.width / 2,
       canvas.height * 0.69,
-      75,
-      14 + mouthMove,
+      70,
+      12 + mouthMove,
       0,
       0,
       Math.PI * 2
@@ -99,17 +95,17 @@ function animateCanvas() {
 
     ctx.fill();
 
-    // 🔥 LIP HIGHLIGHT
+    // 🔥 RED INNER LIP
     ctx.fillStyle =
-      "rgba(255,80,80,0.10)";
+      "rgba(255,70,70,0.22)";
 
     ctx.beginPath();
 
     ctx.ellipse(
       canvas.width / 2,
       canvas.height * 0.688,
-      60,
-      8 + mouthMove * 0.4,
+      48,
+      5 + mouthMove * 0.4,
       0,
       0,
       Math.PI * 2
@@ -120,7 +116,7 @@ function animateCanvas() {
 
   // ===== TEXT BOX =====
   ctx.fillStyle =
-    "rgba(0,0,0,0.58)";
+    "rgba(0,0,0,0.60)";
 
   roundRect(
     ctx,
@@ -129,30 +125,31 @@ function animateCanvas() {
     960,
     420,
     28,
-    true,
-    false
+    true
   );
 
   // ===== TEXT =====
   ctx.font =
     "bold 54px sans-serif";
 
-  ctx.textAlign = "center";
+  ctx.textAlign = "left";
 
   drawColoredText(
     textBox.innerText,
-    canvas.width / 2,
+    110,
     860,
-    850,
-    80
+    860,
+    82
   );
 
   // ===== WATERMARK =====
   ctx.fillStyle =
-    "rgba(255,255,255,0.92)";
+    "rgba(255,255,255,0.95)";
 
   ctx.font =
     "italic bold 34px sans-serif";
+
+  ctx.textAlign = "center";
 
   ctx.fillText(
     watermark.innerText,
@@ -169,7 +166,7 @@ function animateCanvas() {
 // ===== DRAW COLORED TEXT =====
 function drawColoredText(
   text,
-  centerX,
+  startX,
   startY,
   maxWidth,
   lineHeight
@@ -178,7 +175,7 @@ function drawColoredText(
   const words =
     text.split(" ");
 
-  let line = "";
+  let x = startX;
   let y = startY;
 
   for (
@@ -187,65 +184,25 @@ function drawColoredText(
     i++
   ) {
 
-    const testLine =
-      line + words[i] + " ";
+    const word =
+      words[i];
 
-    const testWidth =
-      ctx.measureText(testLine).width;
+    const wordWidth =
+      ctx.measureText(
+        word + " "
+      ).width;
 
+    // ===== LINE BREAK =====
     if (
-      testWidth > maxWidth &&
-      i > 0
+      x + wordWidth >
+      startX + maxWidth
     ) {
 
-      drawLineWords(
-        line.trim(),
-        centerX,
-        y
-      );
-
-      line =
-        words[i] + " ";
-
+      x = startX;
       y += lineHeight;
-
-    } else {
-
-      line = testLine;
     }
-  }
 
-  drawLineWords(
-    line.trim(),
-    centerX,
-    y
-  );
-}
-
-// ===== DRAW LINE WORDS =====
-function drawLineWords(
-  line,
-  centerX,
-  y
-) {
-
-  const words =
-    line.split(" ");
-
-  let totalWidth = 0;
-
-  words.forEach(word => {
-
-    totalWidth +=
-      ctx.measureText(word + " ")
-        .width;
-  });
-
-  let x =
-    centerX - totalWidth / 2;
-
-  words.forEach((word, i) => {
-
+    // ===== WORD COLOR =====
     ctx.fillStyle =
       canvasColors[
         i % canvasColors.length
@@ -257,10 +214,8 @@ function drawLineWords(
       y
     );
 
-    x +=
-      ctx.measureText(word + " ")
-        .width;
-  });
+    x += wordWidth;
+  }
 }
 
 // ===== ROUND RECT =====
@@ -271,13 +226,15 @@ function roundRect(
   width,
   height,
   radius,
-  fill,
-  stroke
+  fill
 ) {
 
   ctx.beginPath();
 
-  ctx.moveTo(x + radius, y);
+  ctx.moveTo(
+    x + radius,
+    y
+  );
 
   ctx.lineTo(
     x + width - radius,
@@ -331,41 +288,50 @@ function roundRect(
 
   if (fill)
     ctx.fill();
-
-  if (stroke)
-    ctx.stroke();
 }
 
 // ===== START RECORDING =====
 function startCanvasRecording() {
 
-  // ===== VIDEO STREAM =====
+  // ✅ ONLY VIDEO
   canvasStream =
     canvas.captureStream(30);
 
-  // ===== AUDIO CONTEXT =====
-  audioContext =
-    new AudioContext();
-
-  audioDestination =
-    audioContext.createMediaStreamDestination();
-
-  // ===== MERGED STREAM =====
-  const mergedStream =
-    new MediaStream([
-      ...canvasStream.getVideoTracks(),
-      ...audioDestination.stream.getAudioTracks()
-    ]);
-
   canvasChunks = [];
+
+  // ✅ SAFE MIME TYPE
+  let options = {};
+
+  if (
+    MediaRecorder.isTypeSupported(
+      "video/webm;codecs=vp9"
+    )
+  ) {
+
+    options.mimeType =
+      "video/webm;codecs=vp9";
+  }
+
+  else if (
+    MediaRecorder.isTypeSupported(
+      "video/webm;codecs=vp8"
+    )
+  ) {
+
+    options.mimeType =
+      "video/webm;codecs=vp8";
+  }
+
+  else {
+
+    options.mimeType =
+      "video/webm";
+  }
 
   canvasRecorder =
     new MediaRecorder(
-      mergedStream,
-      {
-        mimeType:
-          "video/webm"
-      }
+      canvasStream,
+      options
     );
 
   canvasRecorder.ondataavailable =
@@ -385,7 +351,7 @@ function startCanvasRecording() {
           canvasChunks,
           {
             type:
-              "video/webm"
+              options.mimeType
           }
         );
 
