@@ -12,6 +12,13 @@ const restartBtn = document.getElementById("restartBtn");
 const watermark = document.getElementById("watermark");
 const userName = document.getElementById("userName");
 
+// ✅ DOWNLOAD
+const downloadBtn = document.getElementById("downloadBtn");
+const preview = document.getElementById("preview");
+
+let mediaRecorder;
+let recordedChunks = [];
+
 // ===== IMAGE LOAD =====
 fileInput.addEventListener("change", function () {
 
@@ -65,8 +72,46 @@ function setVoice(type) {
 let lines = [];
 let index = 0;
 
+// ===== START RECORDING =====
+async function startRecording() {
+
+  const stream = await navigator.mediaDevices.getDisplayMedia({
+    video: true,
+    audio: true
+  });
+
+  mediaRecorder = new MediaRecorder(stream);
+
+  recordedChunks = [];
+
+  mediaRecorder.ondataavailable = event => {
+
+    if (event.data.size > 0) {
+      recordedChunks.push(event.data);
+    }
+  };
+
+  mediaRecorder.onstop = () => {
+
+    const blob = new Blob(recordedChunks, {
+      type: "video/webm"
+    });
+
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+
+    a.href = url;
+    a.download = "reel.webm";
+
+    a.click();
+  };
+
+  mediaRecorder.start();
+}
+
 // ===== PLAY =====
-playBtn.addEventListener("click", function () {
+playBtn.addEventListener("click", async function () {
 
   const text = textInput.value.trim();
 
@@ -92,7 +137,20 @@ playBtn.addEventListener("click", function () {
 
   index = 0;
 
+  // ✅ START RECORDING
+  await startRecording();
+
   speakNext();
+});
+
+// ===== DOWNLOAD BUTTON =====
+downloadBtn.addEventListener("click", function () {
+
+  if (mediaRecorder &&
+      mediaRecorder.state !== "inactive") {
+
+    mediaRecorder.stop();
+  }
 });
 
 // ===== RESTART =====
@@ -108,7 +166,17 @@ restartBtn.addEventListener("click", function () {
 // ===== SPEAK FUNCTION =====
 function speakNext() {
 
-  if (index >= lines.length) return;
+  if (index >= lines.length) {
+
+    // ✅ AUTO STOP RECORDING
+    if (mediaRecorder &&
+        mediaRecorder.state !== "inactive") {
+
+      mediaRecorder.stop();
+    }
+
+    return;
+  }
 
   const line = lines[index];
 
@@ -221,6 +289,7 @@ function speakNext() {
   speech.onend = () => {
 
     index++;
+
     // ✅ SMOOTH NATURAL PAUSE
     setTimeout(speakNext, 850);
   };
