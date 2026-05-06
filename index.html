@@ -6,67 +6,138 @@
 <title>Reel Creator</title>
 
 <style>
-body { margin:0; background:black; font-family:sans-serif; }
+body {
+  margin: 0;
+  background: black;
+  font-family: sans-serif;
+  height: 100vh;
+  overflow: hidden;
+}
 
+/* FULL SCREEN CONTAINER */
+.container {
+  width: 100%;
+  height: 100vh;
+}
+
+/* INPUTS */
+input, textarea {
+  width: 90%;
+  margin: 10px auto;
+  display: block;
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 6px;
+  border: none;
+}
+
+/* PREVIEW AREA */
 .preview {
-  position:relative;
-  width:100%;
-  height:100vh;
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  background: black;
+  overflow: hidden;
 }
 
-img {
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  display:none;
+/* IMAGE */
+.preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: none;
 }
 
+/* TEXT BOX */
 .text-box {
-  position:absolute;
-  top:50%;
-  left:50%;
-  transform:translate(-50%,-50%);
-  width:90%;
-  padding:20px;
-  background:rgba(0,0,0,0.6);
-  color:white;
-  text-align:center;
-  font-size:28px;
-  font-weight:bold;
-  border-radius:12px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  padding: 20px;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  text-align: center;
+  font-size: 22px;
+  line-height: 1.7;
+  border-radius: 12px;
 }
 
-.watermark {
-  position:absolute;
-  bottom:20px;
-  right:20px;
-  color:white;
-  opacity:0.7;
+/* PLAY BUTTON */
+.play-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 26px;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 50%;
+  background: white;
+  color: black;
+  cursor: pointer;
+  z-index: 10; /* सबसे ऊपर */
 }
 
-button {
-  position:absolute;
-  top:50%;
-  left:50%;
-  transform:translate(-50%,-50%);
+/* VOICE BUTTONS */
+.voice-controls {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 8;
+}
+
+.voice-controls button {
+  margin-right: 5px;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
 }
 </style>
 </head>
 
 <body>
 
-<input type="file" id="fileInput">
-<textarea id="textInput" placeholder="लेख लिखें"></textarea>
-<input id="userName" placeholder="नाम">
+<div class="container">
 
+<!-- IMAGE UPLOAD -->
+<input type="file" id="fileInput" accept="image/*">
+
+<!-- TEXT INPUT -->
+<textarea id="textInput" placeholder="यहाँ अपना लेख लिखें..."></textarea>
+
+<!-- PREVIEW -->
 <div class="preview">
-  <img id="img">
-  <div id="textBox" class="text-box"></div>
-  <div id="watermark" class="watermark"></div>
 
-  <button id="playBtn">▶</button>
+  <!-- IMAGE -->
+  <img id="img">
+
+  <!-- TEXT -->
+  <div class="text-box" id="textBox"></div>
+
+  <!-- VOICE BUTTONS -->
+  <div class="voice-controls">
+    <button id="voiceToggle">🎤 Voice</button>
+
+    <div id="voiceOptions" style="display:none; margin-top:5px;">
+      <button onclick="setVoice('female')">👩 Female</button>
+      <button onclick="setVoice('male')">👨 Male</button>
+      <button onclick="setVoice('auto')">Auto</button>
+    </div>
+  </div>
+
+  <!-- 🔥 PLAY BUTTON (यही missing था) -->
+  <button id="playBtn" class="play-btn">▶</button>
+
 </div>
 
+</div>
+
+<!-- SCRIPT -->
 <script src="script.js"></script>
+
 </body>
 </html>
