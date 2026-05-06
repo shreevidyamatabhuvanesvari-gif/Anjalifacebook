@@ -12,19 +12,12 @@ body {
   font-family: sans-serif;
   height: 100vh;
   overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 /* FULL SCREEN CONTAINER */
 .container {
   width: 100%;
-  max-width: 450px;
-  aspect-ratio: 9 / 16;
   height: 100vh;
-  position: relative;
-  background: black;
 }
 
 /* INPUTS */
@@ -50,7 +43,7 @@ textarea {
 .preview {
   position: relative;
   width: 100%;
-  height: 100%;
+  height: 100vh;
   background: black;
   overflow: hidden;
 }
@@ -69,15 +62,33 @@ textarea {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 90%;
-  padding: 20px;
+  width: 92%;
+  max-height: 80vh;
+
+  padding: 22px;
+
   background: rgba(0,0,0,0.6);
+
   color: white;
+
   text-align: center;
-  font-size: 22px;
-  line-height: 1.7;
+
+  font-size: 34px;
+  font-weight: bold;
+
+  line-height: 1.6;
+
   border-radius: 12px;
+
   z-index: 6;
+
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+
+  overflow-y: auto;
+
+  box-sizing: border-box;
 }
 
 /* WATERMARK BELOW TEXT BOX */
@@ -139,18 +150,15 @@ textarea {
 /* RESTART BUTTON */
 .restart-btn {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  padding: 14px 24px;
+  bottom: 20px;
+  left: 20px;
+  padding: 10px 16px;
   border: none;
-  border-radius: 12px;
-  background: rgba(255,255,255,0.95);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.9);
   color: black;
   cursor: pointer;
   z-index: 10;
-  font-size: 18px;
-  display: none;
 }
 
 /* VOICE BUTTONS */
@@ -191,7 +199,7 @@ textarea {
 <input type="text" id="userName" placeholder="Watermark Name">
 
 <!-- PREVIEW -->
-<div class="preview" id="preview">
+<div class="preview">
 
   <!-- IMAGE -->
   <img id="img">
@@ -240,32 +248,13 @@ textarea {
 </div>
 
 <script>
-const playBtn = document.getElementById("playBtn");
-const restartBtn = document.getElementById("restartBtn");
-
-playBtn.addEventListener("click", function () {
+document.getElementById("playBtn").addEventListener("click", function () {
 
   document.getElementById("fileInput").classList.add("hide-ui");
   document.getElementById("textInput").classList.add("hide-ui");
   document.getElementById("userName").classList.add("hide-ui");
   document.getElementById("voiceControls").classList.add("hide-ui");
 
-  /* FULL SCREEN MODE */
-  if (document.documentElement.requestFullscreen) {
-    document.documentElement.requestFullscreen();
-  }
-
-  /* SHOW RESTART BUTTON AFTER TEXT COMPLETE */
-  setTimeout(() => {
-    restartBtn.style.display = "block";
-  }, 5000);
-
-});
-
-/* RESTART BUTTON HIDE ON CLICK */
-restartBtn.addEventListener("click", function () {
-  restartBtn.style.display = "none";
-  location.reload();
 });
 </script>
 
