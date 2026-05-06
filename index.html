@@ -159,6 +159,11 @@ textarea {
   cursor: pointer;
   font-size: 14px;
 }
+
+/* HIDE INPUTS ON PLAY */
+.hide-ui {
+  display: none !important;
+}
 </style>
 </head>
 
@@ -188,7 +193,7 @@ textarea {
   <div id="watermark" class="watermark"></div>
 
   <!-- VOICE BUTTONS -->
-  <div class="voice-controls">
+  <div class="voice-controls" id="voiceControls">
 
     <button id="voiceToggle">🎤 Voice</button>
 
@@ -223,6 +228,17 @@ textarea {
 </div>
 
 </div>
+
+<script>
+document.getElementById("playBtn").addEventListener("click", function () {
+
+  document.getElementById("fileInput").classList.add("hide-ui");
+  document.getElementById("textInput").classList.add("hide-ui");
+  document.getElementById("userName").classList.add("hide-ui");
+  document.getElementById("voiceControls").classList.add("hide-ui");
+
+});
+</script>
 
 <!-- SCRIPT -->
 <script src="script.js"></script>
