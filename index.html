@@ -14,16 +14,16 @@ body {
   overflow: hidden;
 }
 
-/* FULL SCREEN CONTAINER */
+/* CONTAINER */
 .container {
   width: 100%;
   height: 100vh;
 }
 
 /* INPUTS */
-input, textarea {
+input, textarea, select {
   width: 90%;
-  margin: 10px auto;
+  margin: 8px auto;
   display: block;
   padding: 10px;
   font-size: 16px;
@@ -31,13 +31,11 @@ input, textarea {
   border: none;
 }
 
-/* PREVIEW AREA */
+/* PREVIEW */
 .preview {
   position: relative;
   width: 100%;
   height: 100vh;
-  background: black;
-  overflow: hidden;
 }
 
 /* IMAGE */
@@ -48,7 +46,7 @@ input, textarea {
   display: none;
 }
 
-/* TEXT BOX */
+/* TEXT */
 .text-box {
   position: absolute;
   top: 50%;
@@ -59,42 +57,41 @@ input, textarea {
   background: rgba(0,0,0,0.6);
   color: white;
   text-align: center;
-  font-size: 22px;
-  line-height: 1.7;
+  font-size: 26px; /* 🔥 bigger */
+  font-weight: bold; /* 🔥 bold */
+  line-height: 1.8;
   border-radius: 12px;
 }
 
-/* PLAY BUTTON */
+/* WATERMARK */
+.watermark {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  font-size: 16px;
+  opacity: 0.7;
+  color: white;
+}
+
+/* PLAY */
 .play-btn {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   font-size: 26px;
-  padding: 14px 20px;
-  border: none;
+  padding: 14px;
   border-radius: 50%;
-  background: white;
-  color: black;
-  cursor: pointer;
-  z-index: 10; /* सबसे ऊपर */
+  border: none;
+  z-index: 10;
 }
 
-/* VOICE BUTTONS */
-.voice-controls {
+/* CONTROLS */
+.controls {
   position: absolute;
   top: 10px;
   left: 10px;
-  z-index: 8;
-}
-
-.voice-controls button {
-  margin-right: 5px;
-  padding: 6px 10px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
+  z-index: 10;
 }
 </style>
 </head>
@@ -103,41 +100,33 @@ input, textarea {
 
 <div class="container">
 
-<!-- IMAGE UPLOAD -->
 <input type="file" id="fileInput" accept="image/*">
+<textarea id="textInput" placeholder="लेख लिखें..."></textarea>
 
-<!-- TEXT INPUT -->
-<textarea id="textInput" placeholder="यहाँ अपना लेख लिखें..."></textarea>
+<input type="text" id="userName" placeholder="अपना नाम लिखें (Watermark)">
+<select id="speedControl">
+  <option value="0.8">Slow</option>
+  <option value="1" selected>Normal</option>
+  <option value="1.2">Fast</option>
+</select>
 
-<!-- PREVIEW -->
 <div class="preview">
-
-  <!-- IMAGE -->
   <img id="img">
-
-  <!-- TEXT -->
   <div class="text-box" id="textBox"></div>
+  <div class="watermark" id="watermark"></div>
 
-  <!-- VOICE BUTTONS -->
-  <div class="voice-controls">
-    <button id="voiceToggle">🎤 Voice</button>
-
-    <div id="voiceOptions" style="display:none; margin-top:5px;">
-      <button onclick="setVoice('female')">👩 Female</button>
-      <button onclick="setVoice('male')">👨 Male</button>
-      <button onclick="setVoice('auto')">Auto</button>
-    </div>
+  <div class="controls">
+    <button onclick="setVoice('female')">👩</button>
+    <button onclick="setVoice('male')">👨</button>
+    <button onclick="setVoice('auto')">Auto</button>
   </div>
 
-  <!-- 🔥 PLAY BUTTON (यही missing था) -->
   <button id="playBtn" class="play-btn">▶</button>
-
+  <button id="restartBtn" style="position:absolute;bottom:20px;left:20px;">Restart</button>
 </div>
 
 </div>
 
-<!-- SCRIPT -->
 <script src="script.js"></script>
-
 </body>
 </html>
