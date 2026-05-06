@@ -18,6 +18,9 @@ body {
 .container {
   width: 100%;
   height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* INPUTS */
@@ -39,10 +42,12 @@ textarea {
   resize: vertical;
 }
 
-/* PREVIEW AREA */
+/* PREVIEW AREA 9:16 */
 .preview {
   position: relative;
   width: 100%;
+  max-width: 420px;
+  aspect-ratio: 9 / 16;
   height: 100vh;
   background: black;
   overflow: hidden;
@@ -129,18 +134,29 @@ textarea {
   z-index: 10;
 }
 
-/* RESTART BUTTON */
+/* RESTART BUTTON CENTER */
 .restart-btn {
   position: absolute;
-  bottom: 20px;
-  left: 20px;
-  padding: 10px 16px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  padding: 14px 22px;
+
   border: none;
-  border-radius: 8px;
-  background: rgba(255,255,255,0.9);
+  border-radius: 10px;
+
+  background: rgba(255,255,255,0.95);
   color: black;
+
   cursor: pointer;
-  z-index: 10;
+
+  z-index: 12;
+
+  display: none;
+
+  font-size: 18px;
+  font-weight: bold;
 }
 
 /* VOICE BUTTONS */
@@ -181,7 +197,7 @@ textarea {
 <input type="text" id="userName" placeholder="Watermark Name">
 
 <!-- PREVIEW -->
-<div class="preview">
+<div class="preview" id="preview">
 
   <!-- IMAGE -->
   <img id="img">
@@ -230,12 +246,32 @@ textarea {
 </div>
 
 <script>
-document.getElementById("playBtn").addEventListener("click", function () {
+const playBtn = document.getElementById("playBtn");
+const restartBtn = document.getElementById("restartBtn");
+
+playBtn.addEventListener("click", function () {
 
   document.getElementById("fileInput").classList.add("hide-ui");
   document.getElementById("textInput").classList.add("hide-ui");
   document.getElementById("userName").classList.add("hide-ui");
   document.getElementById("voiceControls").classList.add("hide-ui");
+
+  /* FULL SCREEN MODE */
+  if (document.documentElement.requestFullscreen) {
+    document.documentElement.requestFullscreen();
+  }
+
+  /* SHOW RESTART AFTER TEXT FINISH */
+  setTimeout(() => {
+    restartBtn.style.display = "block";
+  }, 5000);
+
+});
+
+/* RESTART BUTTON HIDE ON CLICK */
+restartBtn.addEventListener("click", function () {
+
+  restartBtn.style.display = "none";
 
 });
 </script>
