@@ -21,7 +21,8 @@ body {
 }
 
 /* INPUTS */
-input, textarea {
+input,
+textarea {
   width: 90%;
   margin: 10px auto;
   display: block;
@@ -29,6 +30,13 @@ input, textarea {
   font-size: 16px;
   border-radius: 6px;
   border: none;
+  box-sizing: border-box;
+}
+
+/* TEXTAREA HEIGHT */
+textarea {
+  min-height: 120px;
+  resize: vertical;
 }
 
 /* PREVIEW AREA */
@@ -112,24 +120,32 @@ input, textarea {
   font-size: 14px;
 }
 
-/* WATERMARK */
+/* FINAL WATERMARK */
 .watermark {
   position: absolute;
-  right: 18px;
-  bottom: 18px;
+  right: 15px;
+  bottom: 15px;
 
-  z-index: 5;
+  z-index: 7;
 
-  color: rgba(255,255,255,0.65);
+  color: rgba(255,255,255,0.6);
 
   font-size: 16px;
-  font-weight: 600;
+  font-weight: bold;
   font-style: italic;
 
-  text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+  letter-spacing: 0.5px;
+
+  text-shadow:
+    1px 1px 3px rgba(0,0,0,0.8);
 
   pointer-events: none;
   user-select: none;
+
+  max-width: 70%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 </style>
 </head>
@@ -144,7 +160,7 @@ input, textarea {
 <!-- TEXT INPUT -->
 <textarea id="textInput" placeholder="यहाँ अपना लेख लिखें..."></textarea>
 
-<!-- WATERMARK INPUT -->
+<!-- WATERMARK NAME INPUT -->
 <input type="text" id="userName" placeholder="Watermark Name">
 
 <!-- PREVIEW -->
@@ -156,7 +172,7 @@ input, textarea {
   <!-- TEXT -->
   <div class="text-box" id="textBox"></div>
 
-  <!-- WATERMARK -->
+  <!-- PHOTO WATERMARK -->
   <div id="watermark" class="watermark"></div>
 
   <!-- VOICE BUTTONS -->
@@ -187,7 +203,7 @@ input, textarea {
     ▶
   </button>
 
-  <!-- RESTART -->
+  <!-- RESTART BUTTON -->
   <button id="restartBtn" class="restart-btn">
     Restart
   </button>
