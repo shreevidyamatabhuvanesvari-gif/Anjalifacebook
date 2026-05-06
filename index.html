@@ -97,10 +97,10 @@ input, textarea {
   font-size: 14px;
 }
 
-/* ✅ STYLISH WATERMARK */
+/* ✅ WATERMARK STYLE */
 .watermark {
   position: absolute;
-  bottom: 30px;
+  bottom: 20px;
   right: 20px;
 
   color: rgba(255,255,255,0.75);
@@ -109,28 +109,12 @@ input, textarea {
   font-weight: bold;
   font-style: italic;
 
-  letter-spacing: 1px;
-
   text-shadow:
     2px 2px 6px rgba(0,0,0,0.8);
 
   z-index: 9;
 
   pointer-events: none;
-}
-
-/* ✅ RESTART BUTTON */
-.restart-btn {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 8px;
-  background: white;
-  color: black;
-  cursor: pointer;
-  z-index: 10;
 }
 </style>
 </head>
@@ -145,8 +129,8 @@ input, textarea {
 <!-- TEXT INPUT -->
 <textarea id="textInput" placeholder="यहाँ अपना लेख लिखें..."></textarea>
 
-<!-- USER NAME -->
-<input type="text" id="userName" placeholder="अपना नाम लिखें (Watermark)">
+<!-- ✅ WATERMARK INPUT -->
+<input type="text" id="userName" placeholder="Watermark Name">
 
 <!-- PREVIEW -->
 <div class="preview">
@@ -186,11 +170,6 @@ input, textarea {
   <!-- PLAY BUTTON -->
   <button id="playBtn" class="play-btn">
     ▶
-  </button>
-
-  <!-- RESTART BUTTON -->
-  <button id="restartBtn" class="restart-btn">
-    Restart
   </button>
 
 </div>
