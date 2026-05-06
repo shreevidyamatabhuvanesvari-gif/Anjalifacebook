@@ -3,67 +3,199 @@ const textInput = document.getElementById("textInput");
 const img = document.getElementById("img");
 const textBox = document.getElementById("textBox");
 const playBtn = document.getElementById("playBtn");
+
+const voiceToggle = document.getElementById("voiceToggle");
+const voiceOptions = document.getElementById("voiceOptions");
+
+// ✅ NEW
+const restartBtn = document.getElementById("restartBtn");
 const watermark = document.getElementById("watermark");
 const userName = document.getElementById("userName");
 
-let lines = [];
-let index = 0;
-let voices = [];
+// ===== IMAGE LOAD =====
+fileInput.addEventListener("change", function () {
 
-// voices load fix
-speechSynthesis.onvoiceschanged = () => {
-  voices = speechSynthesis.getVoices();
-};
-
-// image load
-fileInput.onchange = () => {
   const file = fileInput.files[0];
-  if(file){
-    img.src = URL.createObjectURL(file);
-    img.style.display = "block";
-  }
-};
+  if (!file) return;
 
-// split text
-function split(text){
-  return text.split(/\n|[।.!?]/).filter(t => t.trim());
+  const url = URL.createObjectURL(file);
+
+  img.src = url;
+  img.style.display = "block";
+});
+
+// ===== TEXT SPLIT =====
+function splitLines(text) {
+
+  return text
+    .split(/\n|[।.!?]/)
+    .map(l => l.trim())
+    .filter(l => l.length > 0);
 }
 
-// play
-playBtn.onclick = () => {
-  if(!textInput.value) return alert("लेख लिखें");
+// ===== COLORS =====
+const colors = [
+  "#ff4d4d",
+  "#ffd633",
+  "#66ff66",
+  "#66ccff",
+  "#ff66cc",
+  "#ffffff"
+];
 
-  watermark.innerText = "© " + userName.value;
+// ===== VOICE MODE =====
+let voiceMode = "female";
 
-  lines = split(textInput.value);
-  index = 0;
+// ===== VOICE MENU =====
+voiceToggle.onclick = () => {
 
-  speak();
+  voiceOptions.style.display =
+    voiceOptions.style.display === "none"
+      ? "block"
+      : "none";
 };
 
-// speak
-function speak(){
+function setVoice(type) {
 
-  if(index >= lines.length) return;
+  voiceMode = type;
+  voiceOptions.style.display = "none";
+}
 
-  let line = lines[index];
+// ===== MAIN =====
+let lines = [];
+let index = 0;
 
-  textBox.innerText = line; // safe (no html conflict)
+// ===== PLAY =====
+playBtn.addEventListener("click", function () {
 
-  let speech = new SpeechSynthesisUtterance(line);
+  const text = textInput.value.trim();
 
-  let female = voices.find(v => v.lang.includes("hi")) || voices[0];
-  let male = voices.find(v => v.lang === "en-IN") || voices[0];
+  if (!text) {
+    alert("पहले लेख लिखें");
+    return;
+  }
 
-  // auto voice change
-  speech.voice = index % 2 === 0 ? female : male;
+  // ✅ watermark
+  watermark.innerText =
+    userName.value
+      ? "© " + userName.value
+      : "";
 
-  speech.rate = 0.9;
-  speech.pitch = index % 2 === 0 ? 1.2 : 0.6;
+  // UI hide
+  fileInput.style.display = "none";
+  textInput.style.display = "none";
+  playBtn.style.display = "none";
+
+  document.querySelector(".voice-controls").style.display = "none";
+
+  lines = splitLines(text);
+
+  index = 0;
+
+  speakNext();
+});
+
+// ===== RESTART =====
+restartBtn.addEventListener("click", function () {
+
+  speechSynthesis.cancel();
+
+  index = 0;
+
+  speakNext();
+});
+
+// ===== SPEAK FUNCTION =====
+function speakNext() {
+
+  if (index >= lines.length) return;
+
+  const line = lines[index];
+
+  // 🎨 MULTICOLOR TEXT
+  const words = line.split(" ");
+
+  const colored = words.map((w, i) => {
+
+    return `<span style="color:${colors[i % colors.length]}">${w}</span>`;
+
+  }).join(" ");
+
+  textBox.innerHTML = colored;
+
+  speechSynthesis.cancel();
+
+  const speech = new SpeechSynthesisUtterance(line);
+
+  let voices = speechSynthesis.getVoices();
+
+  // ===== FILTER VOICES =====
+  let hindiVoices = voices.filter(v =>
+    v.lang.includes("hi")
+  );
+
+  if (hindiVoices.length === 0)
+    hindiVoices = voices;
+
+  // ===== FEMALE =====
+  let femaleVoice = hindiVoices[0];
+
+  // ===== MALE =====
+  let maleVoice = voices.find(v =>
+    v.lang === "en-IN"
+  );
+
+  if (!maleVoice) {
+
+    maleVoice =
+      hindiVoices[1] ||
+      hindiVoices[0];
+  }
+
+  let selectedVoice;
+
+  // ===== APPLY =====
+  if (voiceMode === "female") {
+
+    selectedVoice = femaleVoice;
+
+    speech.pitch = 1.2;
+    speech.rate = 1;
+  }
+
+  else if (voiceMode === "male") {
+
+    selectedVoice = maleVoice;
+
+    speech.pitch = 0.5;
+    speech.rate = 0.85;
+  }
+
+  else {
+
+    selectedVoice =
+      index % 2 === 0
+        ? femaleVoice
+        : maleVoice;
+
+    speech.pitch =
+      index % 2 === 0
+        ? 1.2
+        : 0.5;
+
+    speech.rate = 0.9;
+  }
+
+  if (selectedVoice)
+    speech.voice = selectedVoice;
+
+  speech.lang = "hi-IN";
 
   speech.onend = () => {
+
     index++;
-    setTimeout(speak, 500);
+
+    setTimeout(speakNext, 600);
   };
 
   speechSynthesis.speak(speech);
