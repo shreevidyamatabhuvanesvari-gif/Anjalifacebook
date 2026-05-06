@@ -17,22 +17,31 @@ const downloadBtn = document.getElementById("downloadBtn");
 const preview = document.getElementById("preview");
 
 // ✅ CANVAS
-const reelCanvas = document.getElementById("reelCanvas");
+const reelCanvas =
+  document.getElementById("reelCanvas");
 
 let mediaRecorder;
 let recordedChunks = [];
 
 // ===== IMAGE LOAD =====
-fileInput.addEventListener("change", function () {
+fileInput.addEventListener(
+  "change",
+  function () {
 
-  const file = fileInput.files[0];
-  if (!file) return;
+    const file =
+      fileInput.files[0];
 
-  const url = URL.createObjectURL(file);
+    if (!file) return;
 
-  img.src = url;
-  img.style.display = "block";
-});
+    const url =
+      URL.createObjectURL(file);
+
+    img.src = url;
+
+    img.style.display =
+      "block";
+  }
+);
 
 // ===== TEXT SPLIT =====
 function splitLines(text) {
@@ -40,7 +49,9 @@ function splitLines(text) {
   return text
     .split(/\n|[।.!?]/)
     .map(l => l.trim())
-    .filter(l => l.length > 0);
+    .filter(
+      l => l.length > 0
+    );
 }
 
 // ===== COLORS =====
@@ -60,7 +71,8 @@ let voiceMode = "female";
 voiceToggle.onclick = () => {
 
   voiceOptions.style.display =
-    voiceOptions.style.display === "none"
+    voiceOptions.style.display ===
+    "none"
       ? "block"
       : "none";
 };
@@ -68,7 +80,9 @@ voiceToggle.onclick = () => {
 function setVoice(type) {
 
   voiceMode = type;
-  voiceOptions.style.display = "none";
+
+  voiceOptions.style.display =
+    "none";
 }
 
 // ===== MAIN =====
@@ -78,77 +92,160 @@ let index = 0;
 // ===== START RECORDING =====
 async function startRecording() {
 
-  if (typeof startCanvasRecording === "function") {
+  // ✅ START AUDIO ENGINE
+  if (
+    typeof startAudioEngine ===
+    "function"
+  ) {
+
+    startAudioEngine();
+  }
+
+  // ✅ START CANVAS RECORDER
+  if (
+    typeof startCanvasRecording ===
+    "function"
+  ) {
 
     startCanvasRecording();
   }
 }
 
 // ===== PLAY =====
-playBtn.addEventListener("click", async function () {
+playBtn.addEventListener(
+  "click",
+  async function () {
 
-  const text = textInput.value.trim();
+    const text =
+      textInput.value.trim();
 
-  if (!text) {
-    alert("पहले लेख लिखें");
-    return;
+    if (!text) {
+
+      alert("पहले लेख लिखें");
+
+      return;
+    }
+
+    // ✅ WATERMARK
+    watermark.innerText =
+      userName.value
+        ? "© " + userName.value
+        : "";
+
+    // ✅ HIDE UI
+    fileInput.style.display =
+      "none";
+
+    textInput.style.display =
+      "none";
+
+    playBtn.style.display =
+      "none";
+
+    document.querySelector(
+      ".voice-controls"
+    ).style.display = "none";
+
+    // ===== SPLIT LINES =====
+    lines = splitLines(text);
+
+    index = 0;
+
+    // ✅ START TALKING EFFECT
+    if (
+      typeof startTalkingEffect ===
+      "function"
+    ) {
+
+      startTalkingEffect();
+    }
+
+    // ✅ START RECORDING
+    await startRecording();
+
+    // ✅ START SPEECH
+    speakNext();
   }
-
-  // ✅ watermark
-  watermark.innerText =
-    userName.value
-      ? "© " + userName.value
-      : "";
-
-  // UI hide
-  fileInput.style.display = "none";
-  textInput.style.display = "none";
-  playBtn.style.display = "none";
-
-  document.querySelector(".voice-controls").style.display = "none";
-
-  lines = splitLines(text);
-
-  index = 0;
-
-  // ✅ START CANVAS SYSTEM
-  if (typeof startTalkingEffect === "function") {
-
-    startTalkingEffect();
-  }
-
-  // ✅ START RECORDING
-  await startRecording();
-
-  speakNext();
-});
+);
 
 // ===== DOWNLOAD BUTTON =====
-downloadBtn.addEventListener("click", function () {
+downloadBtn.addEventListener(
+  "click",
+  function () {
 
-  if (typeof stopCanvasRecording === "function") {
+    // ✅ STOP AUDIO
+    if (
+      typeof stopAudioEngine ===
+      "function"
+    ) {
 
-    stopCanvasRecording();
+      stopAudioEngine();
+    }
+
+    // ✅ STOP RECORDING
+    if (
+      typeof stopCanvasRecording ===
+      "function"
+    ) {
+
+      stopCanvasRecording();
+    }
   }
-});
+);
 
 // ===== RESTART =====
-restartBtn.addEventListener("click", function () {
+restartBtn.addEventListener(
+  "click",
+  function () {
 
-  speechSynthesis.cancel();
+    // ✅ STOP SPEECH
+    speechSynthesis.cancel();
 
-  index = 0;
+    // ✅ RESET
+    index = 0;
 
-  speakNext();
-});
+    // ✅ RESTART AUDIO
+    if (
+      typeof stopAudioEngine ===
+      "function"
+    ) {
+
+      stopAudioEngine();
+    }
+
+    if (
+      typeof startAudioEngine ===
+      "function"
+    ) {
+
+      startAudioEngine();
+    }
+
+    // ✅ START AGAIN
+    speakNext();
+  }
+);
 
 // ===== SPEAK FUNCTION =====
 function speakNext() {
 
+  // ===== END =====
   if (index >= lines.length) {
 
-    // ✅ AUTO STOP RECORDING
-    if (typeof stopCanvasRecording === "function") {
+    // ✅ STOP AUDIO ENGINE
+    if (
+      typeof stopAudioEngine ===
+      "function"
+    ) {
+
+      stopAudioEngine();
+    }
+
+    // ✅ STOP RECORDING
+    if (
+      typeof stopCanvasRecording ===
+      "function"
+    ) {
 
       stopCanvasRecording();
     }
@@ -156,53 +253,98 @@ function speakNext() {
     return;
   }
 
-  const line = lines[index];
+  const line =
+    lines[index];
 
-  // 🎨 MULTICOLOR TEXT
-  const words = line.split(" ");
+  // ===== MULTICOLOR TEXT =====
+  const words =
+    line.split(" ");
 
-  const colored = words.map((w, i) => {
+  const colored =
+    words.map((w, i) => {
 
-    return `<span style="color:${colors[i % colors.length]}">${w}</span>`;
+      return `
+        <span
+        style="
+        color:${colors[
+          i % colors.length
+        ]}">
+        ${w}
+        </span>
+      `;
 
-  }).join(" ");
+    }).join(" ");
 
-  textBox.innerHTML = colored;
+  textBox.innerHTML =
+    colored;
 
+  // ===== CANCEL OLD =====
   speechSynthesis.cancel();
 
-  const speech = new SpeechSynthesisUtterance(line);
+  // ===== SPEECH =====
+  const speech =
+    new SpeechSynthesisUtterance(
+      line
+    );
 
-  let voices = speechSynthesis.getVoices();
+  let voices =
+    speechSynthesis.getVoices();
 
-  // ===== FILTER VOICES =====
-  let hindiVoices = voices.filter(v =>
-    v.lang.includes("hi")
-  );
+  // ===== FILTER =====
+  let hindiVoices =
+    voices.filter(v =>
+      v.lang.includes("hi")
+    );
 
-  if (hindiVoices.length === 0)
+  if (
+    hindiVoices.length === 0
+  ) {
+
     hindiVoices = voices;
+  }
 
   // ===== FEMALE =====
-  let femaleVoice = hindiVoices[0];
+  let femaleVoice =
+    hindiVoices[0];
 
-  // ===== EXTRA NATURAL MALE =====
-  let maleVoice = voices.find(v =>
+  // ===== MALE =====
+  let maleVoice =
+    voices.find(v =>
 
-    v.name.toLowerCase().includes("male") ||
-    v.name.toLowerCase().includes("david") ||
-    v.name.toLowerCase().includes("google uk english male") ||
-    v.name.toLowerCase().includes("microsoft ravi") ||
-    v.name.toLowerCase().includes("microsoft heera")
+      v.name
+        .toLowerCase()
+        .includes("male") ||
 
-  );
+      v.name
+        .toLowerCase()
+        .includes("david") ||
+
+      v.name
+        .toLowerCase()
+        .includes(
+          "google uk english male"
+        ) ||
+
+      v.name
+        .toLowerCase()
+        .includes(
+          "microsoft ravi"
+        ) ||
+
+      v.name
+        .toLowerCase()
+        .includes(
+          "microsoft heera"
+        )
+    );
 
   // ===== FALLBACK =====
   if (!maleVoice) {
 
-    maleVoice = voices.find(v =>
-      v.lang.includes("hi")
-    );
+    maleVoice =
+      voices.find(v =>
+        v.lang.includes("hi")
+      );
   }
 
   if (!maleVoice) {
@@ -214,24 +356,33 @@ function speakNext() {
 
   let selectedVoice;
 
-  // ===== APPLY =====
-  if (voiceMode === "female") {
+  // ===== FEMALE MODE =====
+  if (
+    voiceMode === "female"
+  ) {
 
-    selectedVoice = femaleVoice;
+    selectedVoice =
+      femaleVoice;
 
     speech.pitch = 1.12;
+
     speech.rate = 0.98;
+
     speech.volume = 1;
   }
 
-  // ===== EXTRA NATURAL HEAVY MALE =====
-  else if (voiceMode === "male") {
+  // ===== MALE MODE =====
+  else if (
+    voiceMode === "male"
+  ) {
 
-    selectedVoice = maleVoice;
+    selectedVoice =
+      maleVoice;
 
-    // 🔥 Heavy Human Male Feel
     speech.pitch = 0.72;
+
     speech.rate = 0.86;
+
     speech.volume = 1;
   }
 
@@ -243,7 +394,6 @@ function speakNext() {
         ? femaleVoice
         : maleVoice;
 
-    // Female / Male balanced switching
     speech.pitch =
       index % 2 === 0
         ? 1.12
@@ -258,8 +408,11 @@ function speakNext() {
   }
 
   // ===== APPLY VOICE =====
-  if (selectedVoice)
-    speech.voice = selectedVoice;
+  if (selectedVoice) {
+
+    speech.voice =
+      selectedVoice;
+  }
 
   speech.lang = "hi-IN";
 
@@ -268,9 +421,15 @@ function speakNext() {
 
     index++;
 
-    // ✅ SMOOTH NATURAL PAUSE
-    setTimeout(speakNext, 850);
+    // ✅ NATURAL PAUSE
+    setTimeout(
+      speakNext,
+      850
+    );
   };
 
-  speechSynthesis.speak(speech);
+  // ===== SPEAK =====
+  speechSynthesis.speak(
+    speech
+  );
 }
