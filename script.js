@@ -173,21 +173,23 @@ function speakNext() {
 
     selectedVoice = femaleVoice;
 
-    speech.pitch = 1.15;
-    speech.rate = 1;
+    speech.pitch = 1.12;
+    speech.rate = 0.98;
     speech.volume = 1;
   }
 
+  // ===== EXTRA NATURAL HEAVY MALE =====
   else if (voiceMode === "male") {
 
     selectedVoice = maleVoice;
 
-    // ✅ EXTRA NATURAL MALE SETTINGS
-    speech.pitch = 0.82;
-    speech.rate = 0.92;
+    // 🔥 Heavy Human Male Feel
+    speech.pitch = 0.72;
+    speech.rate = 0.86;
     speech.volume = 1;
   }
 
+  // ===== AUTO MODE =====
   else {
 
     selectedVoice =
@@ -195,24 +197,30 @@ function speakNext() {
         ? femaleVoice
         : maleVoice;
 
+    // Female / Male balanced switching
     speech.pitch =
       index % 2 === 0
-        ? 1.15
-        : 0.82;
+        ? 1.12
+        : 0.72;
 
-    speech.rate = 0.92;
+    speech.rate =
+      index % 2 === 0
+        ? 0.98
+        : 0.86;
+
     speech.volume = 1;
   }
 
+  // ===== APPLY VOICE =====
   if (selectedVoice)
     speech.voice = selectedVoice;
 
   speech.lang = "hi-IN";
 
+  // ===== NEXT LINE =====
   speech.onend = () => {
 
     index++;
-
     // ✅ SMOOTH NATURAL PAUSE
     setTimeout(speakNext, 850);
   };
