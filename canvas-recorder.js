@@ -1,62 +1,422 @@
-// ===== START RECORDING =====
-async function startCanvasRecording() {
+// ======================================================
+// CANVAS VIDEO + TTS AUDIO RECORDER
+// MOBILE + PC SUPPORT
+// ======================================================
 
-  try {
+// ===== CANVAS =====
+const canvas =
+  document.getElementById(
+    "reelCanvas"
+  );
 
-    // ===== GET SCREEN + AUDIO =====
-    screenStream =
-      await navigator.mediaDevices.getDisplayMedia({
-        video: true,
-        audio: {
-          echoCancellation: false,
-          noiseSuppression: false,
-          sampleRate: 44100
-        }
-      });
+const ctx =
+  canvas.getContext("2d");
 
-    // ===== CANVAS VIDEO =====
-    canvasStream = canvas.captureStream(30);
+// ===== SIZE =====
+canvas.width = 1080;
+canvas.height = 1920;
 
-    // ===== GET AUDIO TRACK =====
-    const screenAudioTracks =
-      screenStream.getAudioTracks();
+// ===== UI =====
+const textBox =
+  document.getElementById(
+    "textBox"
+  );
 
-    
-    // ===== AUDIO OPTIONAL =====
-if (screenAudioTracks.length) {
+const watermark =
+  document.getElementById(
+    "watermark"
+  );
 
-  screenAudioTracks.forEach(track => {
-    mergedStream.addTrack(track);
-  });
+const ttsAudio =
+  document.getElementById(
+    "ttsAudio"
+  );
 
-} else {
+// ===== IMAGE =====
+let img = new Image();
 
-  console.log(
-    "No system audio available on this device"
+img.crossOrigin =
+  "anonymous";
+
+// ===== RECORDING =====
+let mediaRecorder;
+let recordedChunks = [];
+
+let animationId;
+
+// ===== COLORS =====
+const canvasColors = [
+  "#ff4d4d",
+  "#ffd633",
+  "#66ff66",
+  "#66ccff",
+  "#ff66cc",
+  "#ffffff"
+];
+
+// ======================================================
+// LOAD IMAGE
+// ======================================================
+function loadImage(src) {
+
+  return new Promise(
+    (resolve, reject) => {
+
+      img.onload = resolve;
+
+      img.onerror = reject;
+
+      img.src = src;
+    }
   );
 }
 
-    // ===== CREATE FINAL STREAM =====
-    mergedStream = new MediaStream();
+// ======================================================
+// START ANIMATION
+// ======================================================
+function startCanvasAnimation() {
 
-    // ===== ADD CANVAS VIDEO =====
+  cancelAnimationFrame(
+    animationId
+  );
+
+  animateCanvas();
+}
+
+// ======================================================
+// ANIMATE
+// ======================================================
+function animateCanvas() {
+
+  // ===== CLEAR =====
+  ctx.clearRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+  // ===== BG =====
+  ctx.fillStyle = "black";
+
+  ctx.fillRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+  // ===== IMAGE =====
+  if (
+    img &&
+    img.complete
+  ) {
+
+    const zoom =
+      1 +
+      Math.sin(
+        Date.now() * 0.0015
+      ) * 0.02;
+
+    const imgWidth =
+      canvas.width * zoom;
+
+    const imgHeight =
+      canvas.height * zoom;
+
+    const x =
+      (canvas.width -
+        imgWidth) / 2;
+
+    const y =
+      (canvas.height -
+        imgHeight) / 2;
+
+    ctx.drawImage(
+      img,
+      x,
+      y,
+      imgWidth,
+      imgHeight
+    );
+  }
+
+  // ===== TEXT BOX =====
+  ctx.fillStyle =
+    "rgba(0,0,0,0.55)";
+
+  roundRect(
+    ctx,
+    60,
+    760,
+    960,
+    420,
+    28,
+    true
+  );
+
+  // ===== TEXT =====
+  ctx.font =
+    "bold 54px sans-serif";
+
+  ctx.textAlign =
+    "left";
+
+  drawColoredText(
+    textBox.value ||
+      textBox.innerText ||
+      "",
+    110,
+    860,
+    850,
+    82
+  );
+
+  // ===== WATERMARK =====
+  ctx.fillStyle =
+    "white";
+
+  ctx.font =
+    "italic bold 34px sans-serif";
+
+  ctx.textAlign =
+    "center";
+
+  ctx.fillText(
+    watermark.value ||
+      watermark.innerText ||
+      "",
+    canvas.width / 2,
+    1320
+  );
+
+  // ===== LOOP =====
+  animationId =
+    requestAnimationFrame(
+      animateCanvas
+    );
+}
+
+// ======================================================
+// DRAW TEXT
+// ======================================================
+function drawColoredText(
+  text,
+  startX,
+  startY,
+  maxWidth,
+  lineHeight
+) {
+
+  if (!text) return;
+
+  const words =
+    text.split(" ");
+
+  let x = startX;
+  let y = startY;
+
+  for (
+    let i = 0;
+    i < words.length;
+    i++
+  ) {
+
+    const word =
+      words[i];
+
+    const width =
+      ctx.measureText(
+        word + " "
+      ).width;
+
+    // ===== NEW LINE =====
+    if (
+      x + width >
+      startX + maxWidth
+    ) {
+
+      x = startX;
+
+      y += lineHeight;
+    }
+
+    // ===== COLOR =====
+    ctx.fillStyle =
+      canvasColors[
+        i %
+          canvasColors.length
+      ];
+
+    ctx.fillText(
+      word,
+      x,
+      y
+    );
+
+    x += width;
+  }
+}
+
+// ======================================================
+// ROUND RECT
+// ======================================================
+function roundRect(
+  ctx,
+  x,
+  y,
+  width,
+  height,
+  radius,
+  fill
+) {
+
+  ctx.beginPath();
+
+  ctx.moveTo(
+    x + radius,
+    y
+  );
+
+  ctx.lineTo(
+    x + width - radius,
+    y
+  );
+
+  ctx.quadraticCurveTo(
+    x + width,
+    y,
+    x + width,
+    y + radius
+  );
+
+  ctx.lineTo(
+    x + width,
+    y + height - radius
+  );
+
+  ctx.quadraticCurveTo(
+    x + width,
+    y + height,
+    x + width - radius,
+    y + height
+  );
+
+  ctx.lineTo(
+    x + radius,
+    y + height
+  );
+
+  ctx.quadraticCurveTo(
+    x,
+    y + height,
+    x,
+    y + height - radius
+  );
+
+  ctx.lineTo(
+    x,
+    y + radius
+  );
+
+  ctx.quadraticCurveTo(
+    x,
+    y,
+    x + radius,
+    y
+  );
+
+  ctx.closePath();
+
+  if (fill) {
+
+    ctx.fill();
+  }
+}
+
+// ======================================================
+// START RECORDING
+// ======================================================
+async function startCanvasRecording(
+  ttsAudioURL
+) {
+
+  try {
+
+    // ===== RESET =====
+    recordedChunks = [];
+
+    // ===== LOAD AUDIO =====
+    ttsAudio.src =
+      ttsAudioURL;
+
+    ttsAudio.crossOrigin =
+      "anonymous";
+
+    // ===== WAIT AUDIO =====
+    await ttsAudio.load();
+
+    // ===== START CANVAS =====
+    startCanvasAnimation();
+
+    // ===== CANVAS STREAM =====
+    const canvasStream =
+      canvas.captureStream(30);
+
+    // ===== AUDIO STREAM =====
+    let audioStream;
+
+    // ===== MOBILE SUPPORT =====
+    if (
+      ttsAudio.captureStream
+    ) {
+
+      audioStream =
+        ttsAudio.captureStream();
+
+    } else if (
+      ttsAudio.mozCaptureStream
+    ) {
+
+      audioStream =
+        ttsAudio.mozCaptureStream();
+
+    } else {
+
+      alert(
+        "Audio stream capture not supported"
+      );
+
+      return;
+    }
+
+    // ===== FINAL STREAM =====
+    const finalStream =
+      new MediaStream();
+
+    // ===== ADD VIDEO =====
     canvasStream
       .getVideoTracks()
       .forEach(track => {
-        mergedStream.addTrack(track);
+
+        finalStream.addTrack(
+          track
+        );
       });
 
     // ===== ADD AUDIO =====
-    screenAudioTracks
+    audioStream
+      .getAudioTracks()
       .forEach(track => {
-        mergedStream.addTrack(track);
+
+        finalStream.addTrack(
+          track
+        );
       });
 
-    // ===== RESET =====
-    canvasChunks = [];
-
-    // ===== BEST MIME =====
-    let mimeType = "";
+    // ===== MIME =====
+    let mimeType =
+      "video/webm";
 
     if (
       MediaRecorder.isTypeSupported(
@@ -75,64 +435,69 @@ if (screenAudioTracks.length) {
 
       mimeType =
         "video/webm;codecs=vp8,opus";
-
-    } else {
-
-      mimeType = "video/webm";
     }
 
     // ===== RECORDER =====
-    canvasRecorder =
+    mediaRecorder =
       new MediaRecorder(
-        mergedStream,
+        finalStream,
         {
           mimeType,
-          videoBitsPerSecond: 8000000,
-          audioBitsPerSecond: 128000
+          videoBitsPerSecond:
+            8000000,
+          audioBitsPerSecond:
+            128000
         }
       );
 
     // ===== DATA =====
-    canvasRecorder.ondataavailable =
-      (event) => {
+    mediaRecorder.ondataavailable =
+      event => {
 
         if (
           event.data &&
           event.data.size > 0
         ) {
 
-          canvasChunks.push(
+          recordedChunks.push(
             event.data
           );
         }
       };
 
     // ===== STOP =====
-    canvasRecorder.onstop =
+    mediaRecorder.onstop =
       () => {
 
-        // ===== CREATE VIDEO =====
+        // ===== BLOB =====
         const blob =
           new Blob(
-            canvasChunks,
+            recordedChunks,
             {
               type: mimeType
             }
           );
 
-        // ===== DOWNLOAD =====
+        // ===== URL =====
         const videoURL =
-          URL.createObjectURL(blob);
+          URL.createObjectURL(
+            blob
+          );
 
+        // ===== DOWNLOAD =====
         const a =
-          document.createElement("a");
+          document.createElement(
+            "a"
+          );
 
         a.href = videoURL;
 
         a.download =
-          "canvas-recording.webm";
+          "tts-video.webm";
 
-        document.body.appendChild(a);
+        document.body.appendChild(
+          a
+        );
 
         a.click();
 
@@ -145,12 +510,16 @@ if (screenAudioTracks.length) {
 
           a.remove();
 
-        }, 2000);
+        }, 3000);
+
+        console.log(
+          "Video Saved"
+        );
       };
 
     // ===== ERROR =====
-    canvasRecorder.onerror =
-      (e) => {
+    mediaRecorder.onerror =
+      e => {
 
         console.log(e);
 
@@ -160,60 +529,78 @@ if (screenAudioTracks.length) {
       };
 
     // ===== START =====
-    canvasRecorder.start(1000);
+    mediaRecorder.start(
+      1000
+    );
+
+    // ===== PLAY AUDIO =====
+    await ttsAudio.play();
 
     console.log(
       "Recording Started"
     );
+
+    // ===== AUTO STOP =====
+    ttsAudio.onended =
+      () => {
+
+        stopCanvasRecording();
+      };
 
   } catch (err) {
 
     console.log(err);
 
     alert(
-      "Permission denied or screen audio unavailable"
+      err.message
     );
   }
 }
 
-// ===== STOP =====
+// ======================================================
+// STOP RECORDING
+// ======================================================
 function stopCanvasRecording() {
 
   try {
 
     // ===== STOP RECORDER =====
     if (
-      canvasRecorder &&
-      canvasRecorder.state ===
+      mediaRecorder &&
+      mediaRecorder.state ===
         "recording"
     ) {
 
-      canvasRecorder.stop();
+      mediaRecorder.stop();
     }
 
-    // ===== STOP STREAMS =====
-    if (screenStream) {
+    // ===== STOP AUDIO =====
+    if (ttsAudio) {
 
-      screenStream
-        .getTracks()
-        .forEach(track => {
+      ttsAudio.pause();
 
-          track.stop();
-        });
+      ttsAudio.currentTime = 0;
     }
 
-    if (canvasStream) {
+    // ===== STOP ANIMATION =====
+    cancelAnimationFrame(
+      animationId
+    );
 
-      canvasStream
-        .getTracks()
-        .forEach(track => {
-
-          track.stop();
-        });
-    }
+    console.log(
+      "Recording Stopped"
+    );
 
   } catch (err) {
 
     console.log(err);
   }
 }
+
+// ======================================================
+// EXAMPLE
+// ======================================================
+
+// startCanvasRecording(
+//   "tts-audio.mp3"
+// );
