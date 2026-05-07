@@ -1,11 +1,24 @@
 <!DOCTYPE html>
 <html lang="hi">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Reel Creator Pro</title>
+
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+/>
+
+<title>
+  Reel Creator Pro
+</title>
 
 <style>
+
+/* =====================================
+   GLOBAL
+===================================== */
 
 *{
   margin:0;
@@ -14,227 +27,512 @@
 }
 
 body{
-  background:#000;
-  font-family:Arial,sans-serif;
+
+  background:black;
+
+  font-family:
+    Arial,
+    sans-serif;
+
   overflow:hidden;
+
   width:100vw;
   height:100vh;
 }
 
+/* =====================================
+   MAIN CONTAINER
+===================================== */
+
 .container{
+
   width:100%;
   height:100vh;
+
   position:relative;
+
   overflow:hidden;
 }
+
+/* =====================================
+   LEFT PANEL
+===================================== */
 
 .control-panel{
+
   position:absolute;
+
   top:0;
   left:0;
-  width:100%;
-  z-index:100;
-  padding:14px;
-  background:rgba(0,0,0,0.75);
-  backdrop-filter:blur(8px);
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-  max-height:55vh;
-  overflow:auto;
-}
 
-input,
-textarea,
-button{
-  border:none;
-  outline:none;
-}
+  width:380px;
 
-input,
-textarea{
-  width:100%;
-  border-radius:12px;
-  background:#111;
-  color:white;
-  padding:14px;
-  font-size:16px;
-}
-
-textarea{
-  min-height:160px;
-  resize:vertical;
-  line-height:1.6;
-}
-
-.button-row{
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
-}
-
-button{
-  padding:12px 18px;
-  border-radius:12px;
-  font-size:15px;
-  font-weight:bold;
-  cursor:pointer;
-  transition:0.25s;
-}
-
-button:hover{
-  transform:scale(1.03);
-}
-
-#playBtn{
-  background:#00cc66;
-  color:white;
-}
-
-#restartBtn{
-  background:#ffaa00;
-  color:black;
-}
-
-#downloadBtn{
-  background:#0066ff;
-  color:white;
-}
-
-.scene-btn{
-  background:#222;
-  color:white;
-}
-
-#nextPhotoBtn{
-  background:#cc00aa;
-  color:white;
-}
-
-#updateTextBtn{
-  background:#00aaff;
-  color:white;
-}
-
-.voice-controls{
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
-}
-
-.voice-controls button{
-  background:#222;
-  color:white;
-}
-
-#sceneCounter{
-  color:white;
-  font-size:16px;
-  font-weight:bold;
-  padding:10px;
-  background:rgba(255,255,255,0.08);
-  border-radius:10px;
-  width:max-content;
-}
-
-.preview{
-  position:absolute;
-  top:0;
-  left:0;
-  width:100%;
   height:100vh;
-  overflow:hidden;
-  background:black;
+
+  overflow-y:auto;
+
+  background:
+    rgba(0,0,0,0.82);
+
+  backdrop-filter:
+    blur(10px);
+
+  z-index:100;
+
+  padding:16px;
 }
 
-.preview img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
+/* =====================================
+   TITLE
+===================================== */
 
-.text-box{
-  position:absolute;
-  top:50%;
-  left:50%;
-  transform:translate(-50%, -50%);
-  width:88%;
-  max-height:75vh;
-  overflow:hidden;
-  padding:28px;
-  border-radius:22px;
-  background:rgba(0,0,0,0.58);
-  backdrop-filter:blur(8px);
-  text-align:center;
-  font-size:52px;
-  font-weight:bold;
-  line-height:1.7;
+.panel-title{
+
   color:white;
-  z-index:20;
-  word-break:break-word;
-  overflow-wrap:break-word;
-}
 
-.watermark{
-  position:absolute;
-  bottom:100px;
-  left:50%;
-  transform:translateX(-50%);
-  z-index:30;
-  padding:10px 20px;
-  border-radius:40px;
-  background:rgba(0,0,0,0.65);
-  color:rgba(255,255,255,0.95);
-  font-size:18px;
+  font-size:28px;
+
   font-weight:bold;
-  font-style:italic;
+
+  margin-bottom:18px;
+
+  text-align:center;
 }
 
-#reelCanvas{
+/* =====================================
+   WATERMARK
+===================================== */
+
+#userName{
+
+  width:100%;
+
+  padding:14px;
+
+  border:none;
+
+  border-radius:12px;
+
+  margin-bottom:18px;
+
+  background:#111;
+
+  color:white;
+
+  font-size:16px;
+}
+
+/* =====================================
+   SCENE LIST
+===================================== */
+
+#sceneContainer{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:18px;
+}
+
+/* =====================================
+   SCENE CARD
+===================================== */
+
+.scene-card{
+
+  background:
+    rgba(255,255,255,0.06);
+
+  border:
+    1px solid
+    rgba(255,255,255,0.08);
+
+  border-radius:18px;
+
+  padding:14px;
+}
+
+/* =====================================
+   SCENE TITLE
+===================================== */
+
+.scene-title{
+
+  color:white;
+
+  font-size:18px;
+
+  font-weight:bold;
+
+  margin-bottom:12px;
+}
+
+/* =====================================
+   IMAGE INPUT
+===================================== */
+
+.scene-image{
+
+  width:100%;
+
+  margin-bottom:12px;
+
+  color:white;
+}
+
+/* =====================================
+   IMAGE PREVIEW
+===================================== */
+
+.scene-preview{
+
+  width:100%;
+
+  height:180px;
+
+  object-fit:cover;
+
+  border-radius:14px;
+
+  margin-bottom:12px;
+
   display:none;
 }
 
-@media(max-width:768px){
+/* =====================================
+   TEXTAREA
+===================================== */
 
-  .text-box{
-    width:92%;
-    font-size:34px;
-    line-height:1.6;
-    padding:22px;
-  }
+.scene-text{
 
-  button{
-    width:100%;
-  }
+  width:100%;
+
+  min-height:150px;
+
+  resize:vertical;
+
+  border:none;
+
+  outline:none;
+
+  border-radius:14px;
+
+  padding:14px;
+
+  background:#111;
+
+  color:white;
+
+  font-size:16px;
+
+  line-height:1.7;
 }
 
-.hide-ui{
-  display:none !important;
+/* =====================================
+   REMOVE BUTTON
+===================================== */
+
+.remove-scene{
+
+  width:100%;
+
+  margin-top:12px;
+
+  padding:12px;
+
+  border:none;
+
+  border-radius:12px;
+
+  background:#ff4444;
+
+  color:white;
+
+  font-size:15px;
+
+  font-weight:bold;
+
+  cursor:pointer;
+}
+
+/* =====================================
+   CONTROL BUTTONS
+===================================== */
+
+.controls{
+
+  margin-top:20px;
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:12px;
+}
+
+.controls button{
+
+  padding:14px;
+
+  border:none;
+
+  border-radius:14px;
+
+  font-size:16px;
+
+  font-weight:bold;
+
+  cursor:pointer;
+}
+
+/* =====================================
+   ADD SCENE
+===================================== */
+
+#addSceneBtn{
+
+  background:#444;
+
+  color:white;
+}
+
+/* =====================================
+   PLAY
+===================================== */
+
+#playBtn{
+
+  background:#00cc66;
+
+  color:white;
+}
+
+/* =====================================
+   RESTART
+===================================== */
+
+#restartBtn{
+
+  background:#ffaa00;
+
+  color:black;
+}
+
+/* =====================================
+   DOWNLOAD
+===================================== */
+
+#downloadBtn{
+
+  background:#0066ff;
+
+  color:white;
+}
+
+/* =====================================
+   VOICE CONTROLS
+===================================== */
+
+.voice-controls{
+
+  display:flex;
+
+  flex-wrap:wrap;
+
+  gap:10px;
+
+  margin-top:10px;
+}
+
+.voice-controls button{
+
+  flex:1;
+
+  padding:12px;
+
+  border:none;
+
+  border-radius:12px;
+
+  background:#222;
+
+  color:white;
+
+  cursor:pointer;
+}
+
+/* =====================================
+   PREVIEW AREA
+===================================== */
+
+.preview{
+
+  position:absolute;
+
+  top:0;
+  left:380px;
+
+  width:calc(100% - 380px);
+
+  height:100vh;
+
+  overflow:hidden;
+
+  background:black;
+}
+
+/* =====================================
+   MAIN IMAGE
+===================================== */
+
+.preview img{
+
+  width:100%;
+  height:100%;
+
+  object-fit:cover;
+
+  display:none;
+}
+
+/* =====================================
+   TEXT BOX
+===================================== */
+
+.text-box{
+
+  position:absolute;
+
+  top:50%;
+  left:50%;
+
+  transform:
+    translate(-50%, -50%);
+
+  width:88%;
+
+  padding:28px;
+
+  border-radius:22px;
+
+  background:
+    rgba(0,0,0,0.58);
+
+  backdrop-filter:
+    blur(8px);
+
+  color:white;
+
+  font-size:52px;
+
+  font-weight:bold;
+
+  line-height:1.7;
+
+  text-align:center;
+
+  word-break:break-word;
+
+  overflow-wrap:break-word;
+
+  z-index:10;
+}
+
+/* =====================================
+   WATERMARK
+===================================== */
+
+.watermark{
+
+  position:absolute;
+
+  bottom:80px;
+
+  left:50%;
+
+  transform:
+    translateX(-50%);
+
+  padding:12px 22px;
+
+  border-radius:40px;
+
+  background:
+    rgba(0,0,0,0.62);
+
+  color:white;
+
+  font-size:18px;
+
+  font-style:italic;
+
+  font-weight:bold;
+
+  z-index:20;
+}
+
+/* =====================================
+   CANVAS
+===================================== */
+
+#reelCanvas{
+
+  display:none;
+}
+
+/* =====================================
+   MOBILE
+===================================== */
+
+@media(max-width:900px){
+
+  .control-panel{
+
+    width:100%;
+
+    height:50vh;
+  }
+
+  .preview{
+
+    top:50vh;
+
+    left:0;
+
+    width:100%;
+
+    height:50vh;
+  }
+
+  .text-box{
+
+    font-size:28px;
+  }
 }
 
 </style>
+
 </head>
+
 <body>
 
 <div class="container">
 
-  <div class="control-panel" id="controlPanel">
+  <!-- =================================
+       CONTROL PANEL
+  ================================== -->
 
-    <!-- IMAGE INPUT -->
+  <div
+    class="control-panel"
+    id="controlPanel"
+  >
 
-    <input
-      type="file"
-      id="fileInput"
-      accept="image/*"
-      multiple
-    />
+    <div class="panel-title">
 
-    <!-- TEXT -->
+      Reel Creator Pro
 
-    <textarea
-      id="textInput"
-      placeholder="हर Scene का टेक्स्ट यहाँ लिखें"
-    ></textarea>
+    </div>
 
     <!-- WATERMARK -->
 
@@ -244,255 +542,197 @@ button:hover{
       placeholder="Watermark Name"
     />
 
-    <!-- PHOTO CONTROLS -->
+    <!-- =================================
+         SCENES
+    ================================== -->
 
-    <div class="button-row">
+    <div id="sceneContainer">
 
-      <button id="prevPhotoBtn" class="scene-btn">
-        🖼 Previous Photo
-      </button>
+      <!-- SCENE 1 -->
 
-      <button id="nextPhotoBtn">
-        🖼 Next Photo
-      </button>
+      <div
+        class="scene-card"
+      >
 
-      <button id="updateTextBtn">
-        ✍ Update Text
-      </button>
+        <div class="scene-title">
+
+          Scene 1
+
+        </div>
+
+        <!-- PHOTO -->
+
+        <input
+          type="file"
+          accept="image/*"
+          class="scene-image"
+        />
+
+        <!-- PREVIEW -->
+
+        <img
+          class="scene-preview"
+        />
+
+        <!-- TEXT -->
+
+        <textarea
+          class="scene-text"
+          placeholder="Scene 1 का टेक्स्ट लिखें..."
+        ></textarea>
+
+        <!-- REMOVE -->
+
+        <button
+          class="remove-scene"
+        >
+
+          Remove Scene
+
+        </button>
+
+      </div>
 
     </div>
 
-    <!-- SCENE CONTROLS -->
+    <!-- =================================
+         CONTROLS
+    ================================== -->
 
-    <div class="button-row">
+    <div class="controls">
 
-      <button id="prevSceneBtn" class="scene-btn">
-        ⬅ Previous Scene
+      <!-- ADD SCENE -->
+
+      <button
+        id="addSceneBtn"
+      >
+
+        ➕ Add Next Photo
+
       </button>
 
-      <button id="nextSceneBtn" class="scene-btn">
-        Next Scene ➡
-      </button>
+      <!-- PLAY -->
 
-      <button id="addSceneBtn" class="scene-btn">
-        ➕ Add Scene
-      </button>
+      <button
+        id="playBtn"
+      >
 
-      <button id="deleteSceneBtn" class="scene-btn">
-        ❌ Delete Scene
-      </button>
-
-    </div>
-
-    <div id="sceneCounter">
-      Scene 1 / 1
-    </div>
-
-    <!-- MAIN BUTTONS -->
-
-    <div class="button-row">
-
-      <button id="playBtn">
         ▶ Play
+
       </button>
 
-      <button id="restartBtn">
+      <!-- RESTART -->
+
+      <button
+        id="restartBtn"
+      >
+
         ↻ Restart
+
       </button>
 
-      <button id="downloadBtn">
+      <!-- DOWNLOAD -->
+
+      <button
+        id="downloadBtn"
+      >
+
         ⬇ Download
+
       </button>
+
+      <!-- VOICE -->
+
+      <div
+        class="voice-controls"
+      >
+
+        <button
+          id="voiceToggle"
+        >
+
+          🎤 Voice
+
+        </button>
+
+        <button
+          onclick="setVoice('female')"
+        >
+
+          👩 Female
+
+        </button>
+
+        <button
+          onclick="setVoice('male')"
+        >
+
+          👨 Male
+
+        </button>
+
+        <button
+          onclick="setVoice('auto')"
+        >
+
+          🔀 Auto
+
+        </button>
+
+      </div>
 
     </div>
 
   </div>
 
-  <!-- PREVIEW -->
+  <!-- =================================
+       PREVIEW AREA
+  ================================== -->
 
-  <div class="preview" id="preview">
+  <div
+    class="preview"
+    id="preview"
+  >
 
-    <canvas id="reelCanvas"></canvas>
+    <!-- CANVAS -->
 
-    <img id="img" alt="preview" />
+    <canvas
+      id="reelCanvas"
+    ></canvas>
 
-    <div class="text-box" id="textBox"></div>
+    <!-- MAIN IMAGE -->
 
-    <div class="watermark" id="watermark"></div>
+    <img
+      id="img"
+      alt="preview"
+    />
+
+    <!-- TEXT -->
+
+    <div
+      class="text-box"
+      id="textBox"
+    ></div>
+
+    <!-- WATERMARK -->
+
+    <div
+      class="watermark"
+      id="watermark"
+    ></div>
 
   </div>
 
 </div>
 
-<script>
+<!-- =================================
+     SCRIPTS
+================================== -->
 
-const fileInput = document.getElementById('fileInput');
-const img = document.getElementById('img');
-const textInput = document.getElementById('textInput');
-const textBox = document.getElementById('textBox');
-const watermark = document.getElementById('watermark');
-const userName = document.getElementById('userName');
-const sceneCounter = document.getElementById('sceneCounter');
-
-const nextPhotoBtn = document.getElementById('nextPhotoBtn');
-const prevPhotoBtn = document.getElementById('prevPhotoBtn');
-const updateTextBtn = document.getElementById('updateTextBtn');
-
-let images = [];
-let currentImage = 0;
-
-// =========================
-// IMAGE LOAD
-// =========================
-
-fileInput.addEventListener('change', (e)=>{
-
-  images = Array.from(e.target.files);
-
-  if(images.length > 0){
-
-    currentImage = 0;
-
-    showImage(currentImage);
-
-    updateCounter();
-  }
-
-});
-
-// =========================
-// SHOW IMAGE
-// =========================
-
-function showImage(index){
-
-  const file = images[index];
-
-  if(!file) return;
-
-  const reader = new FileReader();
-
-  reader.onload = function(event){
-
-    img.src = event.target.result;
-  }
-
-  reader.readAsDataURL(file);
-}
-
-// =========================
-// NEXT PHOTO
-// =========================
-
-nextPhotoBtn.addEventListener('click', ()=>{
-
-  if(images.length === 0) return;
-
-  currentImage++;
-
-  if(currentImage >= images.length){
-    currentImage = 0;
-  }
-
-  showImage(currentImage);
-
-  updateCounter();
-
-});
-
-// =========================
-// PREVIOUS PHOTO
-// =========================
-
-prevPhotoBtn.addEventListener('click', ()=>{
-
-  if(images.length === 0) return;
-
-  currentImage--;
-
-  if(currentImage < 0){
-    currentImage = images.length - 1;
-  }
-
-  showImage(currentImage);
-
-  updateCounter();
-
-});
-
-// =========================
-// UPDATE TEXT BUTTON
-// =========================
-
-updateTextBtn.addEventListener('click', ()=>{
-
-  textBox.innerText = textInput.value;
-
-});
-
-// =========================
-// LIVE WATERMARK
-// =========================
-
-userName.addEventListener('input', ()=>{
-
-  watermark.innerText = userName.value;
-
-});
-
-// =========================
-// COUNTER
-// =========================
-
-function updateCounter(){
-
-  sceneCounter.innerText =
-    `Photo ${currentImage + 1} / ${images.length}`;
-}
-
-// =========================
-// PLAY BUTTON
-// =========================
-
-document.getElementById('playBtn')
-.addEventListener('click', ()=>{
-
-  alert('Preview Started');
-
-});
-
-// =========================
-// RESTART BUTTON
-// =========================
-
-document.getElementById('restartBtn')
-.addEventListener('click', ()=>{
-
-  currentImage = 0;
-
-  if(images.length > 0){
-    showImage(currentImage);
-  }
-
-  updateCounter();
-
-});
-
-// =========================
-// DOWNLOAD BUTTON
-// =========================
-
-document.getElementById('downloadBtn')
-.addEventListener('click', ()=>{
-
-  alert('Download Feature Ready');
-
-});
-
-</script>
-  
 <script src="canvas-recorder.js"></script>
 
 <script src="script.js"></script>
+
 </body>
+
 </html>
