@@ -73,8 +73,11 @@ fileInput.addEventListener(
 
     img.src = url;
 
-    img.style.display =
-      "block";
+    img.onload = () => {
+
+      img.style.display =
+        "block";
+    };
   }
 );
 
@@ -82,7 +85,7 @@ fileInput.addEventListener(
 function splitLines(text) {
 
   return text
-    .split(/\n|[।.!?]/)
+    .split(/\n|[।!?]/)
     .map(line => line.trim())
     .filter(
       line => line.length > 0
@@ -99,9 +102,18 @@ const colors = [
   "#ffffff"
 ];
 
-// ===== VOICE =====
+// ===== VOICE MODE =====
 let voiceMode =
   "female";
+
+// ===== FLAGS =====
+let lines = [];
+
+let index = 0;
+
+let speaking = false;
+
+let playing = false;
 
 // ===== MENU =====
 voiceToggle.onclick = () => {
@@ -113,6 +125,7 @@ voiceToggle.onclick = () => {
       : "none";
 };
 
+// ===== SET VOICE =====
 function setVoice(type) {
 
   voiceMode = type;
@@ -120,13 +133,6 @@ function setVoice(type) {
   voiceOptions.style.display =
     "none";
 }
-
-// ===== DATA =====
-let lines = [];
-
-let index = 0;
-
-let speaking = false;
 
 // ===== START RECORDING =====
 async function startRecording() {
@@ -136,7 +142,7 @@ async function startRecording() {
     "function"
   ) {
 
-    await startCanvasRecording();
+    startCanvasRecording();
   }
 }
 
@@ -144,6 +150,11 @@ async function startRecording() {
 playBtn.addEventListener(
   "click",
   async function () {
+
+    // ===== BLOCK DOUBLE PLAY =====
+    if (playing) return;
+
+    playing = true;
 
     const text =
       textInput.value.trim();
@@ -153,6 +164,20 @@ playBtn.addEventListener(
       alert(
         "पहले लेख लिखें"
       );
+
+      playing = false;
+
+      return;
+    }
+
+    // ===== IMAGE CHECK =====
+    if (!img.src) {
+
+      alert(
+        "पहले फोटो चुनें"
+      );
+
+      playing = false;
 
       return;
     }
@@ -205,7 +230,7 @@ playBtn.addEventListener(
 
       speakNext();
 
-    }, 1200);
+    }, 1000);
   }
 );
 
@@ -217,6 +242,8 @@ downloadBtn.addEventListener(
     speechSynthesis.cancel();
 
     speaking = false;
+
+    playing = false;
 
     if (
       typeof stopCanvasRecording ===
@@ -243,7 +270,7 @@ restartBtn.addEventListener(
 
       speakNext();
 
-    }, 500);
+    }, 600);
   }
 );
 
@@ -257,6 +284,9 @@ function speakNext() {
 
     speaking = false;
 
+    playing = false;
+
+    // ===== STOP RECORDER =====
     setTimeout(() => {
 
       if (
@@ -275,10 +305,11 @@ function speakNext() {
   const line =
     lines[index];
 
-  // ===== MULTI COLOR =====
+  // ===== WORDS =====
   const words =
     line.split(" ");
 
+  // ===== MULTICOLOR =====
   const colored =
     words.map((word, i) => {
 
@@ -290,7 +321,8 @@ function speakNext() {
           i %
           colors.length
         ]
-      }">
+      };
+      ">
       ${word}
       </span>
       `;
@@ -300,7 +332,7 @@ function speakNext() {
   textBox.innerHTML =
     colored;
 
-  // ===== CLEAR OLD =====
+  // ===== STOP OLD =====
   speechSynthesis.cancel();
 
   // ===== CREATE =====
@@ -309,19 +341,20 @@ function speakNext() {
       line
     );
 
-  // ===== LOAD VOICES =====
+  // ===== GET VOICES =====
   let voices =
     speechSynthesis.getVoices();
 
-  // ===== FALLBACK =====
+  // ===== WAIT VOICES =====
   if (
     voices.length === 0
   ) {
 
-    setTimeout(
-      speakNext,
-      500
-    );
+    setTimeout(() => {
+
+      speakNext();
+
+    }, 500);
 
     return;
   }
@@ -342,6 +375,12 @@ function speakNext() {
 
   // ===== FEMALE =====
   let femaleVoice =
+    hindiVoices.find(v =>
+
+      v.name
+        .toLowerCase()
+        .includes("female")
+    ) ||
     hindiVoices[0];
 
   // ===== MALE =====
@@ -368,7 +407,7 @@ function speakNext() {
       hindiVoices[0];
   }
 
-  // ===== APPLY =====
+  // ===== FEMALE =====
   if (
     voiceMode ===
     "female"
@@ -384,6 +423,7 @@ function speakNext() {
       0.96;
   }
 
+  // ===== MALE =====
   else if (
     voiceMode ===
     "male"
@@ -396,9 +436,10 @@ function speakNext() {
       0.72;
 
     speech.rate =
-      0.84;
+      0.86;
   }
 
+  // ===== AUTO =====
   else {
 
     speech.voice =
@@ -414,9 +455,10 @@ function speakNext() {
     speech.rate =
       index % 2 === 0
         ? 0.96
-        : 0.84;
+        : 0.86;
   }
 
+  // ===== LANGUAGE =====
   speech.lang =
     "hi-IN";
 
@@ -437,17 +479,16 @@ function speakNext() {
   };
 
   // ===== ERROR =====
-  speech.onerror =
-    function () {
+  speech.onerror = () => {
 
-      index++;
+    index++;
 
-      setTimeout(() => {
+    setTimeout(() => {
 
-        speakNext();
+      speakNext();
 
-      }, 700);
-    };
+    }, 700);
+  };
 
   // ===== SPEAK =====
   speechSynthesis.speak(
@@ -457,7 +498,7 @@ function speakNext() {
 
 // ===== LOAD VOICES =====
 speechSynthesis.onvoiceschanged =
-  () => {
+  function () {
 
     speechSynthesis.getVoices();
   };
