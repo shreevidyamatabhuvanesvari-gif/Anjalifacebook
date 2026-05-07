@@ -1,296 +1,584 @@
 <!DOCTYPE html>
 <html lang="hi">
+
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reel Creator</title>
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+/>
+
+<title>
+  Reel Creator Pro
+</title>
 
 <style>
-body {
-  margin: 0;
-  background: black;
-  font-family: sans-serif;
-  height: 100vh;
-  overflow: hidden;
+
+/* ===================================
+   GLOBAL
+=================================== */
+
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
 }
 
-/* FULL SCREEN CONTAINER */
-.container {
-  width: 100%;
-  height: 100vh;
+body{
+
+  background:black;
+
+  font-family:
+    Arial,
+    sans-serif;
+
+  overflow:hidden;
+
+  width:100vw;
+  height:100vh;
 }
 
-/* INPUTS */
+/* ===================================
+   APP CONTAINER
+=================================== */
+
+.container{
+
+  width:100%;
+  height:100vh;
+
+  position:relative;
+
+  overflow:hidden;
+}
+
+/* ===================================
+   TOP CONTROL PANEL
+=================================== */
+
+.control-panel{
+
+  position:absolute;
+
+  top:0;
+  left:0;
+
+  width:100%;
+
+  z-index:100;
+
+  padding:14px;
+
+  background:
+    rgba(0,0,0,0.72);
+
+  backdrop-filter:blur(8px);
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:10px;
+}
+
+/* ===================================
+   INPUTS
+=================================== */
+
 input,
-textarea {
-  width: 90%;
-  margin: 10px auto;
-  display: block;
-  padding: 10px;
-  font-size: 16px;
-  border-radius: 6px;
-  border: none;
-  box-sizing: border-box;
+textarea,
+button{
+
+  border:none;
+  outline:none;
 }
 
-/* TEXTAREA HEIGHT */
-textarea {
-  min-height: 120px;
-  resize: vertical;
+/* ===================================
+   MULTI IMAGE INPUT
+=================================== */
+
+#fileInput{
+
+  width:100%;
+
+  padding:12px;
+
+  background:#111;
+
+  color:white;
+
+  border-radius:10px;
+
+  font-size:16px;
 }
 
-/* PREVIEW AREA */
-.preview {
-  position: relative;
-  width: 100%;
-  height: 100vh;
-  background: black;
-  overflow: hidden;
+/* ===================================
+   TEXT INPUT
+=================================== */
+
+#textInput{
+
+  width:100%;
+
+  min-height:160px;
+
+  resize:vertical;
+
+  padding:14px;
+
+  border-radius:10px;
+
+  background:#111;
+
+  color:white;
+
+  font-size:18px;
+
+  line-height:1.6;
 }
 
-/* IMAGE */
-.preview img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: none;
+/* ===================================
+   WATERMARK INPUT
+=================================== */
+
+#userName{
+
+  width:100%;
+
+  padding:12px;
+
+  border-radius:10px;
+
+  background:#111;
+
+  color:white;
+
+  font-size:16px;
 }
 
-/* TEXT BOX */
-.text-box {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 92%;
-  max-height: 80vh;
+/* ===================================
+   BUTTON ROW
+=================================== */
 
-  padding: 22px;
+.button-row{
 
-  background: rgba(0,0,0,0.6);
+  display:flex;
 
-  color: white;
+  flex-wrap:wrap;
 
-  text-align: center;
-
-  font-size: 46px;
-  font-weight: bold;
-
-  line-height: 1.6;
-
-  border-radius: 12px;
-
-  z-index: 6;
-
-  overflow-wrap: break-word;
-  word-wrap: break-word;
-  word-break: break-word;
-
-  overflow-y: auto;
-
-  box-sizing: border-box;
+  gap:10px;
 }
 
-/* WATERMARK BELOW TEXT BOX */
-.watermark {
-  position: absolute;
-  top: calc(50% + 140px);
-  left: 50%;
-  transform: translateX(-50%);
+/* ===================================
+   BUTTONS
+=================================== */
 
-  z-index: 7;
+button{
 
-  padding: 8px 18px;
+  cursor:pointer;
 
-  background: rgba(0,0,0,0.55);
+  font-size:15px;
 
-  color: rgba(255,255,255,0.92);
+  font-weight:bold;
 
-  font-size: 16px;
-  font-weight: bold;
-  font-style: italic;
+  border-radius:10px;
 
-  border-radius: 25px;
+  padding:12px 16px;
 
-  border: 1px solid rgba(255,255,255,0.25);
-
-  letter-spacing: 1px;
-
-  text-shadow:
-    1px 1px 4px rgba(0,0,0,0.9);
-
-  box-shadow:
-    0 4px 10px rgba(0,0,0,0.35);
-
-  pointer-events: none;
-  user-select: none;
-
-  max-width: 80%;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  transition:0.25s;
 }
 
-/* PLAY BUTTON */
-.play-btn {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 26px;
-  padding: 14px 20px;
-  border: none;
-  border-radius: 50%;
-  background: white;
-  color: black;
-  cursor: pointer;
-  z-index: 10;
+button:hover{
+
+  transform:scale(1.03);
 }
 
-/* RESTART BUTTON */
-.restart-btn {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 8px;
-  background: rgba(255,255,255,0.9);
-  color: black;
-  cursor: pointer;
-  z-index: 10;
+/* ===================================
+   PLAY
+=================================== */
+
+#playBtn{
+
+  background:#00cc66;
+
+  color:white;
 }
 
-/* DOWNLOAD BUTTON */
-.download-btn {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 8px;
-  background: #00cc66;
-  color: white;
-  cursor: pointer;
-  z-index: 10;
-  font-weight: bold;
+/* ===================================
+   RESTART
+=================================== */
+
+#restartBtn{
+
+  background:#ffaa00;
+
+  color:black;
 }
 
-/* VOICE BUTTONS */
-.voice-controls {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 8;
+/* ===================================
+   DOWNLOAD
+=================================== */
+
+#downloadBtn{
+
+  background:#0066ff;
+
+  color:white;
 }
 
-.voice-controls button {
-  margin-right: 5px;
-  padding: 6px 10px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
+/* ===================================
+   VOICE CONTROLS
+=================================== */
+
+.voice-controls{
+
+  display:flex;
+
+  gap:10px;
+
+  flex-wrap:wrap;
 }
 
-/* HIDE INPUTS ON PLAY */
-.hide-ui {
-  display: none !important;
+.voice-controls button{
+
+  background:#222;
+
+  color:white;
 }
 
-/* CANVAS */
-#reelCanvas{
+/* ===================================
+   PREVIEW
+=================================== */
+
+.preview{
+
+  position:absolute;
+
+  top:0;
+  left:0;
+
+  width:100%;
+  height:100vh;
+
+  background:black;
+
+  overflow:hidden;
+}
+
+/* ===================================
+   MAIN IMAGE
+=================================== */
+
+.preview img{
+
+  width:100%;
+  height:100%;
+
+  object-fit:cover;
+
   display:none;
 }
+
+/* ===================================
+   TEXT AREA
+=================================== */
+
+.text-box{
+
+  position:absolute;
+
+  top:50%;
+  left:50%;
+
+  transform:
+    translate(-50%, -50%);
+
+  width:88%;
+
+  max-height:75vh;
+
+  overflow:hidden;
+
+  padding:28px;
+
+  border-radius:22px;
+
+  background:
+    rgba(0,0,0,0.58);
+
+  backdrop-filter:
+    blur(8px);
+
+  text-align:center;
+
+  font-size:52px;
+
+  font-weight:bold;
+
+  line-height:1.65;
+
+  color:white;
+
+  z-index:20;
+
+  word-break:break-word;
+
+  overflow-wrap:break-word;
+
+  box-shadow:
+    0 0 30px
+    rgba(0,0,0,0.45);
+}
+
+/* ===================================
+   WATERMARK
+=================================== */
+
+.watermark{
+
+  position:absolute;
+
+  bottom:110px;
+
+  left:50%;
+
+  transform:
+    translateX(-50%);
+
+  z-index:30;
+
+  padding:
+    10px 20px;
+
+  border-radius:50px;
+
+  background:
+    rgba(0,0,0,0.62);
+
+  color:
+    rgba(255,255,255,0.95);
+
+  font-size:18px;
+
+  font-style:italic;
+
+  font-weight:bold;
+
+  letter-spacing:1px;
+
+  border:
+    1px solid
+    rgba(255,255,255,0.2);
+
+  backdrop-filter:blur(5px);
+
+  max-width:80%;
+
+  overflow:hidden;
+
+  text-overflow:ellipsis;
+
+  white-space:nowrap;
+}
+
+/* ===================================
+   CANVAS
+=================================== */
+
+#reelCanvas{
+
+  display:none;
+}
+
+/* ===================================
+   MOBILE
+=================================== */
+
+@media(max-width:768px){
+
+  .text-box{
+
+    width:92%;
+
+    font-size:34px;
+
+    line-height:1.6;
+
+    padding:22px;
+  }
+
+  .watermark{
+
+    font-size:15px;
+  }
+
+  button{
+
+    width:100%;
+  }
+}
+
+/* ===================================
+   HIDE UI
+=================================== */
+
+.hide-ui{
+
+  display:none !important;
+}
+
 </style>
+
 </head>
 
 <body>
 
 <div class="container">
 
-<!-- IMAGE UPLOAD -->
-<input type="file" id="fileInput" accept="image/*">
+  <!-- =========================
+       CONTROL PANEL
+  ========================== -->
 
-<!-- TEXT INPUT -->
-<textarea id="textInput" placeholder="यहाँ अपना लेख लिखें..."></textarea>
+  <div
+    class="control-panel"
+    id="controlPanel"
+  >
 
-<!-- WATERMARK NAME INPUT -->
-<input type="text" id="userName" placeholder="Watermark Name">
+    <!-- MULTI IMAGE -->
+    <input
+      type="file"
+      id="fileInput"
+      accept="image/*"
+      multiple
+    />
 
-<!-- PREVIEW -->
-<div class="preview" id="preview">
+    <!-- MULTI TEXT -->
+    <textarea
+      id="textInput"
+      placeholder="
+फोटो और टेक्स्ट क्रम में लिखें।
 
-  <!-- CANVAS -->
-  <canvas id="reelCanvas"></canvas>
+उदाहरण:
 
-  <!-- IMAGE -->
-  <img id="img">
+[PHOTO 1]
+यह पहला लेख है।
 
-  <!-- TEXT -->
-  <div class="text-box" id="textBox"></div>
+[PHOTO 2]
+यह दूसरा लेख है।
+"
+    ></textarea>
 
-  <!-- WATERMARK BELOW TEXT -->
-  <div id="watermark" class="watermark"></div>
+    <!-- WATERMARK -->
+    <input
+      type="text"
+      id="userName"
+      placeholder="Watermark Name"
+    />
 
-  <!-- VOICE BUTTONS -->
-  <div class="voice-controls" id="voiceControls">
+    <!-- BUTTONS -->
+    <div class="button-row">
 
-    <button id="voiceToggle">🎤 Voice</button>
-
-    <div id="voiceOptions" style="display:none; margin-top:5px;">
-
-      <button onclick="setVoice('female')">
-        👩 Female
+      <button id="playBtn">
+        ▶ Play
       </button>
 
-      <button onclick="setVoice('male')">
-        👨 Male
+      <button id="restartBtn">
+        ↻ Restart
       </button>
 
-      <button onclick="setVoice('auto')">
-        Auto
+      <button id="downloadBtn">
+        ⬇ Download
       </button>
+
+    </div>
+
+    <!-- VOICE -->
+    <div
+      class="voice-controls"
+      id="voiceControls"
+    >
+
+      <button
+        id="voiceToggle"
+      >
+        🎤 Voice
+      </button>
+
+      <div
+        id="voiceOptions"
+        style="display:none;"
+      >
+
+        <button
+          onclick="setVoice('female')"
+        >
+          👩 Female
+        </button>
+
+        <button
+          onclick="setVoice('male')"
+        >
+          👨 Male
+        </button>
+
+        <button
+          onclick="setVoice('auto')"
+        >
+          🔀 Auto
+        </button>
+
+      </div>
 
     </div>
 
   </div>
 
-<!-- PLAY BUTTON -->
-  <button id="playBtn" class="play-btn">
-    ▶
-  </button>
+  <!-- =========================
+       PREVIEW
+  ========================== -->
 
-  <!-- RESTART BUTTON -->
-  <button id="restartBtn" class="restart-btn">
-    Restart
-  </button>
+  <div
+    class="preview"
+    id="preview"
+  >
 
-  <!-- DOWNLOAD BUTTON -->
-  <button id="downloadBtn" class="download-btn">
-    ⬇ Download
-  </button>
+    <!-- HIDDEN CANVAS -->
+    <canvas
+      id="reelCanvas"
+    ></canvas>
+
+    <!-- MAIN IMAGE -->
+    <img
+      id="img"
+      alt="preview"
+    />
+
+    <!-- TEXT -->
+    <div
+      class="text-box"
+      id="textBox"
+    ></div>
+
+    <!-- WATERMARK -->
+    <div
+      class="watermark"
+      id="watermark"
+    ></div>
+
+  </div>
 
 </div>
 
-</div>
+<!-- =========================
+     SCRIPTS
+========================== -->
 
-<script>
-document.getElementById("playBtn").addEventListener("click", function () {
-
-  document.getElementById("fileInput").classList.add("hide-ui");
-  document.getElementById("textInput").classList.add("hide-ui");
-  document.getElementById("userName").classList.add("hide-ui");
-  document.getElementById("voiceControls").classList.add("hide-ui");
-
-});
-</script>
-
-<!-- CANVAS RECORDER -->
 <script src="canvas-recorder.js"></script>
 
-<!-- MAIN SCRIPT -->
 <script src="script.js"></script>
 
 </body>
+
 </html>
