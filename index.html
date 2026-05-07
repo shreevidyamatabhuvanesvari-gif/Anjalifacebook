@@ -16,9 +16,9 @@
 
 <style>
 
-/* ===================================
+/* =========================
    GLOBAL
-=================================== */
+========================= */
 
 *{
   margin:0;
@@ -40,9 +40,9 @@ body{
   height:100vh;
 }
 
-/* ===================================
-   APP CONTAINER
-=================================== */
+/* =========================
+   MAIN
+========================= */
 
 .container{
 
@@ -54,9 +54,9 @@ body{
   overflow:hidden;
 }
 
-/* ===================================
-   TOP CONTROL PANEL
-=================================== */
+/* =========================
+   CONTROL PANEL
+========================= */
 
 .control-panel{
 
@@ -72,20 +72,21 @@ body{
   padding:14px;
 
   background:
-    rgba(0,0,0,0.72);
+    rgba(0,0,0,0.75);
 
-  backdrop-filter:blur(8px);
+  backdrop-filter:
+    blur(8px);
 
   display:flex;
 
   flex-direction:column;
 
-  gap:10px;
+  gap:12px;
 }
 
-/* ===================================
+/* =========================
    INPUTS
-=================================== */
+========================= */
 
 input,
 textarea,
@@ -95,72 +96,38 @@ button{
   outline:none;
 }
 
-/* ===================================
-   MULTI IMAGE INPUT
-=================================== */
-
-#fileInput{
+input,
+textarea{
 
   width:100%;
 
-  padding:12px;
+  border-radius:12px;
 
   background:#111;
 
   color:white;
 
-  border-radius:10px;
+  padding:14px;
 
   font-size:16px;
 }
 
-/* ===================================
-   TEXT INPUT
-=================================== */
+/* =========================
+   TEXTAREA
+========================= */
 
-#textInput{
+textarea{
 
-  width:100%;
-
-  min-height:160px;
+  min-height:180px;
 
   resize:vertical;
-
-  padding:14px;
-
-  border-radius:10px;
-
-  background:#111;
-
-  color:white;
-
-  font-size:18px;
 
   line-height:1.6;
 }
 
-/* ===================================
-   WATERMARK INPUT
-=================================== */
-
-#userName{
-
-  width:100%;
-
-  padding:12px;
-
-  border-radius:10px;
-
-  background:#111;
-
-  color:white;
-
-  font-size:16px;
-}
-
-/* ===================================
+/* =========================
    BUTTON ROW
-=================================== */
+========================= */
 
 .button-row{
 
@@ -171,21 +138,21 @@ button{
   gap:10px;
 }
 
-/* ===================================
+/* =========================
    BUTTONS
-=================================== */
+========================= */
 
 button{
 
-  cursor:pointer;
+  padding:12px 18px;
+
+  border-radius:12px;
 
   font-size:15px;
 
   font-weight:bold;
 
-  border-radius:10px;
-
-  padding:12px 16px;
+  cursor:pointer;
 
   transition:0.25s;
 }
@@ -195,9 +162,9 @@ button:hover{
   transform:scale(1.03);
 }
 
-/* ===================================
+/* =========================
    PLAY
-=================================== */
+========================= */
 
 #playBtn{
 
@@ -206,9 +173,9 @@ button:hover{
   color:white;
 }
 
-/* ===================================
+/* =========================
    RESTART
-=================================== */
+========================= */
 
 #restartBtn{
 
@@ -217,9 +184,9 @@ button:hover{
   color:black;
 }
 
-/* ===================================
+/* =========================
    DOWNLOAD
-=================================== */
+========================= */
 
 #downloadBtn{
 
@@ -228,17 +195,28 @@ button:hover{
   color:white;
 }
 
-/* ===================================
-   VOICE CONTROLS
-=================================== */
+/* =========================
+   SCENE BUTTONS
+========================= */
+
+.scene-btn{
+
+  background:#222;
+
+  color:white;
+}
+
+/* =========================
+   VOICE
+========================= */
 
 .voice-controls{
 
   display:flex;
 
-  gap:10px;
-
   flex-wrap:wrap;
+
+  gap:10px;
 }
 
 .voice-controls button{
@@ -248,9 +226,31 @@ button:hover{
   color:white;
 }
 
-/* ===================================
+/* =========================
+   SCENE INFO
+========================= */
+
+#sceneCounter{
+
+  color:white;
+
+  font-size:16px;
+
+  font-weight:bold;
+
+  padding:10px;
+
+  background:
+    rgba(255,255,255,0.08);
+
+  border-radius:10px;
+
+  width:max-content;
+}
+
+/* =========================
    PREVIEW
-=================================== */
+========================= */
 
 .preview{
 
@@ -262,14 +262,14 @@ button:hover{
   width:100%;
   height:100vh;
 
-  background:black;
-
   overflow:hidden;
+
+  background:black;
 }
 
-/* ===================================
-   MAIN IMAGE
-=================================== */
+/* =========================
+   IMAGE
+========================= */
 
 .preview img{
 
@@ -281,9 +281,9 @@ button:hover{
   display:none;
 }
 
-/* ===================================
-   TEXT AREA
-=================================== */
+/* =========================
+   TEXT BOX
+========================= */
 
 .text-box{
 
@@ -317,7 +317,7 @@ button:hover{
 
   font-weight:bold;
 
-  line-height:1.65;
+  line-height:1.7;
 
   color:white;
 
@@ -326,21 +326,17 @@ button:hover{
   word-break:break-word;
 
   overflow-wrap:break-word;
-
-  box-shadow:
-    0 0 30px
-    rgba(0,0,0,0.45);
 }
 
-/* ===================================
+/* =========================
    WATERMARK
-=================================== */
+========================= */
 
 .watermark{
 
   position:absolute;
 
-  bottom:110px;
+  bottom:100px;
 
   left:50%;
 
@@ -352,49 +348,33 @@ button:hover{
   padding:
     10px 20px;
 
-  border-radius:50px;
+  border-radius:40px;
 
   background:
-    rgba(0,0,0,0.62);
+    rgba(0,0,0,0.65);
 
   color:
     rgba(255,255,255,0.95);
 
   font-size:18px;
 
-  font-style:italic;
-
   font-weight:bold;
 
-  letter-spacing:1px;
-
-  border:
-    1px solid
-    rgba(255,255,255,0.2);
-
-  backdrop-filter:blur(5px);
-
-  max-width:80%;
-
-  overflow:hidden;
-
-  text-overflow:ellipsis;
-
-  white-space:nowrap;
+  font-style:italic;
 }
 
-/* ===================================
+/* =========================
    CANVAS
-=================================== */
+========================= */
 
 #reelCanvas{
 
   display:none;
 }
 
-/* ===================================
+/* =========================
    MOBILE
-=================================== */
+========================= */
 
 @media(max-width:768px){
 
@@ -409,20 +389,15 @@ button:hover{
     padding:22px;
   }
 
-  .watermark{
-
-    font-size:15px;
-  }
-
   button{
 
     width:100%;
   }
 }
 
-/* ===================================
+/* =========================
    HIDE UI
-=================================== */
+========================= */
 
 .hide-ui{
 
@@ -437,16 +412,17 @@ button:hover{
 
 <div class="container">
 
-  <!-- =========================
+  <!-- =====================
        CONTROL PANEL
-  ========================== -->
+  ====================== -->
 
   <div
     class="control-panel"
     id="controlPanel"
   >
 
-    <!-- MULTI IMAGE -->
+    <!-- IMAGE INPUT -->
+
     <input
       type="file"
       id="fileInput"
@@ -454,30 +430,79 @@ button:hover{
       multiple
     />
 
-    <!-- MULTI TEXT -->
+    <!-- TEXT -->
+
     <textarea
       id="textInput"
       placeholder="
-फोटो और टेक्स्ट क्रम में लिखें।
+Scene 1 का टेक्स्ट
 
-उदाहरण:
+----------------
 
-[PHOTO 1]
-यह पहला लेख है।
+Scene 2 का टेक्स्ट
 
-[PHOTO 2]
-यह दूसरा लेख है।
+----------------
+
+Scene 3 का टेक्स्ट
 "
     ></textarea>
 
     <!-- WATERMARK -->
+
     <input
       type="text"
       id="userName"
       placeholder="Watermark Name"
     />
 
-    <!-- BUTTONS -->
+    <!-- =====================
+         SCENE CONTROLS
+    ====================== -->
+
+    <div class="button-row">
+
+      <button
+        id="prevSceneBtn"
+        class="scene-btn"
+      >
+        ⬅ Previous
+      </button>
+
+      <button
+        id="nextSceneBtn"
+        class="scene-btn"
+      >
+        Next ➡
+      </button>
+
+      <button
+        id="addSceneBtn"
+        class="scene-btn"
+      >
+        ➕ Add Scene
+      </button>
+
+      <button
+        id="deleteSceneBtn"
+        class="scene-btn"
+      >
+        ❌ Delete Scene
+      </button>
+
+    </div>
+
+    <!-- SCENE COUNTER -->
+
+    <div id="sceneCounter">
+
+      Scene 1 / 1
+
+    </div>
+
+    <!-- =====================
+         MAIN BUTTONS
+    ====================== -->
+
     <div class="button-row">
 
       <button id="playBtn">
@@ -494,7 +519,10 @@ button:hover{
 
     </div>
 
-    <!-- VOICE -->
+    <!-- =====================
+         VOICE
+    ====================== -->
+
     <div
       class="voice-controls"
       id="voiceControls"
@@ -535,33 +563,37 @@ button:hover{
 
   </div>
 
-  <!-- =========================
+  <!-- =====================
        PREVIEW
-  ========================== -->
+  ====================== -->
 
   <div
     class="preview"
     id="preview"
   >
 
-    <!-- HIDDEN CANVAS -->
+    <!-- CANVAS -->
+
     <canvas
       id="reelCanvas"
     ></canvas>
 
-    <!-- MAIN IMAGE -->
+    <!-- IMAGE -->
+
     <img
       id="img"
       alt="preview"
     />
 
     <!-- TEXT -->
+
     <div
       class="text-box"
       id="textBox"
     ></div>
 
     <!-- WATERMARK -->
+
     <div
       class="watermark"
       id="watermark"
@@ -571,9 +603,9 @@ button:hover{
 
 </div>
 
-<!-- =========================
+<!-- =====================
      SCRIPTS
-========================== -->
+===================== -->
 
 <script src="canvas-recorder.js"></script>
 
