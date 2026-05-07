@@ -1,3 +1,7 @@
+// ======================================
+// DOM
+// ======================================
+
 const fileInput =
   document.getElementById(
     "fileInput"
@@ -53,46 +57,10 @@ const downloadBtn =
     "downloadBtn"
   );
 
-const reelCanvas =
-  document.getElementById(
-    "reelCanvas"
-  );
+// ======================================
+// COLORS
+// ======================================
 
-// ===== IMAGE LOAD =====
-fileInput.addEventListener(
-  "change",
-  function () {
-
-    const file =
-      fileInput.files[0];
-
-    if (!file) return;
-
-    const url =
-      URL.createObjectURL(file);
-
-    img.src = url;
-
-    img.onload = () => {
-
-      img.style.display =
-        "block";
-    };
-  }
-);
-
-// ===== SPLIT LINES =====
-function splitLines(text) {
-
-  return text
-    .split(/\n|[।!?]/)
-    .map(line => line.trim())
-    .filter(
-      line => line.length > 0
-    );
-}
-
-// ===== COLORS =====
 const colors = [
   "#ff4d4d",
   "#ffd633",
@@ -102,30 +70,91 @@ const colors = [
   "#ffffff"
 ];
 
-// ===== VOICE MODE =====
-let voiceMode =
-  "female";
+// ======================================
+// DATA
+// ======================================
 
-// ===== FLAGS =====
-let lines = [];
+let uploadedImages = [];
 
-let index = 0;
+let photoArticles = [];
 
-let speaking = false;
+let currentPhotoIndex = 0;
 
-let playing = false;
+let currentLineIndex = 0;
 
-// ===== MENU =====
+let currentLines = [];
+
+let voiceMode = "female";
+
+let isPlaying = false;
+
+let activeSpeech = null;
+
+// ======================================
+// IMAGE LOAD
+// ======================================
+
+fileInput.addEventListener(
+  "change",
+  function () {
+
+    uploadedImages = [];
+
+    const files =
+      Array.from(
+        fileInput.files
+      );
+
+    if (
+      files.length === 0
+    ) {
+
+      return;
+    }
+
+    files.forEach(file => {
+
+      const url =
+        URL.createObjectURL(
+          file
+        );
+
+      uploadedImages.push(
+        url
+      );
+    });
+
+    img.src =
+      uploadedImages[0];
+
+    img.onload = () => {
+
+      img.style.display =
+        "block";
+    };
+  }
+);
+
+// ======================================
+// VOICE MENU
+// ======================================
+
 voiceToggle.onclick = () => {
 
   voiceOptions.style.display =
+
     voiceOptions.style.display ===
     "none"
+
       ? "block"
+
       : "none";
 };
 
-// ===== SET VOICE =====
+// ======================================
+// SET VOICE
+// ======================================
+
 function setVoice(type) {
 
   voiceMode = type;
@@ -134,7 +163,43 @@ function setVoice(type) {
     "none";
 }
 
-// ===== START RECORDING =====
+// ======================================
+// SPLIT ARTICLES
+// ======================================
+
+function parsePhotoArticles(
+  text
+) {
+
+  return text
+    .split("===PHOTO===")
+    .map(item => item.trim())
+    .filter(
+      item => item.length > 0
+    );
+}
+
+// ======================================
+// SPLIT LINES
+// ======================================
+
+function splitLines(text) {
+
+  return text
+
+    .split(/\n|[।.!?]/)
+
+    .map(line => line.trim())
+
+    .filter(
+      line => line.length > 0
+    );
+}
+
+// ======================================
+// START RECORDING
+// ======================================
+
 async function startRecording() {
 
   if (
@@ -142,54 +207,97 @@ async function startRecording() {
     "function"
   ) {
 
-    startCanvasRecording();
+    await startCanvasRecording();
   }
 }
 
-// ===== PLAY =====
+// ======================================
+// PLAY
+// ======================================
+
 playBtn.addEventListener(
   "click",
+
   async function () {
 
-    // ===== BLOCK DOUBLE PLAY =====
-    if (playing) return;
-
-    playing = true;
-
-    const text =
-      textInput.value.trim();
-
-    if (!text) {
-
-      alert(
-        "पहले लेख लिखें"
-      );
-
-      playing = false;
-
+    if (isPlaying)
       return;
-    }
 
-    // ===== IMAGE CHECK =====
-    if (!img.src) {
+    // ==========================
+    // VALIDATION
+    // ==========================
+
+    if (
+      uploadedImages.length === 0
+    ) {
 
       alert(
         "पहले फोटो चुनें"
       );
 
-      playing = false;
+      return;
+    }
+
+    const fullText =
+      textInput.value.trim();
+
+    if (!fullText) {
+
+      alert(
+        "पहले लेख लिखें"
+      );
 
       return;
     }
 
-    // ===== WATERMARK =====
+    // ==========================
+    // PARSE ARTICLES
+    // ==========================
+
+    photoArticles =
+      parsePhotoArticles(
+        fullText
+      );
+
+    // ==========================
+    // MATCH CHECK
+    // ==========================
+
+    if (
+      photoArticles.length !==
+      uploadedImages.length
+    ) {
+
+      alert(
+        "जितनी फोटो हैं उतने ही ===PHOTO=== section रखें"
+      );
+
+      return;
+    }
+
+    // ==========================
+    // PLAY LOCK
+    // ==========================
+
+    isPlaying = true;
+
+    // ==========================
+    // WATERMARK
+    // ==========================
+
     watermark.innerText =
+
       userName.value
+
         ? "© " +
           userName.value
+
         : "";
 
-    // ===== HIDE UI =====
+    // ==========================
+    // HIDE UI
+    // ==========================
+
     fileInput.style.display =
       "none";
 
@@ -207,13 +315,18 @@ playBtn.addEventListener(
     ).style.display =
       "none";
 
-    // ===== SPLIT =====
-    lines =
-      splitLines(text);
+    // ==========================
+    // RESET
+    // ==========================
 
-    index = 0;
+    currentPhotoIndex = 0;
 
-    // ===== START CANVAS =====
+    currentLineIndex = 0;
+
+    // ==========================
+    // START CANVAS
+    // ==========================
+
     if (
       typeof startTalkingEffect ===
       "function"
@@ -222,99 +335,329 @@ playBtn.addEventListener(
       startTalkingEffect();
     }
 
-    // ===== START RECORDING =====
+    // ==========================
+    // START RECORDING
+    // ==========================
+
     await startRecording();
 
-    // ===== WAIT =====
+    // ==========================
+    // START FLOW
+    // ==========================
+
     setTimeout(() => {
 
-      speakNext();
+      loadCurrentPhoto();
 
     }, 1000);
   }
 );
 
-// ===== DOWNLOAD =====
-downloadBtn.addEventListener(
-  "click",
-  function () {
+// ======================================
+// LOAD CURRENT PHOTO
+// ======================================
 
-    speechSynthesis.cancel();
+function loadCurrentPhoto() {
 
-    speaking = false;
+  // ==========================
+  // END
+  // ==========================
 
-    playing = false;
-
-    if (
-      typeof stopCanvasRecording ===
-      "function"
-    ) {
-
-      stopCanvasRecording();
-    }
-  }
-);
-
-// ===== RESTART =====
-restartBtn.addEventListener(
-  "click",
-  function () {
-
-    speechSynthesis.cancel();
-
-    speaking = false;
-
-    index = 0;
-
-    setTimeout(() => {
-
-      speakNext();
-
-    }, 600);
-  }
-);
-
-// ===== SPEAK NEXT =====
-function speakNext() {
-
-  // ===== END =====
   if (
-    index >= lines.length
+    currentPhotoIndex >=
+    uploadedImages.length
   ) {
 
-    speaking = false;
-
-    playing = false;
-
-    // ===== STOP RECORDER =====
-    setTimeout(() => {
-
-      if (
-        typeof stopCanvasRecording ===
-        "function"
-      ) {
-
-        stopCanvasRecording();
-      }
-
-    }, 1500);
+    finishVideo();
 
     return;
   }
 
-  const line =
-    lines[index];
+  // ==========================
+  // IMAGE
+  // ==========================
 
-  // ===== WORDS =====
+  img.src =
+    uploadedImages[
+      currentPhotoIndex
+    ];
+
+  // ==========================
+  // ARTICLE
+  // ==========================
+
+  currentLines =
+    splitLines(
+      photoArticles[
+        currentPhotoIndex
+      ]
+    );
+
+  currentLineIndex = 0;
+
+  // ==========================
+  // START SPEECH
+  // ==========================
+
+  setTimeout(() => {
+
+    speakCurrentLine();
+
+  }, 1200);
+}
+
+// ======================================
+// SPEAK CURRENT LINE
+// ======================================
+
+function speakCurrentLine() {
+
+  // ==========================
+  // NEXT PHOTO
+  // ==========================
+
+  if (
+    currentLineIndex >=
+    currentLines.length
+  ) {
+
+    currentPhotoIndex++;
+
+    setTimeout(() => {
+
+      loadCurrentPhoto();
+
+    }, 1200);
+
+    return;
+  }
+
+  // ==========================
+  // LINE
+  // ==========================
+
+  const line =
+    currentLines[
+      currentLineIndex
+    ];
+
+  // ==========================
+  // MULTICOLOR
+  // ==========================
+
+  renderColoredText(line);
+
+  // ==========================
+  // CANCEL OLD
+  // ==========================
+
+  speechSynthesis.cancel();
+
+  // ==========================
+  // CREATE SPEECH
+  // ==========================
+
+  const speech =
+    new SpeechSynthesisUtterance(
+      line
+    );
+
+  activeSpeech = speech;
+
+  // ==========================
+  // VOICES
+  // ==========================
+
+  const voices =
+    speechSynthesis.getVoices();
+
+  let hindiVoices =
+    voices.filter(v =>
+
+      v.lang.includes("hi")
+    );
+
+  if (
+    hindiVoices.length === 0
+  ) {
+
+    hindiVoices = voices;
+  }
+
+  // ==========================
+  // FEMALE
+  // ==========================
+
+  const femaleVoice =
+
+    hindiVoices.find(v =>
+
+      v.name
+        .toLowerCase()
+        .includes("female")
+    )
+
+    ||
+
+    hindiVoices[0];
+
+  // ==========================
+  // MALE
+  // ==========================
+
+  let maleVoice =
+
+    voices.find(v =>
+
+      v.name
+        .toLowerCase()
+        .includes("male")
+
+      ||
+
+      v.name
+        .toLowerCase()
+        .includes("david")
+
+      ||
+
+      v.name
+        .toLowerCase()
+        .includes("ravi")
+    );
+
+  if (!maleVoice) {
+
+    maleVoice =
+
+      hindiVoices[1]
+
+      ||
+
+      hindiVoices[0];
+  }
+
+  // ==========================
+  // APPLY VOICE
+  // ==========================
+
+  if (
+    voiceMode ===
+    "female"
+  ) {
+
+    speech.voice =
+      femaleVoice;
+
+    speech.pitch = 1.05;
+
+    speech.rate = 0.92;
+  }
+
+  else if (
+    voiceMode ===
+    "male"
+  ) {
+
+    speech.voice =
+      maleVoice;
+
+    speech.pitch = 0.72;
+
+    speech.rate = 0.84;
+  }
+
+  else {
+
+    speech.voice =
+
+      currentLineIndex % 2 === 0
+
+        ? femaleVoice
+
+        : maleVoice;
+
+    speech.pitch =
+
+      currentLineIndex % 2 === 0
+
+        ? 1.05
+
+        : 0.72;
+
+    speech.rate =
+
+      currentLineIndex % 2 === 0
+
+        ? 0.92
+
+        : 0.84;
+  }
+
+  // ==========================
+  // LANG
+  // ==========================
+
+  speech.lang = "hi-IN";
+
+  speech.volume = 1;
+
+  // ==========================
+  // ON END
+  // ==========================
+
+  speech.onend = () => {
+
+    currentLineIndex++;
+
+    setTimeout(() => {
+
+      speakCurrentLine();
+
+    }, 700);
+  };
+
+  // ==========================
+  // ERROR
+  // ==========================
+
+  speech.onerror = () => {
+
+    currentLineIndex++;
+
+    setTimeout(() => {
+
+      speakCurrentLine();
+
+    }, 700);
+  };
+
+  // ==========================
+  // SPEAK
+  // ==========================
+
+  speechSynthesis.speak(
+    speech
+  );
+}
+
+// ======================================
+// RENDER MULTICOLOR TEXT
+// ======================================
+
+function renderColoredText(
+  line
+) {
+
   const words =
     line.split(" ");
 
-  // ===== MULTICOLOR =====
   const colored =
     words.map((word, i) => {
 
       return `
-      <span style="
+      <span
+      style="
       color:
       ${
         colors[
@@ -331,172 +674,83 @@ function speakNext() {
 
   textBox.innerHTML =
     colored;
-
-  // ===== STOP OLD =====
-  speechSynthesis.cancel();
-
-  // ===== CREATE =====
-  const speech =
-    new SpeechSynthesisUtterance(
-      line
-    );
-
-  // ===== GET VOICES =====
-  let voices =
-    speechSynthesis.getVoices();
-
-  // ===== WAIT VOICES =====
-  if (
-    voices.length === 0
-  ) {
-
-    setTimeout(() => {
-
-      speakNext();
-
-    }, 500);
-
-    return;
-  }
-
-  // ===== HINDI =====
-  let hindiVoices =
-    voices.filter(v =>
-
-      v.lang.includes("hi")
-    );
-
-  if (
-    hindiVoices.length === 0
-  ) {
-
-    hindiVoices = voices;
-  }
-
-  // ===== FEMALE =====
-  let femaleVoice =
-    hindiVoices.find(v =>
-
-      v.name
-        .toLowerCase()
-        .includes("female")
-    ) ||
-    hindiVoices[0];
-
-  // ===== MALE =====
-  let maleVoice =
-    voices.find(v =>
-
-      v.name
-        .toLowerCase()
-        .includes("male") ||
-
-      v.name
-        .toLowerCase()
-        .includes("david") ||
-
-      v.name
-        .toLowerCase()
-        .includes("ravi")
-    );
-
-  if (!maleVoice) {
-
-    maleVoice =
-      hindiVoices[1] ||
-      hindiVoices[0];
-  }
-
-  // ===== FEMALE =====
-  if (
-    voiceMode ===
-    "female"
-  ) {
-
-    speech.voice =
-      femaleVoice;
-
-    speech.pitch =
-      1.1;
-
-    speech.rate =
-      0.96;
-  }
-
-  // ===== MALE =====
-  else if (
-    voiceMode ===
-    "male"
-  ) {
-
-    speech.voice =
-      maleVoice;
-
-    speech.pitch =
-      0.72;
-
-    speech.rate =
-      0.86;
-  }
-
-  // ===== AUTO =====
-  else {
-
-    speech.voice =
-      index % 2 === 0
-        ? femaleVoice
-        : maleVoice;
-
-    speech.pitch =
-      index % 2 === 0
-        ? 1.1
-        : 0.72;
-
-    speech.rate =
-      index % 2 === 0
-        ? 0.96
-        : 0.86;
-  }
-
-  // ===== LANGUAGE =====
-  speech.lang =
-    "hi-IN";
-
-  speech.volume = 1;
-
-  speaking = true;
-
-  // ===== NEXT =====
-  speech.onend = () => {
-
-    index++;
-
-    setTimeout(() => {
-
-      speakNext();
-
-    }, 700);
-  };
-
-  // ===== ERROR =====
-  speech.onerror = () => {
-
-    index++;
-
-    setTimeout(() => {
-
-      speakNext();
-
-    }, 700);
-  };
-
-  // ===== SPEAK =====
-  speechSynthesis.speak(
-    speech
-  );
 }
 
-// ===== LOAD VOICES =====
+// ======================================
+// FINISH VIDEO
+// ======================================
+
+function finishVideo() {
+
+  speechSynthesis.cancel();
+
+  isPlaying = false;
+
+  setTimeout(() => {
+
+    if (
+      typeof stopCanvasRecording ===
+      "function"
+    ) {
+
+      stopCanvasRecording();
+    }
+
+  }, 1800);
+}
+
+// ======================================
+// DOWNLOAD BUTTON
+// ======================================
+
+downloadBtn.addEventListener(
+  "click",
+
+  function () {
+
+    speechSynthesis.cancel();
+
+    isPlaying = false;
+
+    if (
+      typeof stopCanvasRecording ===
+      "function"
+    ) {
+
+      stopCanvasRecording();
+    }
+  }
+);
+
+// ======================================
+// RESTART
+// ======================================
+
+restartBtn.addEventListener(
+  "click",
+
+  function () {
+
+    speechSynthesis.cancel();
+
+    isPlaying = false;
+
+    currentPhotoIndex = 0;
+
+    currentLineIndex = 0;
+
+    setTimeout(() => {
+
+      playBtn.click();
+
+    }, 800);
+  }
+);
+
+// ======================================
+// LOAD VOICES
+// ======================================
+
 speechSynthesis.onvoiceschanged =
   function () {
 
