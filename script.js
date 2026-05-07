@@ -33,7 +33,6 @@ const voiceOptions =
     "voiceOptions"
   );
 
-// ✅ NEW
 const restartBtn =
   document.getElementById(
     "restartBtn"
@@ -49,25 +48,15 @@ const userName =
     "userName"
   );
 
-// ✅ DOWNLOAD
 const downloadBtn =
   document.getElementById(
     "downloadBtn"
   );
 
-const preview =
-  document.getElementById(
-    "preview"
-  );
-
-// ✅ CANVAS
 const reelCanvas =
   document.getElementById(
     "reelCanvas"
   );
-
-let mediaRecorder;
-let recordedChunks = [];
 
 // ===== IMAGE LOAD =====
 fileInput.addEventListener(
@@ -89,14 +78,14 @@ fileInput.addEventListener(
   }
 );
 
-// ===== TEXT SPLIT =====
+// ===== SPLIT LINES =====
 function splitLines(text) {
 
   return text
     .split(/\n|[।.!?]/)
-    .map(l => l.trim())
+    .map(line => line.trim())
     .filter(
-      l => l.length > 0
+      line => line.length > 0
     );
 }
 
@@ -110,8 +99,9 @@ const colors = [
   "#ffffff"
 ];
 
-// ===== VOICE MODE =====
-let voiceMode = "female";
+// ===== VOICE =====
+let voiceMode =
+  "female";
 
 // ===== MENU =====
 voiceToggle.onclick = () => {
@@ -131,38 +121,22 @@ function setVoice(type) {
     "none";
 }
 
-// ===== MAIN =====
+// ===== DATA =====
 let lines = [];
+
 let index = 0;
+
+let speaking = false;
 
 // ===== START RECORDING =====
 async function startRecording() {
 
-  // ✅ START AUDIO ENGINE
-  if (
-    typeof startAudioEngine ===
-    "function"
-  ) {
-
-    startAudioEngine();
-  }
-
-  // ✅ START TTS AUDIO
-  if (
-    typeof startTTSAudio ===
-    "function"
-  ) {
-
-    startTTSAudio();
-  }
-
-  // ✅ START CANVAS
   if (
     typeof startCanvasRecording ===
     "function"
   ) {
 
-    startCanvasRecording();
+    await startCanvasRecording();
   }
 }
 
@@ -197,6 +171,9 @@ playBtn.addEventListener(
     textInput.style.display =
       "none";
 
+    userName.style.display =
+      "none";
+
     playBtn.style.display =
       "none";
 
@@ -206,11 +183,12 @@ playBtn.addEventListener(
       "none";
 
     // ===== SPLIT =====
-    lines = splitLines(text);
+    lines =
+      splitLines(text);
 
     index = 0;
 
-    // ===== TALKING EFFECT =====
+    // ===== START CANVAS =====
     if (
       typeof startTalkingEffect ===
       "function"
@@ -219,11 +197,15 @@ playBtn.addEventListener(
       startTalkingEffect();
     }
 
-    // ===== RECORDING =====
+    // ===== START RECORDING =====
     await startRecording();
 
-    // ===== SPEECH =====
-    speakNext();
+    // ===== WAIT =====
+    setTimeout(() => {
+
+      speakNext();
+
+    }, 1200);
   }
 );
 
@@ -232,25 +214,10 @@ downloadBtn.addEventListener(
   "click",
   function () {
 
-    // ===== STOP AUDIO ENGINE =====
-    if (
-      typeof stopAudioEngine ===
-      "function"
-    ) {
+    speechSynthesis.cancel();
 
-      stopAudioEngine();
-    }
+    speaking = false;
 
-    // ===== STOP TTS =====
-    if (
-      typeof stopTTSAudio ===
-      "function"
-    ) {
-
-      stopTTSAudio();
-    }
-
-    // ===== STOP RECORDER =====
     if (
       typeof stopCanvasRecording ===
       "function"
@@ -266,50 +233,21 @@ restartBtn.addEventListener(
   "click",
   function () {
 
-    // ===== STOP SPEECH =====
     speechSynthesis.cancel();
+
+    speaking = false;
 
     index = 0;
 
-    // ===== RESET AUDIO =====
-    if (
-      typeof stopAudioEngine ===
-      "function"
-    ) {
+    setTimeout(() => {
 
-      stopAudioEngine();
-    }
+      speakNext();
 
-    if (
-      typeof stopTTSAudio ===
-      "function"
-    ) {
-
-      stopTTSAudio();
-    }
-
-    // ===== START AGAIN =====
-    if (
-      typeof startAudioEngine ===
-      "function"
-    ) {
-
-      startAudioEngine();
-    }
-
-    if (
-      typeof startTTSAudio ===
-      "function"
-    ) {
-
-      startTTSAudio();
-    }
-
-    speakNext();
+    }, 500);
   }
 );
 
-// ===== SPEAK =====
+// ===== SPEAK NEXT =====
 function speakNext() {
 
   // ===== END =====
@@ -317,32 +255,19 @@ function speakNext() {
     index >= lines.length
   ) {
 
-    // ===== STOP AUDIO =====
-    if (
-      typeof stopAudioEngine ===
-      "function"
-    ) {
+    speaking = false;
 
-      stopAudioEngine();
-    }
+    setTimeout(() => {
 
-    // ===== STOP TTS =====
-    if (
-      typeof stopTTSAudio ===
-      "function"
-    ) {
+      if (
+        typeof stopCanvasRecording ===
+        "function"
+      ) {
 
-      stopTTSAudio();
-    }
+        stopCanvasRecording();
+      }
 
-    // ===== STOP RECORDING =====
-    if (
-      typeof stopCanvasRecording ===
-      "function"
-    ) {
-
-      stopCanvasRecording();
-    }
+    }, 1500);
 
     return;
   }
@@ -350,25 +275,24 @@ function speakNext() {
   const line =
     lines[index];
 
-  // ===== COLORFUL TEXT =====
+  // ===== MULTI COLOR =====
   const words =
     line.split(" ");
 
   const colored =
-    words.map((w, i) => {
+    words.map((word, i) => {
 
       return `
-        <span
-        style="
-        color:
-        ${
-          colors[
-            i %
-            colors.length
-          ]
-        }">
-        ${w}
-        </span>
+      <span style="
+      color:
+      ${
+        colors[
+          i %
+          colors.length
+        ]
+      }">
+      ${word}
+      </span>
       `;
 
     }).join(" ");
@@ -376,21 +300,36 @@ function speakNext() {
   textBox.innerHTML =
     colored;
 
-  // ===== CANCEL OLD =====
+  // ===== CLEAR OLD =====
   speechSynthesis.cancel();
 
-  // ===== SPEECH =====
+  // ===== CREATE =====
   const speech =
     new SpeechSynthesisUtterance(
       line
     );
 
+  // ===== LOAD VOICES =====
   let voices =
     speechSynthesis.getVoices();
 
-  // ===== FILTER =====
+  // ===== FALLBACK =====
+  if (
+    voices.length === 0
+  ) {
+
+    setTimeout(
+      speakNext,
+      500
+    );
+
+    return;
+  }
+
+  // ===== HINDI =====
   let hindiVoices =
     voices.filter(v =>
+
       v.lang.includes("hi")
     );
 
@@ -419,31 +358,8 @@ function speakNext() {
 
       v.name
         .toLowerCase()
-        .includes(
-          "google uk english male"
-        ) ||
-
-      v.name
-        .toLowerCase()
-        .includes(
-          "microsoft ravi"
-        ) ||
-
-      v.name
-        .toLowerCase()
-        .includes(
-          "microsoft heera"
-        )
+        .includes("ravi")
     );
-
-  // ===== FALLBACK =====
-  if (!maleVoice) {
-
-    maleVoice =
-      voices.find(v =>
-        v.lang.includes("hi")
-      );
-  }
 
   if (!maleVoice) {
 
@@ -452,90 +368,96 @@ function speakNext() {
       hindiVoices[0];
   }
 
-  let selectedVoice;
-
-  // ===== FEMALE =====
+  // ===== APPLY =====
   if (
     voiceMode ===
     "female"
   ) {
 
-    selectedVoice =
+    speech.voice =
       femaleVoice;
 
     speech.pitch =
-      1.12;
+      1.1;
 
     speech.rate =
-      0.98;
-
-    speech.volume =
-      1;
+      0.96;
   }
 
-  // ===== MALE =====
   else if (
-    voiceMode === "male"
+    voiceMode ===
+    "male"
   ) {
 
-    selectedVoice =
+    speech.voice =
       maleVoice;
 
     speech.pitch =
       0.72;
 
     speech.rate =
-      0.86;
-
-    speech.volume =
-      1;
+      0.84;
   }
 
-  // ===== AUTO =====
   else {
 
-    selectedVoice =
+    speech.voice =
       index % 2 === 0
         ? femaleVoice
         : maleVoice;
 
     speech.pitch =
       index % 2 === 0
-        ? 1.12
+        ? 1.1
         : 0.72;
 
     speech.rate =
       index % 2 === 0
-        ? 0.98
-        : 0.86;
-
-    speech.volume =
-      1;
-  }
-
-  // ===== APPLY =====
-  if (selectedVoice) {
-
-    speech.voice =
-      selectedVoice;
+        ? 0.96
+        : 0.84;
   }
 
   speech.lang =
     "hi-IN";
+
+  speech.volume = 1;
+
+  speaking = true;
 
   // ===== NEXT =====
   speech.onend = () => {
 
     index++;
 
-    setTimeout(
-      speakNext,
-      850
-    );
+    setTimeout(() => {
+
+      speakNext();
+
+    }, 700);
   };
+
+  // ===== ERROR =====
+  speech.onerror =
+    function () {
+
+      index++;
+
+      setTimeout(() => {
+
+        speakNext();
+
+      }, 700);
+    };
 
   // ===== SPEAK =====
   speechSynthesis.speak(
     speech
   );
 }
+
+// ===== LOAD VOICES =====
+speechSynthesis.onvoiceschanged =
+  () => {
+
+    speechSynthesis.getVoices();
+  };
