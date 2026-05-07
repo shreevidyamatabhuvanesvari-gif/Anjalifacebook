@@ -202,11 +202,6 @@ textarea {
 #reelCanvas{
   display:none;
 }
-
-/* HIDDEN AUDIO */
-#ttsAudio{
-  display:none;
-}
 </style>
 </head>
 
@@ -238,12 +233,6 @@ textarea {
   <!-- WATERMARK BELOW TEXT -->
   <div id="watermark" class="watermark"></div>
 
-  <!-- IMPORTANT AUDIO TAG -->
-  <audio
-    id="ttsAudio"
-    crossorigin="anonymous"
-  ></audio>
-
   <!-- VOICE BUTTONS -->
   <div class="voice-controls" id="voiceControls">
 
@@ -267,7 +256,7 @@ textarea {
 
   </div>
 
-  <!-- PLAY BUTTON -->
+<!-- PLAY BUTTON -->
   <button id="playBtn" class="play-btn">
     ▶
   </button>
@@ -287,110 +276,14 @@ textarea {
 </div>
 
 <script>
+document.getElementById("playBtn").addEventListener("click", function () {
 
-// ======================================================
-// EXISTING UI HIDE
-// ======================================================
+  document.getElementById("fileInput").classList.add("hide-ui");
+  document.getElementById("textInput").classList.add("hide-ui");
+  document.getElementById("userName").classList.add("hide-ui");
+  document.getElementById("voiceControls").classList.add("hide-ui");
 
-document
-.getElementById("playBtn")
-.addEventListener(
-  "click",
-  function () {
-
-    document
-    .getElementById("fileInput")
-    .classList.add("hide-ui");
-
-    document
-    .getElementById("textInput")
-    .classList.add("hide-ui");
-
-    document
-    .getElementById("userName")
-    .classList.add("hide-ui");
-
-    document
-    .getElementById("voiceControls")
-    .classList.add("hide-ui");
-
-  }
-);
-
-// ======================================================
-// LIVE PREVIEW TEXT
-// ======================================================
-
-document
-.getElementById("textInput")
-.addEventListener(
-  "input",
-  function () {
-
-    document
-    .getElementById("textBox")
-    .innerText =
-      this.value;
-
-  }
-);
-
-// ======================================================
-// LIVE WATERMARK
-// ======================================================
-
-document
-.getElementById("userName")
-.addEventListener(
-  "input",
-  function () {
-
-    document
-    .getElementById("watermark")
-    .innerText =
-      this.value;
-
-  }
-);
-
-// ======================================================
-// IMAGE LOAD FIX
-// ======================================================
-
-document
-.getElementById("fileInput")
-.addEventListener(
-  "change",
-  function (e) {
-
-    const file =
-      e.target.files[0];
-
-    if (!file) return;
-
-    const reader =
-      new FileReader();
-
-    reader.onload =
-      function (event) {
-
-        const img =
-          document.getElementById(
-            "img"
-          );
-
-        img.src =
-          event.target.result;
-
-        img.style.display =
-          "block";
-      };
-
-    reader.readAsDataURL(file);
-
-  }
-);
-
+});
 </script>
 
 <!-- AUDIO ENGINE -->
