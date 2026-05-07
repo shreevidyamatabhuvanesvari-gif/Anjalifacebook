@@ -1,4 +1,4 @@
-// ===== ADVANCED AUDIO ENGINE =====
+// ===== CLEAN AUDIO ENGINE =====
 
 // ✅ GLOBAL AUDIO
 let reelAudioContext;
@@ -6,48 +6,37 @@ let reelDestination;
 
 let masterGain;
 
-let bassOscillator;
-let formantOscillator;
-let airOscillator;
-
-let bassGain;
-let formantGain;
-let airGain;
-let noiseGain;
-
-let voiceLFO;
-let voiceLFOGain;
-
-let modulationInterval;
+let silentOscillator;
+let silentGain;
 
 let audioStarted = false;
 
-// ===== INIT AUDIO ENGINE =====
+// ===== INIT AUDIO =====
 function initAudioEngine() {
 
   if (audioStarted) return;
 
-  // ✅ AUDIO CONTEXT
+  // ===== AUDIO CONTEXT =====
   reelAudioContext =
     new (
       window.AudioContext ||
       window.webkitAudioContext
     )();
 
-  // ✅ DESTINATION STREAM
+  // ===== DESTINATION =====
   reelDestination =
     reelAudioContext
       .createMediaStreamDestination();
 
-  // ✅ MASTER GAIN
+  // ===== MASTER GAIN =====
   masterGain =
     reelAudioContext
       .createGain();
 
-  // 🔥 CLEANER MASTER OUTPUT
-  masterGain.gain.value = 0.82;
+  masterGain.gain.value =
+    1;
 
-  // ✅ CONNECT
+  // ===== CONNECT =====
   masterGain.connect(
     reelDestination
   );
@@ -55,247 +44,52 @@ function initAudioEngine() {
   audioStarted = true;
 }
 
-// ===== CREATE ADVANCED HUMAN MALE TONE =====
-function createHumanMaleTone() {
+// ===== CREATE CLEAN AUDIO TRACK =====
+function createSilentAudioTrack() {
 
-  // ===== MAIN BASS =====
-  bassOscillator =
+  // ===== SILENT OSCILLATOR =====
+  silentOscillator =
     reelAudioContext
       .createOscillator();
 
-  bassOscillator.type =
-    "sawtooth";
-
-  // 🔥 DEEPER MALE
-  bassOscillator.frequency.value =
-    96;
-
-  // ===== FORMANT =====
-  formantOscillator =
-    reelAudioContext
-      .createOscillator();
-
-  formantOscillator.type =
-    "triangle";
-
-  formantOscillator.frequency.value =
-    190;
-
-  // ===== AIR LAYER =====
-  airOscillator =
-    reelAudioContext
-      .createOscillator();
-
-  airOscillator.type =
+  // ===== CLEAN SINE =====
+  silentOscillator.type =
     "sine";
 
-  airOscillator.frequency.value =
-    320;
+  // ===== SAFE FREQUENCY =====
+  silentOscillator.frequency.value =
+    440;
 
-  // ===== BASS GAIN =====
-  bassGain =
+  // ===== SILENT GAIN =====
+  silentGain =
     reelAudioContext
       .createGain();
 
-  bassGain.gain.value =
-    0.075;
+  // 🔥 VERY LOW
+  silentGain.gain.value =
+    0.0001;
 
-  // ===== FORMANT GAIN =====
-  formantGain =
-    reelAudioContext
-      .createGain();
-
-  formantGain.gain.value =
-    0.04;
-
-  // ===== AIR GAIN =====
-  airGain =
-    reelAudioContext
-      .createGain();
-
-  airGain.gain.value =
-    0.012;
-
-  // ===== WHITE NOISE =====
-  const bufferSize =
-    reelAudioContext.sampleRate * 2;
-
-  const noiseBuffer =
-    reelAudioContext
-      .createBuffer(
-        1,
-        bufferSize,
-        reelAudioContext.sampleRate
-      );
-
-  const output =
-    noiseBuffer.getChannelData(0);
-
-  for (
-    let i = 0;
-    i < bufferSize;
-    i++
-  ) {
-
-    output[i] =
-      (Math.random() * 2 - 1) * 0.022;
-  }
-
-  const whiteNoise =
-    reelAudioContext
-      .createBufferSource();
-
-  whiteNoise.buffer =
-    noiseBuffer;
-
-  whiteNoise.loop = true;
-
-  // ===== FILTER =====
-  const noiseFilter =
-    reelAudioContext
-      .createBiquadFilter();
-
-  noiseFilter.type =
-    "lowpass";
-
-  noiseFilter.frequency.value =
-    1200;
-
-  // ===== NOISE GAIN =====
-  noiseGain =
-    reelAudioContext
-      .createGain();
-
-  noiseGain.gain.value =
-    0.010;
-
-  // ===== VOICE LFO =====
-  voiceLFO =
-    reelAudioContext
-      .createOscillator();
-
-  voiceLFO.type =
-    "sine";
-
-  voiceLFO.frequency.value =
-    4.2;
-
-  voiceLFOGain =
-    reelAudioContext
-      .createGain();
-
-  // 🔥 NATURAL THROAT MOVEMENT
-  voiceLFOGain.gain.value =
-    3.5;
-
-  // ===== CONNECT LFO =====
-  voiceLFO.connect(
-    voiceLFOGain
+  // ===== CONNECT =====
+  silentOscillator.connect(
+    silentGain
   );
 
-  voiceLFOGain.connect(
-    bassOscillator.frequency
-  );
-
-  // ===== CONNECT AUDIO =====
-  bassOscillator.connect(
-    bassGain
-  );
-
-  formantOscillator.connect(
-    formantGain
-  );
-
-  airOscillator.connect(
-    airGain
-  );
-
-  whiteNoise.connect(
-    noiseFilter
-  );
-
-  noiseFilter.connect(
-    noiseGain
-  );
-
-  bassGain.connect(
-    masterGain
-  );
-
-  formantGain.connect(
-    masterGain
-  );
-
-  airGain.connect(
-    masterGain
-  );
-
-  noiseGain.connect(
+  silentGain.connect(
     masterGain
   );
 
   // ===== START =====
-  bassOscillator.start();
-
-  formantOscillator.start();
-
-  airOscillator.start();
-
-  whiteNoise.start();
-
-  voiceLFO.start();
-
-  // ===== HUMAN MICRO MODULATION =====
-  modulationInterval =
-    setInterval(() => {
-
-      if (!audioStarted) return;
-
-      const randomBass =
-        94 +
-        Math.random() * 6;
-
-      const randomFormant =
-        185 +
-        Math.random() * 10;
-
-      const randomAir =
-        315 +
-        Math.random() * 15;
-
-      bassOscillator.frequency
-        .setTargetAtTime(
-          randomBass,
-          reelAudioContext.currentTime,
-          0.05
-        );
-
-      formantOscillator.frequency
-        .setTargetAtTime(
-          randomFormant,
-          reelAudioContext.currentTime,
-          0.05
-        );
-
-      airOscillator.frequency
-        .setTargetAtTime(
-          randomAir,
-          reelAudioContext.currentTime,
-          0.05
-        );
-
-    }, 120);
+  silentOscillator.start();
 }
 
 // ===== START AUDIO =====
 function startAudioEngine() {
 
-  if (!audioStarted) {
+  if (audioStarted) return;
 
-    initAudioEngine();
+  initAudioEngine();
 
-    createHumanMaleTone();
-  }
+  createSilentAudioTrack();
 }
 
 // ===== STOP AUDIO =====
@@ -305,32 +99,16 @@ function stopAudioEngine() {
 
     audioStarted = false;
 
-    clearInterval(
-      modulationInterval
-    );
+    if (silentOscillator) {
 
-    if (bassOscillator) {
+      silentOscillator.stop();
 
-      bassOscillator.stop();
-      bassOscillator.disconnect();
+      silentOscillator.disconnect();
     }
 
-    if (formantOscillator) {
+    if (silentGain) {
 
-      formantOscillator.stop();
-      formantOscillator.disconnect();
-    }
-
-    if (airOscillator) {
-
-      airOscillator.stop();
-      airOscillator.disconnect();
-    }
-
-    if (voiceLFO) {
-
-      voiceLFO.stop();
-      voiceLFO.disconnect();
+      silentGain.disconnect();
     }
 
     if (masterGain) {
@@ -344,7 +122,7 @@ function stopAudioEngine() {
   }
 }
 
-// ===== GET AUDIO STREAM =====
+// ===== GET STREAM =====
 function getAudioStream() {
 
   if (!reelDestination)
