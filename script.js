@@ -1,758 +1,634 @@
-// ======================================
-// DOM
-// ======================================
+/*
+====================================================
+REEL CREATOR PRO
+MAIN APPLICATION CONTROLLER
+script.js
+====================================================
+*/
 
-const fileInput =
-  document.getElementById(
-    "fileInput"
-  );
+/*
+====================================================
+DOM REFERENCES
+====================================================
+*/
 
-const textInput =
-  document.getElementById(
-    "textInput"
-  );
+const app = document.querySelector("#app");
 
-const img =
-  document.getElementById(
-    "img"
-  );
+const sceneContainer = document.querySelector("#sceneContainer");
 
-const textBox =
-  document.getElementById(
-    "textBox"
-  );
+const addSceneBtn = document.querySelector("#addSceneBtn");
 
-const playBtn =
-  document.getElementById(
-    "playBtn"
-  );
+const playBtn = document.querySelector("#playBtn");
 
-const voiceToggle =
-  document.getElementById(
-    "voiceToggle"
-  );
+const restartBtn = document.querySelector("#restartBtn");
 
-const voiceOptions =
-  document.getElementById(
-    "voiceOptions"
-  );
+const downloadBtn = document.querySelector("#downloadBtn");
 
-const restartBtn =
-  document.getElementById(
-    "restartBtn"
-  );
+const voiceSelect = document.querySelector("#voiceSelect");
 
-const watermark =
-  document.getElementById(
-    "watermark"
-  );
+const watermarkInput = document.querySelector("#watermarkInput");
 
-const userName =
-  document.getElementById(
-    "userName"
-  );
+const cinematicPreview = document.querySelector("#cinematicPreview");
 
-const downloadBtn =
-  document.getElementById(
-    "downloadBtn"
-  );
+const renderCanvas = document.querySelector("#renderCanvas");
 
-// ======================================
-// COLORS
-// ======================================
+/*
+====================================================
+APPLICATION STATE
+====================================================
+*/
 
-const colors = [
-  "#ff4d4d",
-  "#ffd633",
-  "#66ff66",
-  "#66ccff",
-  "#ff66cc",
-  "#ffffff"
-];
+const appState = {
 
-// ======================================
-// DATA
-// ======================================
+  scenes: [],
 
-let uploadedImages = [];
+  playback: {
+    isPlaying: false,
+    currentSceneIndex: 0,
+    currentLineIndex: 0
+  },
 
-let photoArticles = [];
+  voiceMode: "female",
 
-let currentPhotoIndex = 0;
+  watermark: "",
 
-let currentLineIndex = 0;
+  exportedVideoBlob: null
 
-let currentLines = [];
-
-let voiceMode = "female";
-
-let isPlaying = false;
-
-let activeSpeech = null;
-
-// ======================================
-// IMAGE LOAD
-// ======================================
-
-fileInput.addEventListener(
-  "change",
-  function () {
-
-    uploadedImages = [];
-
-    const files =
-      Array.from(
-        fileInput.files
-      );
-
-    if (
-      files.length === 0
-    ) {
-
-      return;
-    }
-
-    files.forEach(file => {
-
-      const url =
-        URL.createObjectURL(
-          file
-        );
-
-      uploadedImages.push(
-        url
-      );
-    });
-
-    img.src =
-      uploadedImages[0];
-
-    img.onload = () => {
-
-      img.style.display =
-        "block";
-    };
-  }
-);
-
-// ======================================
-// VOICE MENU
-// ======================================
-
-voiceToggle.onclick = () => {
-
-  voiceOptions.style.display =
-
-    voiceOptions.style.display ===
-    "none"
-
-      ? "block"
-
-      : "none";
 };
 
-// ======================================
-// SET VOICE
-// ======================================
+/*
+====================================================
+SCENE MODEL
+====================================================
+*/
 
-function setVoice(type) {
+function createSceneObject() {
 
-  voiceMode = type;
+  return {
+    image: null,
+    imageURL: "",
+    text: "",
+    lines: []
+  };
 
-  voiceOptions.style.display =
-    "none";
 }
 
-// ======================================
-// SPLIT ARTICLES
-// ======================================
+/*
+====================================================
+DEFAULT SCENE
+====================================================
+*/
 
-function parsePhotoArticles(
-  text
-) {
+appState.scenes.push(
+  createSceneObject()
+);
 
-  return text
-    .split("===PHOTO===")
-    .map(item => item.trim())
-    .filter(
-      item => item.length > 0
-    );
+/*
+====================================================
+SCENE CARD TEMPLATE
+====================================================
+*/
+
+function createSceneCard(index) {
+
+  const sceneCard = document.createElement("article");
+
+  sceneCard.className = "scene-card";
+
+  sceneCard.dataset.index = index;
+
+  sceneCard.innerHTML = `
+    
+    <div class="scene-topbar">
+
+      <div class="scene-title">
+        Scene ${index + 1}
+      </div>
+
+      <button
+        type="button"
+        class="scene-remove-btn"
+      >
+        Remove
+      </button>
+
+    </div>
+
+    <div class="scene-field">
+
+      <label>
+        Upload Photo
+      </label>
+
+      <input
+        type="file"
+        accept="image/*"
+        class="scene-image-input"
+      />
+
+    </div>
+
+    <div class="scene-field">
+
+      <label>
+        Scene Narration
+      </label>
+
+      <textarea
+        class="scene-text-input"
+        placeholder="Write cinematic narration..."
+      ></textarea>
+
+    </div>
+
+    <div class="scene-preview">
+
+      <img
+        src=""
+        alt="Scene Preview"
+      />
+
+    </div>
+
+  `;
+
+  attachSceneCardEvents(sceneCard);
+
+  return sceneCard;
+
 }
 
-// ======================================
-// SPLIT LINES
-// ======================================
+/*
+====================================================
+RENDER ALL SCENES
+====================================================
+*/
 
-function splitLines(text) {
+function renderScenes() {
+
+  sceneContainer.innerHTML = "";
+
+  appState.scenes.forEach((scene, index) => {
+
+    const sceneCard = createSceneCard(index);
+
+    const imageInput =
+      sceneCard.querySelector(".scene-image-input");
+
+    const textInput =
+      sceneCard.querySelector(".scene-text-input");
+
+    const previewImage =
+      sceneCard.querySelector(".scene-preview img");
+
+    textInput.value = scene.text;
+
+    if (scene.imageURL) {
+
+      previewImage.src = scene.imageURL;
+
+    }
+
+    sceneContainer.appendChild(sceneCard);
+
+  });
+
+}
+
+/*
+====================================================
+ATTACH EVENTS
+====================================================
+*/
+
+function attachSceneCardEvents(sceneCard) {
+
+  const index =
+    Number(sceneCard.dataset.index);
+
+  const imageInput =
+    sceneCard.querySelector(".scene-image-input");
+
+  const textInput =
+    sceneCard.querySelector(".scene-text-input");
+
+  const removeBtn =
+    sceneCard.querySelector(".scene-remove-btn");
+
+  const previewImage =
+    sceneCard.querySelector(".scene-preview img");
+
+  /*
+  ================================================
+  IMAGE INPUT
+  ================================================
+  */
+
+  imageInput.addEventListener("change", (event) => {
+
+    const file = event.target.files[0];
+
+    if (!file) return;
+
+    const imageURL =
+      URL.createObjectURL(file);
+
+    appState.scenes[index].image = file;
+
+    appState.scenes[index].imageURL = imageURL;
+
+    previewImage.src = imageURL;
+
+  });
+
+  /*
+  ================================================
+  TEXT INPUT
+  ================================================
+  */
+
+  textInput.addEventListener("input", (event) => {
+
+    const text =
+      event.target.value;
+
+    appState.scenes[index].text = text;
+
+    appState.scenes[index].lines =
+      parseSceneLines(text);
+
+  });
+
+  /*
+  ================================================
+  REMOVE SCENE
+  ================================================
+  */
+
+  removeBtn.addEventListener("click", () => {
+
+    removeScene(index);
+
+  });
+
+}
+
+/*
+====================================================
+LINE PARSER
+====================================================
+*/
+
+function parseSceneLines(text) {
 
   return text
-
-    .split(/\n|[।.!?]/)
-
+    .split("\n")
     .map(line => line.trim())
+    .filter(line => line.length > 0);
 
-    .filter(
-      line => line.length > 0
-    );
 }
 
-// ======================================
-// START RECORDING
-// ======================================
+/*
+====================================================
+ADD SCENE
+====================================================
+*/
 
-async function startRecording() {
+function addScene() {
+
+  const newScene =
+    createSceneObject();
+
+  appState.scenes.push(newScene);
+
+  renderScenes();
+
+}
+
+/*
+====================================================
+REMOVE SCENE
+====================================================
+*/
+
+function removeScene(index) {
+
+  if (appState.scenes.length === 1) {
+
+    alert("At least one scene is required.");
+
+    return;
+
+  }
+
+  appState.scenes.splice(index, 1);
+
+  renderScenes();
+
+}
+
+/*
+====================================================
+VALIDATE SCENES
+====================================================
+*/
+
+function validateScenes() {
+
+  if (appState.scenes.length === 0) {
+
+    alert("No scenes available.");
+
+    return false;
+
+  }
+
+  for (const scene of appState.scenes) {
+
+    if (!scene.image) {
+
+      alert("Every scene requires an image.");
+
+      return false;
+
+    }
+
+    if (!scene.text.trim()) {
+
+      alert("Every scene requires narration text.");
+
+      return false;
+
+    }
+
+    if (scene.lines.length === 0) {
+
+      alert("Narration lines missing.");
+
+      return false;
+
+    }
+
+  }
+
+  return true;
+
+}
+
+/*
+====================================================
+PLAYBACK MODE
+====================================================
+*/
+
+function enablePlaybackMode() {
+
+  document.body.classList.add(
+    "playback-mode"
+  );
+
+}
+
+function disablePlaybackMode() {
+
+  document.body.classList.remove(
+    "playback-mode"
+  );
+
+}
+
+/*
+====================================================
+PLAYBACK START
+====================================================
+*/
+
+async function startPlayback() {
+
+  if (appState.playback.isPlaying) {
+
+    return;
+
+  }
+
+  const valid =
+    validateScenes();
+
+  if (!valid) {
+
+    return;
+
+  }
+
+  appState.playback.isPlaying = true;
+
+  appState.playback.currentSceneIndex = 0;
+
+  appState.playback.currentLineIndex = 0;
+
+  appState.voiceMode =
+    voiceSelect.value;
+
+  appState.watermark =
+    watermarkInput.value.trim();
+
+  enablePlaybackMode();
+
+  /*
+  ================================================
+  START RENDER ENGINE
+  ================================================
+  */
 
   if (
-    typeof startCanvasRecording ===
-    "function"
+    window.CanvasRecorder &&
+    typeof window.CanvasRecorder.initialize === "function"
   ) {
 
-    await startCanvasRecording();
+    await window.CanvasRecorder.initialize({
+      canvas: renderCanvas,
+      previewElement: cinematicPreview,
+      watermark: appState.watermark
+    });
+
   }
+
+  /*
+  ================================================
+  START RECORDING
+  ================================================
+  */
+
+  if (
+    window.CanvasRecorder &&
+    typeof window.CanvasRecorder.startRecording === "function"
+  ) {
+
+    await window.CanvasRecorder.startRecording();
+
+  }
+
+  /*
+  ================================================
+  START TIMELINE ENGINE
+  ================================================
+  */
+
+  if (
+    window.TimelineEngine &&
+    typeof window.TimelineEngine.start === "function"
+  ) {
+
+    await window.TimelineEngine.start({
+      scenes: appState.scenes,
+      playbackState: appState.playback,
+      voiceMode: appState.voiceMode
+    });
+
+  }
+
 }
 
-// ======================================
-// PLAY
-// ======================================
+/*
+====================================================
+PLAYBACK COMPLETE
+====================================================
+*/
+
+async function handlePlaybackComplete() {
+
+  /*
+  ================================================
+  STOP RECORDING
+  ================================================
+  */
+
+  if (
+    window.CanvasRecorder &&
+    typeof window.CanvasRecorder.stopRecording === "function"
+  ) {
+
+    const videoBlob =
+      await window.CanvasRecorder.stopRecording();
+
+    appState.exportedVideoBlob =
+      videoBlob;
+
+  }
+
+  disablePlaybackMode();
+
+  appState.playback.isPlaying = false;
+
+  appState.playback.currentSceneIndex = 0;
+
+  appState.playback.currentLineIndex = 0;
+
+}
+
+/*
+====================================================
+RESTART PLAYBACK
+====================================================
+*/
+
+async function restartPlayback() {
+
+  if (
+    appState.playback.isPlaying
+  ) {
+
+    location.reload();
+
+    return;
+
+  }
+
+}
+
+/*
+====================================================
+DOWNLOAD VIDEO
+====================================================
+*/
+
+function downloadVideo() {
+
+  if (!appState.exportedVideoBlob) {
+
+    alert("No exported video available.");
+
+    return;
+
+  }
+
+  const url =
+    URL.createObjectURL(
+      appState.exportedVideoBlob
+    );
+
+  const a =
+    document.createElement("a");
+
+  a.href = url;
+
+  a.download =
+    `reel-${Date.now()}.webm`;
+
+  document.body.appendChild(a);
+
+  a.click();
+
+  a.remove();
+
+  URL.revokeObjectURL(url);
+
+}
+
+/*
+====================================================
+GLOBAL CALLBACKS
+====================================================
+*/
+
+window.ReelCreatorApp = {
+
+  appState,
+
+  handlePlaybackComplete
+
+};
+
+/*
+====================================================
+BUTTON EVENTS
+====================================================
+*/
+
+addSceneBtn.addEventListener(
+  "click",
+  addScene
+);
 
 playBtn.addEventListener(
   "click",
-
-  async function () {
-
-    if (isPlaying)
-      return;
-
-    // ==========================
-    // VALIDATION
-    // ==========================
-
-    if (
-      uploadedImages.length === 0
-    ) {
-
-      alert(
-        "पहले फोटो चुनें"
-      );
-
-      return;
-    }
-
-    const fullText =
-      textInput.value.trim();
-
-    if (!fullText) {
-
-      alert(
-        "पहले लेख लिखें"
-      );
-
-      return;
-    }
-
-    // ==========================
-    // PARSE ARTICLES
-    // ==========================
-
-    photoArticles =
-      parsePhotoArticles(
-        fullText
-      );
-
-    // ==========================
-    // MATCH CHECK
-    // ==========================
-
-    if (
-      photoArticles.length !==
-      uploadedImages.length
-    ) {
-
-      alert(
-        "जितनी फोटो हैं उतने ही ===PHOTO=== section रखें"
-      );
-
-      return;
-    }
-
-    // ==========================
-    // PLAY LOCK
-    // ==========================
-
-    isPlaying = true;
-
-    // ==========================
-    // WATERMARK
-    // ==========================
-
-    watermark.innerText =
-
-      userName.value
-
-        ? "© " +
-          userName.value
-
-        : "";
-
-    // ==========================
-    // HIDE UI
-    // ==========================
-
-    fileInput.style.display =
-      "none";
-
-    textInput.style.display =
-      "none";
-
-    userName.style.display =
-      "none";
-
-    playBtn.style.display =
-      "none";
-
-    document.querySelector(
-      ".voice-controls"
-    ).style.display =
-      "none";
-
-    // ==========================
-    // RESET
-    // ==========================
-
-    currentPhotoIndex = 0;
-
-    currentLineIndex = 0;
-
-    // ==========================
-    // START CANVAS
-    // ==========================
-
-    if (
-      typeof startTalkingEffect ===
-      "function"
-    ) {
-
-      startTalkingEffect();
-    }
-
-    // ==========================
-    // START RECORDING
-    // ==========================
-
-    await startRecording();
-
-    // ==========================
-    // START FLOW
-    // ==========================
-
-    setTimeout(() => {
-
-      loadCurrentPhoto();
-
-    }, 1000);
-  }
+  startPlayback
 );
-
-// ======================================
-// LOAD CURRENT PHOTO
-// ======================================
-
-function loadCurrentPhoto() {
-
-  // ==========================
-  // END
-  // ==========================
-
-  if (
-    currentPhotoIndex >=
-    uploadedImages.length
-  ) {
-
-    finishVideo();
-
-    return;
-  }
-
-  // ==========================
-  // IMAGE
-  // ==========================
-
-  img.src =
-    uploadedImages[
-      currentPhotoIndex
-    ];
-
-  // ==========================
-  // ARTICLE
-  // ==========================
-
-  currentLines =
-    splitLines(
-      photoArticles[
-        currentPhotoIndex
-      ]
-    );
-
-  currentLineIndex = 0;
-
-  // ==========================
-  // START SPEECH
-  // ==========================
-
-  setTimeout(() => {
-
-    speakCurrentLine();
-
-  }, 1200);
-}
-
-// ======================================
-// SPEAK CURRENT LINE
-// ======================================
-
-function speakCurrentLine() {
-
-  // ==========================
-  // NEXT PHOTO
-  // ==========================
-
-  if (
-    currentLineIndex >=
-    currentLines.length
-  ) {
-
-    currentPhotoIndex++;
-
-    setTimeout(() => {
-
-      loadCurrentPhoto();
-
-    }, 1200);
-
-    return;
-  }
-
-  // ==========================
-  // LINE
-  // ==========================
-
-  const line =
-    currentLines[
-      currentLineIndex
-    ];
-
-  // ==========================
-  // MULTICOLOR
-  // ==========================
-
-  renderColoredText(line);
-
-  // ==========================
-  // CANCEL OLD
-  // ==========================
-
-  speechSynthesis.cancel();
-
-  // ==========================
-  // CREATE SPEECH
-  // ==========================
-
-  const speech =
-    new SpeechSynthesisUtterance(
-      line
-    );
-
-  activeSpeech = speech;
-
-  // ==========================
-  // VOICES
-  // ==========================
-
-  const voices =
-    speechSynthesis.getVoices();
-
-  let hindiVoices =
-    voices.filter(v =>
-
-      v.lang.includes("hi")
-    );
-
-  if (
-    hindiVoices.length === 0
-  ) {
-
-    hindiVoices = voices;
-  }
-
-  // ==========================
-  // FEMALE
-  // ==========================
-
-  const femaleVoice =
-
-    hindiVoices.find(v =>
-
-      v.name
-        .toLowerCase()
-        .includes("female")
-    )
-
-    ||
-
-    hindiVoices[0];
-
-  // ==========================
-  // MALE
-  // ==========================
-
-  let maleVoice =
-
-    voices.find(v =>
-
-      v.name
-        .toLowerCase()
-        .includes("male")
-
-      ||
-
-      v.name
-        .toLowerCase()
-        .includes("david")
-
-      ||
-
-      v.name
-        .toLowerCase()
-        .includes("ravi")
-    );
-
-  if (!maleVoice) {
-
-    maleVoice =
-
-      hindiVoices[1]
-
-      ||
-
-      hindiVoices[0];
-  }
-
-  // ==========================
-  // APPLY VOICE
-  // ==========================
-
-  if (
-    voiceMode ===
-    "female"
-  ) {
-
-    speech.voice =
-      femaleVoice;
-
-    speech.pitch = 1.05;
-
-    speech.rate = 0.92;
-  }
-
-  else if (
-    voiceMode ===
-    "male"
-  ) {
-
-    speech.voice =
-      maleVoice;
-
-    speech.pitch = 0.72;
-
-    speech.rate = 0.84;
-  }
-
-  else {
-
-    speech.voice =
-
-      currentLineIndex % 2 === 0
-
-        ? femaleVoice
-
-        : maleVoice;
-
-    speech.pitch =
-
-      currentLineIndex % 2 === 0
-
-        ? 1.05
-
-        : 0.72;
-
-    speech.rate =
-
-      currentLineIndex % 2 === 0
-
-        ? 0.92
-
-        : 0.84;
-  }
-
-  // ==========================
-  // LANG
-  // ==========================
-
-  speech.lang = "hi-IN";
-
-  speech.volume = 1;
-
-  // ==========================
-  // ON END
-  // ==========================
-
-  speech.onend = () => {
-
-    currentLineIndex++;
-
-    setTimeout(() => {
-
-      speakCurrentLine();
-
-    }, 700);
-  };
-
-  // ==========================
-  // ERROR
-  // ==========================
-
-  speech.onerror = () => {
-
-    currentLineIndex++;
-
-    setTimeout(() => {
-
-      speakCurrentLine();
-
-    }, 700);
-  };
-
-  // ==========================
-  // SPEAK
-  // ==========================
-
-  speechSynthesis.speak(
-    speech
-  );
-}
-
-// ======================================
-// RENDER MULTICOLOR TEXT
-// ======================================
-
-function renderColoredText(
-  line
-) {
-
-  const words =
-    line.split(" ");
-
-  const colored =
-    words.map((word, i) => {
-
-      return `
-      <span
-      style="
-      color:
-      ${
-        colors[
-          i %
-          colors.length
-        ]
-      };
-      ">
-      ${word}
-      </span>
-      `;
-
-    }).join(" ");
-
-  textBox.innerHTML =
-    colored;
-}
-
-// ======================================
-// FINISH VIDEO
-// ======================================
-
-function finishVideo() {
-
-  speechSynthesis.cancel();
-
-  isPlaying = false;
-
-  setTimeout(() => {
-
-    if (
-      typeof stopCanvasRecording ===
-      "function"
-    ) {
-
-      stopCanvasRecording();
-    }
-
-  }, 1800);
-}
-
-// ======================================
-// DOWNLOAD BUTTON
-// ======================================
-
-downloadBtn.addEventListener(
-  "click",
-
-  function () {
-
-    speechSynthesis.cancel();
-
-    isPlaying = false;
-
-    if (
-      typeof stopCanvasRecording ===
-      "function"
-    ) {
-
-      stopCanvasRecording();
-    }
-  }
-);
-
-// ======================================
-// RESTART
-// ======================================
 
 restartBtn.addEventListener(
   "click",
-
-  function () {
-
-    speechSynthesis.cancel();
-
-    isPlaying = false;
-
-    currentPhotoIndex = 0;
-
-    currentLineIndex = 0;
-
-    setTimeout(() => {
-
-      playBtn.click();
-
-    }, 800);
-  }
+  restartPlayback
 );
 
-// ======================================
-// LOAD VOICES
-// ======================================
+downloadBtn.addEventListener(
+  "click",
+  downloadVideo
+);
 
-speechSynthesis.onvoiceschanged =
-  function () {
+/*
+====================================================
+INITIAL RENDER
+====================================================
+*/
 
-    speechSynthesis.getVoices();
-  };
+renderScenes();
