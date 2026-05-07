@@ -1,11 +1,21 @@
 <!DOCTYPE html>
 <html lang="hi">
+
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reel Creator</title>
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+>
+
+<title>
+  Reel Creator
+</title>
 
 <style>
+
 body {
   margin: 0;
   background: black;
@@ -53,7 +63,7 @@ textarea {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: none;
+  display: block;
 }
 
 /* TEXT BOX */
@@ -91,7 +101,7 @@ textarea {
   box-sizing: border-box;
 }
 
-/* WATERMARK BELOW TEXT BOX */
+/* WATERMARK */
 .watermark {
   position: absolute;
   top: calc(50% + 140px);
@@ -193,7 +203,7 @@ textarea {
   font-size: 14px;
 }
 
-/* HIDE INPUTS ON PLAY */
+/* HIDE INPUTS */
 .hide-ui {
   display: none !important;
 }
@@ -202,6 +212,12 @@ textarea {
 #reelCanvas{
   display:none;
 }
+
+/* AUDIO */
+#ttsAudio{
+  display:none;
+}
+
 </style>
 </head>
 
@@ -209,93 +225,276 @@ textarea {
 
 <div class="container">
 
-<!-- IMAGE UPLOAD -->
-<input type="file" id="fileInput" accept="image/*">
+  <!-- IMAGE UPLOAD -->
+  <input
+    type="file"
+    id="fileInput"
+    accept="image/*"
+  >
 
-<!-- TEXT INPUT -->
-<textarea id="textInput" placeholder="यहाँ अपना लेख लिखें..."></textarea>
+  <!-- TEXT INPUT -->
+  <textarea
+    id="textInput"
+    placeholder="यहाँ अपना लेख लिखें..."
+  ></textarea>
 
-<!-- WATERMARK NAME INPUT -->
-<input type="text" id="userName" placeholder="Watermark Name">
+  <!-- WATERMARK -->
+  <input
+    type="text"
+    id="userName"
+    placeholder="Watermark Name"
+  >
 
-<!-- PREVIEW -->
-<div class="preview" id="preview">
+  <!-- PREVIEW -->
+  <div
+    class="preview"
+    id="preview"
+  >
 
-  <!-- CANVAS -->
-  <canvas id="reelCanvas"></canvas>
+    <!-- CANVAS -->
+    <canvas id="reelCanvas"></canvas>
 
-  <!-- IMAGE -->
-  <img id="img">
+    <!-- IMAGE -->
+    <img id="img">
 
-  <!-- TEXT -->
-  <div class="text-box" id="textBox"></div>
+    <!-- TEXT -->
+    <div
+      class="text-box"
+      id="textBox"
+    ></div>
 
-  <!-- WATERMARK BELOW TEXT -->
-  <div id="watermark" class="watermark"></div>
+    <!-- WATERMARK -->
+    <div
+      id="watermark"
+      class="watermark"
+    ></div>
 
-  <!-- VOICE BUTTONS -->
-  <div class="voice-controls" id="voiceControls">
+    <!-- AUDIO -->
+    <audio
+      id="ttsAudio"
+      crossorigin="anonymous"
+    ></audio>
 
-    <button id="voiceToggle">🎤 Voice</button>
+    <!-- VOICE BUTTONS -->
+    <div
+      class="voice-controls"
+      id="voiceControls"
+    >
 
-    <div id="voiceOptions" style="display:none; margin-top:5px;">
-
-      <button onclick="setVoice('female')">
-        👩 Female
+      <button id="voiceToggle">
+        🎤 Voice
       </button>
 
-      <button onclick="setVoice('male')">
-        👨 Male
-      </button>
+      <div
+        id="voiceOptions"
+        style="
+          display:none;
+          margin-top:5px;
+        "
+      >
 
-      <button onclick="setVoice('auto')">
-        Auto
-      </button>
+        <button
+          onclick="setVoice('female')"
+        >
+          👩 Female
+        </button>
+
+        <button
+          onclick="setVoice('male')"
+        >
+          👨 Male
+        </button>
+
+        <button
+          onclick="setVoice('auto')"
+        >
+          Auto
+        </button>
+
+      </div>
 
     </div>
 
+    <!-- PLAY -->
+    <button
+      id="playBtn"
+      class="play-btn"
+    >
+      ▶
+    </button>
+
+    <!-- RESTART -->
+    <button
+      id="restartBtn"
+      class="restart-btn"
+    >
+      Restart
+    </button>
+
+    <!-- DOWNLOAD -->
+    <button
+      id="downloadBtn"
+      class="download-btn"
+    >
+      ⬇ Download
+    </button>
+
   </div>
-
-  <!-- PLAY BUTTON -->
-  <button id="playBtn" class="play-btn">
-    ▶
-  </button>
-
-  <!-- RESTART BUTTON -->
-  <button id="restartBtn" class="restart-btn">
-    Restart
-  </button>
-
-  <!-- DOWNLOAD BUTTON -->
-  <button id="downloadBtn" class="download-btn">
-    ⬇ Download
-  </button>
-
-</div>
 
 </div>
 
 <script>
-document.getElementById("playBtn").addEventListener("click", function () {
 
-  document.getElementById("fileInput").classList.add("hide-ui");
-  document.getElementById("textInput").classList.add("hide-ui");
-  document.getElementById("userName").classList.add("hide-ui");
-  document.getElementById("voiceControls").classList.add("hide-ui");
+// ======================================================
+// ELEMENTS
+// ======================================================
 
-});
+const fileInput =
+  document.getElementById(
+    "fileInput"
+  );
+
+const img =
+  document.getElementById(
+    "img"
+  );
+
+const textInput =
+  document.getElementById(
+    "textInput"
+  );
+
+const textBox =
+  document.getElementById(
+    "textBox"
+  );
+
+const userName =
+  document.getElementById(
+    "userName"
+  );
+
+const watermark =
+  document.getElementById(
+    "watermark"
+  );
+
+// ======================================================
+// IMAGE LOAD
+// ======================================================
+
+fileInput.addEventListener(
+  "change",
+  function (e) {
+
+    const file =
+      e.target.files[0];
+
+    if (!file) return;
+
+    const reader =
+      new FileReader();
+
+    reader.onload =
+      function (event) {
+
+        img.src =
+          event.target.result;
+
+        img.style.display =
+          "block";
+      };
+
+    reader.readAsDataURL(
+      file
+    );
+  }
+);
+
+// ======================================================
+// LIVE TEXT
+// ======================================================
+
+textInput.addEventListener(
+  "input",
+  function () {
+
+    textBox.innerText =
+      this.value;
+  }
+);
+
+// ======================================================
+// WATERMARK
+// ======================================================
+
+userName.addEventListener(
+  "input",
+  function () {
+
+    watermark.innerText =
+      this.value;
+  }
+);
+
+// ======================================================
+// PLAY BUTTON
+// ======================================================
+
+document
+  .getElementById(
+    "playBtn"
+  )
+  .addEventListener(
+    "click",
+    function () {
+
+      document
+        .getElementById(
+          "fileInput"
+        )
+        .classList.add(
+          "hide-ui"
+        );
+
+      document
+        .getElementById(
+          "textInput"
+        )
+        .classList.add(
+          "hide-ui"
+        );
+
+      document
+        .getElementById(
+          "userName"
+        )
+        .classList.add(
+          "hide-ui"
+        );
+
+      document
+        .getElementById(
+          "voiceControls"
+        )
+        .classList.add(
+          "hide-ui"
+        );
+    }
+  );
+
 </script>
 
 <!-- AUDIO ENGINE -->
 <script src="audio-engine.js"></script>
 
-<!-- TTS AUDIO -->
+<!-- TTS -->
 <script src="tts-audio-generator.js"></script>
 
-<!-- CANVAS RECORDER -->
+<!-- RECORDER -->
 <script src="canvas-recorder.js"></script>
 
-<!-- MAIN SCRIPT -->
+<!-- MAIN -->
 <script src="script.js"></script>
 
 </body>
