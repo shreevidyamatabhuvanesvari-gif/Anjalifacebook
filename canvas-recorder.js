@@ -1,11 +1,6 @@
 // ===== CANVAS =====
-const canvas =
-  document.getElementById(
-    "reelCanvas"
-  );
-
-const ctx =
-  canvas.getContext("2d");
+const canvas = document.getElementById("reelCanvas");
+const ctx = canvas.getContext("2d");
 
 // ===== SIZE =====
 canvas.width = 1080;
@@ -14,10 +9,8 @@ canvas.height = 1920;
 // ===== RECORDING =====
 let canvasRecorder;
 let canvasChunks = [];
-
 let canvasStream;
 let mergedStream;
-let screenStream;
 
 // ===== TALKING EFFECT =====
 let talkingAnimation;
@@ -36,9 +29,7 @@ const canvasColors = [
 // ===== START TALKING EFFECT =====
 function startTalkingEffect() {
 
-  cancelAnimationFrame(
-    talkingAnimation
-  );
+  cancelAnimationFrame(talkingAnimation);
 
   animateCanvas();
 }
@@ -46,16 +37,10 @@ function startTalkingEffect() {
 // ===== ANIMATION LOOP =====
 function animateCanvas() {
 
-  ctx.clearRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // ===== BG =====
+  // ===== BLACK BG =====
   ctx.fillStyle = "black";
-
   ctx.fillRect(
     0,
     0,
@@ -64,11 +49,9 @@ function animateCanvas() {
   );
 
   // ===== IMAGE =====
-  if (
-    img.complete &&
-    img.naturalWidth > 0
-  ) {
+  if (img.complete && img.naturalWidth > 0) {
 
+    // 🔥 BREATHING EFFECT
     const zoom =
       1 +
       Math.sin(
@@ -82,14 +65,12 @@ function animateCanvas() {
       canvas.height * zoom;
 
     const x =
-      (canvas.width -
-        imgWidth) / 2;
+      (canvas.width - imgWidth) / 2;
 
     const y =
-      (canvas.height -
-        imgHeight) / 2;
+      (canvas.height - imgHeight) / 2;
 
-    // ===== IMAGE DRAW =====
+    // ===== MAIN IMAGE =====
     ctx.drawImage(
       img,
       x,
@@ -98,13 +79,13 @@ function animateCanvas() {
       imgHeight
     );
 
-    // ===== TALKING =====
+    // ===== TALKING EFFECT =====
     mouthFrame += 0.35;
 
     const mouthMove =
       Math.sin(mouthFrame) * 10;
 
-    // ===== SHADOW =====
+    // 🔥 SHADOW
     ctx.fillStyle =
       "rgba(0,0,0,0.35)";
 
@@ -122,7 +103,7 @@ function animateCanvas() {
 
     ctx.fill();
 
-    // ===== INNER LIP =====
+    // 🔥 INNER LIP
     ctx.fillStyle =
       "rgba(255,70,70,0.22)";
 
@@ -159,8 +140,7 @@ function animateCanvas() {
   ctx.font =
     "bold 54px sans-serif";
 
-  ctx.textAlign =
-    "left";
+  ctx.textAlign = "left";
 
   drawColoredText(
     textBox.innerText,
@@ -177,8 +157,7 @@ function animateCanvas() {
   ctx.font =
     "italic bold 34px sans-serif";
 
-  ctx.textAlign =
-    "center";
+  ctx.textAlign = "center";
 
   ctx.fillText(
     watermark.innerText,
@@ -186,14 +165,13 @@ function animateCanvas() {
     1320
   );
 
-  // ===== LOOP =====
   talkingAnimation =
     requestAnimationFrame(
       animateCanvas
     );
 }
 
-// ===== DRAW TEXT =====
+// ===== DRAW COLORED TEXT =====
 function drawColoredText(
   text,
   startX,
@@ -222,22 +200,20 @@ function drawColoredText(
         word + " "
       ).width;
 
-    // ===== NEW LINE =====
+    // ===== LINE BREAK =====
     if (
       x + wordWidth >
       startX + maxWidth
     ) {
 
       x = startX;
-
       y += lineHeight;
     }
 
-    // ===== COLOR =====
+    // ===== WORD COLOR =====
     ctx.fillStyle =
       canvasColors[
-        i %
-          canvasColors.length
+        i % canvasColors.length
       ];
 
     ctx.fillText(
@@ -323,218 +299,130 @@ function roundRect(
 }
 
 // ===== START RECORDING =====
-async function startCanvasRecording() {
+function startCanvasRecording() {
 
-  try {
+  // ✅ START AUDIO ENGINE
+  startAudioEngine();
 
-    // ===== ASK SCREEN AUDIO =====
-    screenStream =
-      await navigator
-        .mediaDevices
-        .getDisplayMedia({
-          video: true,
-          audio: true
-        });
+  // ===== VIDEO STREAM =====
+  canvasStream =
+    canvas.captureStream(30);
 
-    // ===== CANVAS VIDEO =====
-    canvasStream =
-      canvas.captureStream(30);
+  // ===== AUDIO STREAM =====
+  const audioStream =
+    getAudioStream();
 
-    // ===== AUDIO TRACKS =====
-    let audioTracks = [];
+  // ===== MERGED STREAM =====
+  mergedStream =
+    new MediaStream([
+      ...canvasStream.getVideoTracks(),
 
-    // ===== SYSTEM AUDIO =====
-    if (
-      screenStream &&
-      screenStream.getAudioTracks()
-        .length > 0
-    ) {
+      ...audioStream.getAudioTracks()
+    ]);
 
-      audioTracks.push(
-        ...screenStream.getAudioTracks()
-      );
-    }
+  canvasChunks = [];
 
-    // ===== FINAL MERGED STREAM =====
-    mergedStream =
-      new MediaStream([
-        ...canvasStream.getVideoTracks(),
-        ...audioTracks
-      ]);
+  // ===== SAFE MIME =====
+  let options = {};
 
-    // ===== RESET CHUNKS =====
-    canvasChunks = [];
+  if (
+    MediaRecorder.isTypeSupported(
+      "video/webm;codecs=vp9"
+    )
+  ) {
 
-    // ===== MIME TYPE =====
-    let mimeType =
-      "video/webm";
-
-    if (
-      MediaRecorder.isTypeSupported(
-        "video/webm;codecs=vp9,opus"
-      )
-    ) {
-
-      mimeType =
-        "video/webm;codecs=vp9,opus";
-    }
-
-    else if (
-      MediaRecorder.isTypeSupported(
-        "video/webm;codecs=vp8,opus"
-      )
-    ) {
-
-      mimeType =
-        "video/webm;codecs=vp8,opus";
-    }
-
-    // ===== RECORDER =====
-    canvasRecorder =
-      new MediaRecorder(
-        mergedStream,
-        {
-          mimeType: mimeType
-        }
-      );
-
-    // ===== DATA =====
-    canvasRecorder.ondataavailable =
-      function (event) {
-
-        if (
-          event.data &&
-          event.data.size > 0
-        ) {
-
-          canvasChunks.push(
-            event.data
-          );
-        }
-      };
-
-    // ===== ERROR =====
-    canvasRecorder.onerror =
-      function (e) {
-
-        console.log(
-          "Recorder Error:",
-          e
-        );
-
-        alert(
-          "Recording error आया"
-        );
-      };
-
-    // ===== STOP =====
-    canvasRecorder.onstop =
-      function () {
-
-        try {
-
-          // ===== BLOB =====
-          const blob =
-            new Blob(
-              canvasChunks,
-              {
-                type: mimeType
-              }
-            );
-
-          // ===== URL =====
-          const videoURL =
-            URL.createObjectURL(
-              blob
-            );
-
-          // ===== DOWNLOAD =====
-          const a =
-            document.createElement(
-              "a"
-            );
-
-          a.style.display =
-            "none";
-
-          a.href =
-            videoURL;
-
-          a.download =
-            "reel-video.webm";
-
-          document.body.appendChild(
-            a
-          );
-
-          a.click();
-
-          // ===== CLEAN =====
-          setTimeout(() => {
-
-            URL.revokeObjectURL(
-              videoURL
-            );
-
-            document.body.removeChild(
-              a
-            );
-
-          }, 1000);
-
-        } catch (err) {
-
-          console.log(err);
-
-          alert(
-            "Video save error"
-          );
-        }
-      };
-
-    // ===== START =====
-    canvasRecorder.start(
-      1000
-    );
-
-  } catch (err) {
-
-    console.log(err);
-
-    alert(
-      "Screen + audio permission allow करें"
-    );
+    options.mimeType =
+      "video/webm;codecs=vp9";
   }
+
+  else if (
+    MediaRecorder.isTypeSupported(
+      "video/webm;codecs=vp8"
+    )
+  ) {
+
+    options.mimeType =
+      "video/webm;codecs=vp8";
+  }
+
+  else {
+
+    options.mimeType =
+      "video/webm";
+  }
+
+  // ===== RECORDER =====
+  canvasRecorder =
+    new MediaRecorder(
+      mergedStream,
+      options
+    );
+
+  // ===== DATA =====
+  canvasRecorder.ondataavailable =
+    function (e) {
+
+      if (e.data.size > 0) {
+
+        canvasChunks.push(e.data);
+      }
+    };
+
+  // ===== STOP =====
+  canvasRecorder.onstop =
+    function () {
+
+      // ✅ STOP AUDIO ENGINE
+      stopAudioEngine();
+
+      const blob =
+        new Blob(
+          canvasChunks,
+          {
+            type:
+              options.mimeType
+          }
+        );
+
+      const videoURL =
+        URL.createObjectURL(blob);
+
+      const a =
+        document.createElement("a");
+
+      a.href = videoURL;
+
+      a.download =
+        "reel-video.webm";
+
+      document.body.appendChild(a);
+
+      a.click();
+
+      setTimeout(() => {
+
+        URL.revokeObjectURL(
+          videoURL
+        );
+
+        document.body.removeChild(a);
+
+      }, 100);
+    };
+
+  // ===== START =====
+  canvasRecorder.start();
 }
 
 // ===== STOP RECORDING =====
 function stopCanvasRecording() {
 
-  try {
+  if (
+    canvasRecorder &&
+    canvasRecorder.state ===
+      "recording"
+  ) {
 
-    // ===== STOP RECORDER =====
-    if (
-      canvasRecorder &&
-      canvasRecorder.state ===
-        "recording"
-    ) {
-
-      canvasRecorder.stop();
-    }
-
-    // ===== STOP SCREEN =====
-    if (screenStream) {
-
-      screenStream
-        .getTracks()
-        .forEach(track => {
-
-          track.stop();
-        });
-    }
-
-  } catch (err) {
-
-    console.log(err);
+    canvasRecorder.stop();
   }
 }
