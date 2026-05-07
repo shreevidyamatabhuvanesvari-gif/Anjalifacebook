@@ -1,738 +1,467 @@
 <!DOCTYPE html>
-<html lang="hi">
-
+<html lang="en">
 <head>
-
-<meta charset="UTF-8">
-
-<meta
-  name="viewport"
-  content="width=device-width, initial-scale=1.0"
-/>
-
-<title>
-  Reel Creator Pro
-</title>
-
-<style>
-
-/* =====================================
-   GLOBAL
-===================================== */
-
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-}
-
-body{
-
-  background:black;
-
-  font-family:
-    Arial,
-    sans-serif;
-
-  overflow:hidden;
-
-  width:100vw;
-  height:100vh;
-}
-
-/* =====================================
-   MAIN CONTAINER
-===================================== */
-
-.container{
-
-  width:100%;
-  height:100vh;
-
-  position:relative;
-
-  overflow:hidden;
-}
-
-/* =====================================
-   LEFT PANEL
-===================================== */
-
-.control-panel{
-
-  position:absolute;
-
-  top:0;
-  left:0;
-
-  width:380px;
-
-  height:100vh;
-
-  overflow-y:auto;
-
-  background:
-    rgba(0,0,0,0.82);
-
-  backdrop-filter:
-    blur(10px);
-
-  z-index:100;
-
-  padding:16px;
-}
-
-/* =====================================
-   TITLE
-===================================== */
-
-.panel-title{
-
-  color:white;
-
-  font-size:28px;
-
-  font-weight:bold;
-
-  margin-bottom:18px;
-
-  text-align:center;
-}
-
-/* =====================================
-   WATERMARK
-===================================== */
-
-#userName{
-
-  width:100%;
-
-  padding:14px;
-
-  border:none;
-
-  border-radius:12px;
-
-  margin-bottom:18px;
-
-  background:#111;
-
-  color:white;
-
-  font-size:16px;
-}
-
-/* =====================================
-   SCENE LIST
-===================================== */
-
-#sceneContainer{
-
-  display:flex;
-
-  flex-direction:column;
-
-  gap:18px;
-}
-
-/* =====================================
-   SCENE CARD
-===================================== */
-
-.scene-card{
-
-  background:
-    rgba(255,255,255,0.06);
-
-  border:
-    1px solid
-    rgba(255,255,255,0.08);
-
-  border-radius:18px;
-
-  padding:14px;
-}
-
-/* =====================================
-   SCENE TITLE
-===================================== */
-
-.scene-title{
-
-  color:white;
-
-  font-size:18px;
-
-  font-weight:bold;
-
-  margin-bottom:12px;
-}
-
-/* =====================================
-   IMAGE INPUT
-===================================== */
-
-.scene-image{
-
-  width:100%;
-
-  margin-bottom:12px;
-
-  color:white;
-}
-
-/* =====================================
-   IMAGE PREVIEW
-===================================== */
-
-.scene-preview{
-
-  width:100%;
-
-  height:180px;
-
-  object-fit:cover;
-
-  border-radius:14px;
-
-  margin-bottom:12px;
-
-  display:none;
-}
-
-/* =====================================
-   TEXTAREA
-===================================== */
-
-.scene-text{
-
-  width:100%;
-
-  min-height:150px;
-
-  resize:vertical;
-
-  border:none;
-
-  outline:none;
-
-  border-radius:14px;
-
-  padding:14px;
-
-  background:#111;
-
-  color:white;
-
-  font-size:16px;
-
-  line-height:1.7;
-}
-
-/* =====================================
-   REMOVE BUTTON
-===================================== */
-
-.remove-scene{
-
-  width:100%;
-
-  margin-top:12px;
-
-  padding:12px;
-
-  border:none;
-
-  border-radius:12px;
-
-  background:#ff4444;
-
-  color:white;
-
-  font-size:15px;
-
-  font-weight:bold;
-
-  cursor:pointer;
-}
-
-/* =====================================
-   CONTROL BUTTONS
-===================================== */
-
-.controls{
-
-  margin-top:20px;
-
-  display:flex;
-
-  flex-direction:column;
-
-  gap:12px;
-}
-
-.controls button{
-
-  padding:14px;
-
-  border:none;
-
-  border-radius:14px;
-
-  font-size:16px;
-
-  font-weight:bold;
-
-  cursor:pointer;
-}
-
-/* =====================================
-   ADD SCENE
-===================================== */
-
-#addSceneBtn{
-
-  background:#444;
-
-  color:white;
-}
-
-/* =====================================
-   PLAY
-===================================== */
-
-#playBtn{
-
-  background:#00cc66;
-
-  color:white;
-}
-
-/* =====================================
-   RESTART
-===================================== */
-
-#restartBtn{
-
-  background:#ffaa00;
-
-  color:black;
-}
-
-/* =====================================
-   DOWNLOAD
-===================================== */
-
-#downloadBtn{
-
-  background:#0066ff;
-
-  color:white;
-}
-
-/* =====================================
-   VOICE CONTROLS
-===================================== */
-
-.voice-controls{
-
-  display:flex;
-
-  flex-wrap:wrap;
-
-  gap:10px;
-
-  margin-top:10px;
-}
-
-.voice-controls button{
-
-  flex:1;
-
-  padding:12px;
-
-  border:none;
-
-  border-radius:12px;
-
-  background:#222;
-
-  color:white;
-
-  cursor:pointer;
-}
-
-/* =====================================
-   PREVIEW AREA
-===================================== */
-
-.preview{
-
-  position:absolute;
-
-  top:0;
-  left:380px;
-
-  width:calc(100% - 380px);
-
-  height:100vh;
-
-  overflow:hidden;
-
-  background:black;
-}
-
-/* =====================================
-   MAIN IMAGE
-===================================== */
-
-.preview img{
-
-  width:100%;
-  height:100%;
-
-  object-fit:cover;
-
-  display:none;
-}
-
-/* =====================================
-   TEXT BOX
-===================================== */
-
-.text-box{
-
-  position:absolute;
-
-  top:50%;
-  left:50%;
-
-  transform:
-    translate(-50%, -50%);
-
-  width:88%;
-
-  padding:28px;
-
-  border-radius:22px;
-
-  background:
-    rgba(0,0,0,0.58);
-
-  backdrop-filter:
-    blur(8px);
-
-  color:white;
-
-  font-size:52px;
-
-  font-weight:bold;
-
-  line-height:1.7;
-
-  text-align:center;
-
-  word-break:break-word;
-
-  overflow-wrap:break-word;
-
-  z-index:10;
-}
-
-/* =====================================
-   WATERMARK
-===================================== */
-
-.watermark{
-
-  position:absolute;
-
-  bottom:80px;
-
-  left:50%;
-
-  transform:
-    translateX(-50%);
-
-  padding:12px 22px;
-
-  border-radius:40px;
-
-  background:
-    rgba(0,0,0,0.62);
-
-  color:white;
-
-  font-size:18px;
-
-  font-style:italic;
-
-  font-weight:bold;
-
-  z-index:20;
-}
-
-/* =====================================
-   CANVAS
-===================================== */
-
-#reelCanvas{
-
-  display:none;
-}
-
-/* =====================================
-   MOBILE
-===================================== */
-
-@media(max-width:900px){
-
-  .control-panel{
-
-    width:100%;
-
-    height:50vh;
-  }
-
-  .preview{
-
-    top:50vh;
-
-    left:0;
-
-    width:100%;
-
-    height:50vh;
-  }
-
-  .text-box{
-
-    font-size:28px;
-  }
-}
-
-</style>
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Reel Creator Pro</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #050505;
+      --panel: #111111;
+      --border: #262626;
+      --text: #ffffff;
+      --muted: #9ca3af;
+      --accent: #ffcc00;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    #app {
+      width: 100%;
+      height: 100vh;
+      display: grid;
+      grid-template-columns: 420px 1fr;
+    }
+
+    /*
+    ========================================
+    EDITOR PANEL
+    ========================================
+    */
+
+    #editorPanel {
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .editor-header {
+      margin-bottom: 24px;
+    }
+
+    .editor-header h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    .editor-header p {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    #sceneContainer {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .scene-card {
+      background: #181818;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .scene-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .scene-title {
+      font-size: 15px;
+      font-weight: bold;
+    }
+
+    .scene-remove-btn {
+      background: #2b2b2b;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .scene-remove-btn:hover {
+      background: #3a3a3a;
+    }
+
+    .scene-field {
+      margin-bottom: 16px;
+    }
+
+    .scene-field label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .scene-image-input,
+    .scene-text-input,
+    #voiceSelect,
+    #watermarkInput {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #0d0d0d;
+      color: white;
+      padding: 12px;
+      font-size: 14px;
+    }
+
+    .scene-text-input {
+      resize: vertical;
+      min-height: 140px;
+      line-height: 1.7;
+    }
+
+    .scene-preview {
+      width: 100%;
+      height: 220px;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #000;
+      margin-top: 10px;
+    }
+
+    .scene-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /*
+    ========================================
+    CONTROLS
+    ========================================
+    */
+
+    .global-controls {
+      margin-top: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .control-group label {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .action-buttons {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    button {
+      border: none;
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    #addSceneBtn {
+      background: #202020;
+      color: white;
+    }
+
+    #playBtn {
+      background: var(--accent);
+      color: black;
+    }
+
+    #restartBtn {
+      background: #2a2a2a;
+      color: white;
+    }
+
+    #downloadBtn {
+      background: #2a2a2a;
+      color: white;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    /*
+    ========================================
+    PREVIEW PANEL
+    ========================================
+    */
+
+    #previewPanel {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: black;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #cinematicPreview {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+      aspect-ratio: 9 / 16;
+      background: #000;
+      overflow: hidden;
+      border-radius: 24px;
+      border: 1px solid #1f1f1f;
+    }
+
+    /*
+    ========================================
+    HIDDEN RENDER CANVAS
+    ========================================
+    */
+
+    #renderCanvas {
+      display: none;
+    }
+
+    /*
+    ========================================
+    PLAYBACK MODE
+    ========================================
+    */
+
+    .playback-mode #editorPanel {
+      display: none;
+    }
+
+    .playback-mode #app {
+      grid-template-columns: 1fr;
+    }
+
+    .playback-mode #cinematicPreview {
+      max-width: 100vw;
+      height: 100vh;
+      border-radius: 0;
+    }
+
+    /*
+    ========================================
+    RESPONSIVE
+    ========================================
+    */
+
+    @media (max-width: 980px) {
+      #app {
+        grid-template-columns: 1fr;
+      }
+
+      #editorPanel {
+        height: 50vh;
+      }
+
+      #previewPanel {
+        height: 50vh;
+      }
+
+      #cinematicPreview {
+        height: 100%;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-<div class="container">
+  <div id="app">
 
-  <!-- =================================
-       CONTROL PANEL
-  ================================== -->
+    <!-- ===================================== -->
+    <!-- EDITOR PANEL -->
+    <!-- ===================================== -->
 
-  <div
-    class="control-panel"
-    id="controlPanel"
-  >
+    <aside id="editorPanel">
 
-    <div class="panel-title">
+      <header class="editor-header">
+        <h1>Reel Creator Pro</h1>
 
-      Reel Creator Pro
+        <p>
+          Create cinematic multi-scene reels with
+          narration, animation, and auto-export.
+        </p>
+      </header>
 
-    </div>
+      <!-- Scene Container -->
 
-    <!-- WATERMARK -->
+      <section id="sceneContainer">
 
-    <input
-      type="text"
-      id="userName"
-      placeholder="Watermark Name"
-    />
+        <!-- Default Scene Card -->
 
-    <!-- =================================
-         SCENES
-    ================================== -->
+        <article class="scene-card">
 
-    <div id="sceneContainer">
+          <div class="scene-topbar">
+            <div class="scene-title">
+              Scene 1
+            </div>
 
-      <!-- SCENE 1 -->
+            <button
+              type="button"
+              class="scene-remove-btn"
+            >
+              Remove
+            </button>
+          </div>
 
-      <div
-        class="scene-card"
-      >
+          <div class="scene-field">
+            <label>
+              Upload Photo
+            </label>
 
-        <div class="scene-title">
+            <input
+              type="file"
+              accept="image/*"
+              class="scene-image-input"
+            />
+          </div>
 
-          Scene 1
+          <div class="scene-field">
+            <label>
+              Scene Narration
+            </label>
+
+            <textarea
+              class="scene-text-input"
+              placeholder="Write cinematic narration..."
+            ></textarea>
+          </div>
+
+          <div class="scene-preview">
+            <img
+              src=""
+              alt="Scene Preview"
+            />
+          </div>
+
+        </article>
+
+      </section>
+
+      <!-- Global Controls -->
+
+      <footer class="global-controls">
+
+        <div class="control-group">
+          <label for="voiceSelect">
+            Voice Mode
+          </label>
+
+          <select id="voiceSelect">
+
+            <option value="female">
+              Female Voice
+            </option>
+
+            <option value="male">
+              Male Voice
+            </option>
+
+            <option value="auto">
+              Auto Voice
+            </option>
+
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label for="watermarkInput">
+            Watermark
+          </label>
+
+          <input
+            type="text"
+            id="watermarkInput"
+            placeholder="Enter watermark text..."
+          />
+        </div>
+
+        <div class="action-buttons">
+
+          <button id="addSceneBtn">
+            Add Scene
+          </button>
+
+          <button id="playBtn">
+            Play Reel
+          </button>
+
+          <button id="restartBtn">
+            Restart
+          </button>
+
+          <button id="downloadBtn">
+            Download
+          </button>
 
         </div>
 
-        <!-- PHOTO -->
+      </footer>
 
-        <input
-          type="file"
-          accept="image/*"
-          class="scene-image"
-        />
+    </aside>
 
-        <!-- PREVIEW -->
+    <!-- ===================================== -->
+    <!-- PREVIEW PANEL -->
+    <!-- ===================================== -->
 
-        <img
-          class="scene-preview"
-        />
+    <main id="previewPanel">
 
-        <!-- TEXT -->
+      <section id="cinematicPreview">
 
-        <textarea
-          class="scene-text"
-          placeholder="Scene 1 का टेक्स्ट लिखें..."
-        ></textarea>
+        <!-- Cinematic render layer injected later -->
 
-        <!-- REMOVE -->
+      </section>
 
-        <button
-          class="remove-scene"
-        >
-
-          Remove Scene
-
-        </button>
-
-      </div>
-
-    </div>
-
-    <!-- =================================
-         CONTROLS
-    ================================== -->
-
-    <div class="controls">
-
-      <!-- ADD SCENE -->
-
-      <button
-        id="addSceneBtn"
-      >
-
-        ➕ Add Next Photo
-
-      </button>
-
-      <!-- PLAY -->
-
-      <button
-        id="playBtn"
-      >
-
-        ▶ Play
-
-      </button>
-
-      <!-- RESTART -->
-
-      <button
-        id="restartBtn"
-      >
-
-        ↻ Restart
-
-      </button>
-
-      <!-- DOWNLOAD -->
-
-      <button
-        id="downloadBtn"
-      >
-
-        ⬇ Download
-
-      </button>
-
-      <!-- VOICE -->
-
-      <div
-        class="voice-controls"
-      >
-
-        <button
-          id="voiceToggle"
-        >
-
-          🎤 Voice
-
-        </button>
-
-        <button
-          onclick="setVoice('female')"
-        >
-
-          👩 Female
-
-        </button>
-
-        <button
-          onclick="setVoice('male')"
-        >
-
-          👨 Male
-
-        </button>
-
-        <button
-          onclick="setVoice('auto')"
-        >
-
-          🔀 Auto
-
-        </button>
-
-      </div>
-
-    </div>
+    </main>
 
   </div>
 
-  <!-- =================================
-       PREVIEW AREA
-  ================================== -->
+  <!-- Hidden Production Canvas -->
 
-  <div
-    class="preview"
-    id="preview"
-  >
+  <canvas id="renderCanvas"></canvas>
 
-    <!-- CANVAS -->
+  <!-- ===================================== -->
+  <!-- ENGINE LOAD ORDER -->
+  <!-- ===================================== -->
 
-    <canvas
-      id="reelCanvas"
-    ></canvas>
+  <script src="timeline-engine.js"></script>
 
-    <!-- MAIN IMAGE -->
+  <script src="tts-engine.js"></script>
 
-    <img
-      id="img"
-      alt="preview"
-    />
+  <script src="canvas-recorder.js"></script>
 
-    <!-- TEXT -->
-
-    <div
-      class="text-box"
-      id="textBox"
-    ></div>
-
-    <!-- WATERMARK -->
-
-    <div
-      class="watermark"
-      id="watermark"
-    ></div>
-
-  </div>
-
-</div>
-
-<!-- =================================
-     SCRIPTS
-================================== -->
-
-<script src="canvas-recorder.js"></script>
-
-<script src="script.js"></script>
+  <script src="script.js"></script>
 
 </body>
-
 </html>
