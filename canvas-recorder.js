@@ -21,15 +21,20 @@ async function startCanvasRecording() {
     const screenAudioTracks =
       screenStream.getAudioTracks();
 
-    // ===== CHECK AUDIO =====
-    if (!screenAudioTracks.length) {
+    
+    // ===== AUDIO OPTIONAL =====
+if (screenAudioTracks.length) {
 
-      alert(
-        "System audio नहीं मिला.\n\nScreen Share करते समय:\n✔ Share tab audio ON करें"
-      );
+  screenAudioTracks.forEach(track => {
+    mergedStream.addTrack(track);
+  });
 
-      return;
-    }
+} else {
+
+  console.log(
+    "No system audio available on this device"
+  );
+}
 
     // ===== CREATE FINAL STREAM =====
     mergedStream = new MediaStream();
