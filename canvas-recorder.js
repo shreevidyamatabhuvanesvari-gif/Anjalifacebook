@@ -53,7 +53,7 @@ function animateCanvas() {
     canvas.height
   );
 
-  // ===== BLACK BG =====
+  // ===== BG =====
   ctx.fillStyle = "black";
 
   ctx.fillRect(
@@ -69,7 +69,6 @@ function animateCanvas() {
     img.naturalWidth > 0
   ) {
 
-    // ===== BREATHING =====
     const zoom =
       1 +
       Math.sin(
@@ -90,7 +89,7 @@ function animateCanvas() {
       (canvas.height -
         imgHeight) / 2;
 
-    // ===== DRAW IMAGE =====
+    // ===== IMAGE DRAW =====
     ctx.drawImage(
       img,
       x,
@@ -328,7 +327,7 @@ async function startCanvasRecording() {
 
   try {
 
-    // ===== SCREEN AUDIO =====
+    // ===== ASK SCREEN AUDIO =====
     screenStream =
       await navigator
         .mediaDevices
@@ -337,7 +336,7 @@ async function startCanvasRecording() {
           audio: true
         });
 
-    // ===== VIDEO STREAM =====
+    // ===== CANVAS VIDEO =====
     canvasStream =
       canvas.captureStream(30);
 
@@ -345,148 +344,197 @@ async function startCanvasRecording() {
     let audioTracks = [];
 
     // ===== SYSTEM AUDIO =====
-    if (screenStream) {
+    if (
+      screenStream &&
+      screenStream.getAudioTracks()
+        .length > 0
+    ) {
 
       audioTracks.push(
         ...screenStream.getAudioTracks()
       );
     }
 
-    // ===== MERGED STREAM =====
+    // ===== FINAL MERGED STREAM =====
     mergedStream =
       new MediaStream([
         ...canvasStream.getVideoTracks(),
         ...audioTracks
       ]);
 
+    // ===== RESET CHUNKS =====
     canvasChunks = [];
 
-    // ===== MIME =====
-    let options = {};
+    // ===== MIME TYPE =====
+    let mimeType =
+      "video/webm";
 
     if (
       MediaRecorder.isTypeSupported(
-        "video/webm;codecs=vp9"
+        "video/webm;codecs=vp9,opus"
       )
     ) {
 
-      options.mimeType =
-        "video/webm;codecs=vp9";
+      mimeType =
+        "video/webm;codecs=vp9,opus";
     }
 
     else if (
       MediaRecorder.isTypeSupported(
-        "video/webm;codecs=vp8"
+        "video/webm;codecs=vp8,opus"
       )
     ) {
 
-      options.mimeType =
-        "video/webm;codecs=vp8";
-    }
-
-    else {
-
-      options.mimeType =
-        "video/webm";
+      mimeType =
+        "video/webm;codecs=vp8,opus";
     }
 
     // ===== RECORDER =====
     canvasRecorder =
       new MediaRecorder(
         mergedStream,
-        options
+        {
+          mimeType: mimeType
+        }
       );
 
     // ===== DATA =====
     canvasRecorder.ondataavailable =
+      function (event) {
+
+        if (
+          event.data &&
+          event.data.size > 0
+        ) {
+
+          canvasChunks.push(
+            event.data
+          );
+        }
+      };
+
+    // ===== ERROR =====
+    canvasRecorder.onerror =
       function (e) {
 
-        if (e.data.size > 0) {
+        console.log(
+          "Recorder Error:",
+          e
+        );
 
-          canvasChunks.push(e.data);
-        }
+        alert(
+          "Recording error आया"
+        );
       };
 
     // ===== STOP =====
     canvasRecorder.onstop =
       function () {
 
-        const blob =
-          new Blob(
-            canvasChunks,
-            {
-              type:
-                options.mimeType
-            }
-          );
+        try {
 
-        const videoURL =
-          URL.createObjectURL(
-            blob
-          );
+          // ===== BLOB =====
+          const blob =
+            new Blob(
+              canvasChunks,
+              {
+                type: mimeType
+              }
+            );
 
-        const a =
-          document.createElement(
-            "a"
-          );
+          // ===== URL =====
+          const videoURL =
+            URL.createObjectURL(
+              blob
+            );
 
-        a.href = videoURL;
+          // ===== DOWNLOAD =====
+          const a =
+            document.createElement(
+              "a"
+            );
 
-        a.download =
-          "reel-video.webm";
+          a.style.display =
+            "none";
 
-        document.body.appendChild(
-          a
-        );
+          a.href =
+            videoURL;
 
-        a.click();
+          a.download =
+            "reel-video.webm";
 
-        setTimeout(() => {
-
-          URL.revokeObjectURL(
-            videoURL
-          );
-
-          document.body.removeChild(
+          document.body.appendChild(
             a
           );
 
-        }, 100);
+          a.click();
+
+          // ===== CLEAN =====
+          setTimeout(() => {
+
+            URL.revokeObjectURL(
+              videoURL
+            );
+
+            document.body.removeChild(
+              a
+            );
+
+          }, 1000);
+
+        } catch (err) {
+
+          console.log(err);
+
+          alert(
+            "Video save error"
+          );
+        }
       };
 
     // ===== START =====
-    canvasRecorder.start();
+    canvasRecorder.start(
+      1000
+    );
 
   } catch (err) {
 
     console.log(err);
 
     alert(
-      "Screen audio permission allow करें"
+      "Screen + audio permission allow करें"
     );
   }
 }
 
-// ===== STOP =====
+// ===== STOP RECORDING =====
 function stopCanvasRecording() {
 
-  if (
-    canvasRecorder &&
-    canvasRecorder.state ===
-      "recording"
-  ) {
+  try {
 
-    canvasRecorder.stop();
-  }
+    // ===== STOP RECORDER =====
+    if (
+      canvasRecorder &&
+      canvasRecorder.state ===
+        "recording"
+    ) {
 
-  // ===== STOP SCREEN STREAM =====
-  if (screenStream) {
+      canvasRecorder.stop();
+    }
 
-    screenStream
-      .getTracks()
-      .forEach(track => {
+    // ===== STOP SCREEN =====
+    if (screenStream) {
 
-        track.stop();
-      });
+      screenStream
+        .getTracks()
+        .forEach(track => {
+
+          track.stop();
+        });
+    }
+
+  } catch (err) {
+
+    console.log(err);
   }
 }
