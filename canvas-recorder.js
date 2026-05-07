@@ -228,7 +228,7 @@ function drawColoredText(
         word + " "
       ).width;
 
-    // ===== LINE BREAK =====
+    // ===== NEW LINE =====
     if (
       x + wordWidth >
       startX + maxWidth
@@ -239,7 +239,7 @@ function drawColoredText(
       y += lineHeight;
     }
 
-    // ===== WORD COLOR =====
+    // ===== COLOR =====
     ctx.fillStyle =
       canvasColors[
         i %
@@ -334,7 +334,7 @@ async function startCanvasRecording() {
   try {
 
     // =====================================
-    // CAPTURE SYSTEM / TAB AUDIO
+    // CAPTURE TAB AUDIO
     // =====================================
 
     screenAudioStream =
@@ -348,7 +348,7 @@ async function startCanvasRecording() {
         });
 
     // =====================================
-    // CANVAS STREAM
+    // CANVAS VIDEO STREAM
     // =====================================
 
     canvasStream =
@@ -360,7 +360,6 @@ async function startCanvasRecording() {
 
     let audioTracks = [];
 
-    // ===== SYSTEM AUDIO =====
     if (
       screenAudioStream &&
       screenAudioStream
@@ -527,6 +526,19 @@ async function startCanvasRecording() {
 
           }, 2000);
 
+          // ===== STOP STREAMS =====
+          if (
+            screenAudioStream
+          ) {
+
+            screenAudioStream
+              .getTracks()
+              .forEach(track => {
+
+                track.stop();
+              });
+          }
+
         } catch (err) {
 
           console.log(err);
@@ -560,7 +572,6 @@ function stopCanvasRecording() {
 
   try {
 
-    // ===== STOP RECORDER =====
     if (
       canvasRecorder &&
       canvasRecorder.state ===
@@ -568,19 +579,6 @@ function stopCanvasRecording() {
     ) {
 
       canvasRecorder.stop();
-    }
-
-    // ===== STOP AUDIO STREAM =====
-    if (
-      screenAudioStream
-    ) {
-
-      screenAudioStream
-        .getTracks()
-        .forEach(track => {
-
-          track.stop();
-        });
     }
 
   } catch (err) {
