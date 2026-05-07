@@ -19,7 +19,7 @@ let canvasStream;
 let mergedStream;
 let screenStream;
 
-// ===== TALKING EFFECT =====
+// ===== TALKING =====
 let talkingAnimation;
 let mouthFrame = 0;
 
@@ -33,7 +33,7 @@ const canvasColors = [
   "#ffffff"
 ];
 
-// ===== START TALKING EFFECT =====
+// ===== START TALKING =====
 function startTalkingEffect() {
 
   cancelAnimationFrame(
@@ -43,7 +43,7 @@ function startTalkingEffect() {
   animateCanvas();
 }
 
-// ===== ANIMATION LOOP =====
+// ===== ANIMATE =====
 function animateCanvas() {
 
   ctx.clearRect(
@@ -65,6 +65,7 @@ function animateCanvas() {
 
   // ===== IMAGE =====
   if (
+    img &&
     img.complete &&
     img.naturalWidth > 0
   ) {
@@ -89,7 +90,6 @@ function animateCanvas() {
       (canvas.height -
         imgHeight) / 2;
 
-    // ===== IMAGE DRAW =====
     ctx.drawImage(
       img,
       x,
@@ -163,7 +163,7 @@ function animateCanvas() {
     "left";
 
   drawColoredText(
-    textBox.innerText,
+    textBox.innerText || "",
     110,
     860,
     860,
@@ -181,7 +181,7 @@ function animateCanvas() {
     "center";
 
   ctx.fillText(
-    watermark.innerText,
+    watermark.innerText || "",
     canvas.width / 2,
     1320
   );
@@ -201,6 +201,8 @@ function drawColoredText(
   maxWidth,
   lineHeight
 ) {
+
+  if (!text) return;
 
   const words =
     text.split(" ");
@@ -318,8 +320,9 @@ function roundRect(
 
   ctx.closePath();
 
-  if (fill)
+  if (fill) {
     ctx.fill();
+  }
 }
 
 // ===== START RECORDING =====
@@ -332,40 +335,60 @@ async function startCanvasRecording() {
       await navigator
         .mediaDevices
         .getDisplayMedia({
-          video: true,
+          video: false,
           audio: true
         });
 
-    // ===== CANVAS VIDEO =====
+    // ===== CANVAS STREAM =====
     canvasStream =
       canvas.captureStream(30);
 
     // ===== AUDIO TRACKS =====
-    let audioTracks = [];
+    const audioTracks = [];
 
     // ===== SYSTEM AUDIO =====
     if (
       screenStream &&
-      screenStream.getAudioTracks()
-        .length > 0
+      screenStream.getAudioTracks
     ) {
 
-      audioTracks.push(
-        ...screenStream.getAudioTracks()
-      );
+      const tracks =
+        screenStream.getAudioTracks();
+
+      if (
+        tracks &&
+        tracks.length > 0
+      ) {
+
+        audioTracks.push(
+          ...tracks
+        );
+      }
     }
 
-    // ===== FINAL MERGED STREAM =====
+    // ===== AUDIO CHECK =====
+    if (
+      audioTracks.length === 0
+    ) {
+
+      alert(
+        "Audio track नहीं मिला। Screen share में audio allow करें।"
+      );
+
+      return;
+    }
+
+    // ===== MERGED STREAM =====
     mergedStream =
       new MediaStream([
         ...canvasStream.getVideoTracks(),
         ...audioTracks
       ]);
 
-    // ===== RESET CHUNKS =====
+    // ===== RESET =====
     canvasChunks = [];
 
-    // ===== MIME TYPE =====
+    // ===== MIME =====
     let mimeType =
       "video/webm";
 
@@ -417,13 +440,10 @@ async function startCanvasRecording() {
     canvasRecorder.onerror =
       function (e) {
 
-        console.log(
-          "Recorder Error:",
-          e
-        );
+        console.log(e);
 
         alert(
-          "Recording error आया"
+          "Recording error"
         );
       };
 
@@ -432,6 +452,18 @@ async function startCanvasRecording() {
       function () {
 
         try {
+
+          // ===== EMPTY CHECK =====
+          if (
+            canvasChunks.length === 0
+          ) {
+
+            alert(
+              "Video data नहीं बना"
+            );
+
+            return;
+          }
 
           // ===== BLOB =====
           const blob =
@@ -480,7 +512,7 @@ async function startCanvasRecording() {
               a
             );
 
-          }, 1000);
+          }, 3000);
 
         } catch (err) {
 
@@ -502,7 +534,7 @@ async function startCanvasRecording() {
     console.log(err);
 
     alert(
-      "Screen + audio permission allow करें"
+      "Screen audio permission allow करें"
     );
   }
 }
@@ -522,16 +554,20 @@ function stopCanvasRecording() {
       canvasRecorder.stop();
     }
 
-    // ===== STOP SCREEN =====
-    if (screenStream) {
+    // ===== STOP SCREEN LATER =====
+    setTimeout(() => {
 
-      screenStream
-        .getTracks()
-        .forEach(track => {
+      if (screenStream) {
 
-          track.stop();
-        });
-    }
+        screenStream
+          .getTracks()
+          .forEach(track => {
+
+            track.stop();
+          });
+      }
+
+    }, 2000);
 
   } catch (err) {
 
