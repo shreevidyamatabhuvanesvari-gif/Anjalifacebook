@@ -1,32 +1,8 @@
 // ======================================================
-// FULL FIXED CANVAS RECORDER
-// IMAGE + TTS AUDIO + VIDEO DOWNLOAD
-// JPG + PNG + WEBP SUPPORTED
-// MOBILE + PC SUPPORTED
+// REAL WORKING MOBILE SAFE RECORDER
 // ======================================================
 
-// ======================================================
-// REQUIRED HTML
-// ======================================================
-//
-// <canvas id="reelCanvas"></canvas>
-//
-// <div id="textBox">
-//   आपका टेक्स्ट
-// </div>
-//
-// <div id="watermark">
-//   @watermark
-// </div>
-//
-// <audio
-//   id="ttsAudio"
-//   crossorigin="anonymous"
-// ></audio>
-//
-// ======================================================
-
-// ===== CANVAS =====
+// ===== ELEMENTS =====
 const canvas =
   document.getElementById(
     "reelCanvas"
@@ -35,11 +11,16 @@ const canvas =
 const ctx =
   canvas.getContext("2d");
 
-// ===== SIZE =====
-canvas.width = 1080;
-canvas.height = 1920;
+const audio =
+  document.getElementById(
+    "ttsAudio"
+  );
 
-// ===== ELEMENTS =====
+const imageInput =
+  document.getElementById(
+    "imageInput"
+  );
+
 const textBox =
   document.getElementById(
     "textBox"
@@ -50,111 +31,64 @@ const watermark =
     "watermark"
   );
 
-const ttsAudio =
-  document.getElementById(
-    "ttsAudio"
-  );
-
-// ===== RECORDING =====
-let canvasRecorder;
-
-let canvasChunks = [];
-
-let canvasStream;
-
-let mergedStream;
-
-// ===== ANIMATION =====
-let talkingAnimation;
-
-let mouthFrame = 0;
+// ===== SIZE =====
+canvas.width = 1080;
+canvas.height = 1920;
 
 // ===== IMAGE =====
-let img = new Image();
+let img = null;
 
-img.crossOrigin =
-  "anonymous";
+// ===== RECORDER =====
+let recorder;
 
-img.referrerPolicy =
-  "no-referrer";
+let chunks = [];
 
-// ===== COLORS =====
-const canvasColors = [
-  "#ff4d4d",
-  "#ffd633",
-  "#66ff66",
-  "#66ccff",
-  "#ff66cc",
-  "#ffffff"
-];
+let animationId;
 
 // ======================================================
-// LOAD IMAGE
-// SUPPORT:
-// JPG
-// PNG
-// WEBP
+// LOAD IMAGE FROM INPUT
 // ======================================================
-function loadImage(src) {
+imageInput.addEventListener(
+  "change",
+  function (e) {
 
-  return new Promise(
-    (resolve, reject) => {
+    const file =
+      e.target.files[0];
 
-      img = new Image();
+    if (!file) return;
 
-      img.crossOrigin =
-        "anonymous";
+    const reader =
+      new FileReader();
 
-      img.referrerPolicy =
-        "no-referrer";
+    reader.onload =
+      function (event) {
 
-      img.onload =
-        () => {
+        img = new Image();
 
-          console.log(
-            "Image Loaded"
-          );
+        img.onload =
+          function () {
 
-          resolve(img);
-        };
+            console.log(
+              "Image loaded"
+            );
 
-      img.onerror =
-        err => {
+            drawCanvas();
+          };
 
-          console.log(err);
+        img.src =
+          event.target.result;
+      };
 
-          reject(
-            new Error(
-              "Image load failed"
-            )
-          );
-        };
-
-      // ===== CACHE FIX =====
-      img.src =
-        src +
-        "?t=" +
-        Date.now();
-    }
-  );
-}
+    reader.readAsDataURL(
+      file
+    );
+  }
+);
 
 // ======================================================
-// START TALKING EFFECT
+// DRAW CANVAS
 // ======================================================
-function startTalkingEffect() {
-
-  cancelAnimationFrame(
-    talkingAnimation
-  );
-
-  animateCanvas();
-}
-
-// ======================================================
-// CANVAS ANIMATION
-// ======================================================
-function animateCanvas() {
+function drawCanvas() {
 
   // ===== CLEAR =====
   ctx.clearRect(
@@ -174,378 +108,112 @@ function animateCanvas() {
     canvas.height
   );
 
-  // ======================================================
-  // IMAGE DRAW
-  // ======================================================
-  if (
-    img &&
-    img.complete &&
-    img.naturalWidth > 0
-  ) {
+  // ===== IMAGE =====
+  if (img) {
 
-    // ===== ZOOM =====
-    const zoom =
-      1 +
-      Math.sin(
-        Date.now() * 0.0015
-      ) * 0.02;
-
-    const imgWidth =
-      canvas.width * zoom;
-
-    const imgHeight =
-      canvas.height * zoom;
-
-    const x =
-      (canvas.width -
-        imgWidth) / 2;
-
-    const y =
-      (canvas.height -
-        imgHeight) / 2;
-
-    // ===== DRAW IMAGE =====
     ctx.drawImage(
       img,
-      x,
-      y,
-      imgWidth,
-      imgHeight
+      0,
+      0,
+      canvas.width,
+      canvas.height
     );
-
-    // ======================================================
-    // TALKING EFFECT
-    // ======================================================
-    mouthFrame += 0.35;
-
-    const mouthMove =
-      Math.sin(
-        mouthFrame
-      ) * 10;
-
-    // ===== SHADOW =====
-    ctx.fillStyle =
-      "rgba(0,0,0,0.35)";
-
-    ctx.beginPath();
-
-    ctx.ellipse(
-      canvas.width / 2,
-      canvas.height * 0.69,
-      70,
-      12 + mouthMove,
-      0,
-      0,
-      Math.PI * 2
-    );
-
-    ctx.fill();
-
-    // ===== INNER LIP =====
-    ctx.fillStyle =
-      "rgba(255,70,70,0.22)";
-
-    ctx.beginPath();
-
-    ctx.ellipse(
-      canvas.width / 2,
-      canvas.height * 0.688,
-      48,
-      5 + mouthMove * 0.4,
-      0,
-      0,
-      Math.PI * 2
-    );
-
-    ctx.fill();
   }
 
-  // ======================================================
-  // TEXT BOX
-  // ======================================================
+  // ===== TEXT BOX =====
   ctx.fillStyle =
-    "rgba(0,0,0,0.60)";
+    "rgba(0,0,0,0.5)";
 
-  roundRect(
-    ctx,
+  ctx.fillRect(
     60,
     760,
     960,
-    420,
-    28,
-    true
+    420
   );
 
-  // ======================================================
-  // TEXT
-  // ======================================================
+  // ===== TEXT =====
+  ctx.fillStyle = "white";
+
   ctx.font =
     "bold 54px sans-serif";
 
-  ctx.textAlign =
-    "left";
-
-  drawColoredText(
-    textBox.innerText || "",
-    110,
-    860,
-    860,
-    82
+  ctx.fillText(
+    textBox.value || "",
+    100,
+    860
   );
 
-  // ======================================================
-  // WATERMARK
-  // ======================================================
-  ctx.fillStyle =
-    "rgba(255,255,255,0.95)";
-
+  // ===== WATERMARK =====
   ctx.font =
-    "italic bold 34px sans-serif";
-
-  ctx.textAlign =
-    "center";
+    "bold 32px sans-serif";
 
   ctx.fillText(
-    watermark.innerText || "",
-    canvas.width / 2,
-    1320
+    watermark.value || "",
+    100,
+    1300
   );
 
-  // ===== LOOP =====
-  talkingAnimation =
+  animationId =
     requestAnimationFrame(
-      animateCanvas
+      drawCanvas
     );
-}
-
-// ======================================================
-// DRAW MULTICOLOR TEXT
-// ======================================================
-function drawColoredText(
-  text,
-  startX,
-  startY,
-  maxWidth,
-  lineHeight
-) {
-
-  if (!text) return;
-
-  const words =
-    text.split(" ");
-
-  let x = startX;
-
-  let y = startY;
-
-  for (
-    let i = 0;
-    i < words.length;
-    i++
-  ) {
-
-    const word =
-      words[i];
-
-    const wordWidth =
-      ctx.measureText(
-        word + " "
-      ).width;
-
-    // ===== NEW LINE =====
-    if (
-      x + wordWidth >
-      startX + maxWidth
-    ) {
-
-      x = startX;
-
-      y += lineHeight;
-    }
-
-    // ===== COLOR =====
-    ctx.fillStyle =
-      canvasColors[
-        i %
-          canvasColors.length
-      ];
-
-    ctx.fillText(
-      word,
-      x,
-      y
-    );
-
-    x += wordWidth;
-  }
-}
-
-// ======================================================
-// ROUND RECT
-// ======================================================
-function roundRect(
-  ctx,
-  x,
-  y,
-  width,
-  height,
-  radius,
-  fill
-) {
-
-  ctx.beginPath();
-
-  ctx.moveTo(
-    x + radius,
-    y
-  );
-
-  ctx.lineTo(
-    x + width - radius,
-    y
-  );
-
-  ctx.quadraticCurveTo(
-    x + width,
-    y,
-    x + width,
-    y + radius
-  );
-
-  ctx.lineTo(
-    x + width,
-    y + height - radius
-  );
-
-  ctx.quadraticCurveTo(
-    x + width,
-    y + height,
-    x + width - radius,
-    y + height
-  );
-
-  ctx.lineTo(
-    x + radius,
-    y + height
-  );
-
-  ctx.quadraticCurveTo(
-    x,
-    y + height,
-    x,
-    y + height - radius
-  );
-
-  ctx.lineTo(
-    x,
-    y + radius
-  );
-
-  ctx.quadraticCurveTo(
-    x,
-    y,
-    x + radius,
-    y
-  );
-
-  ctx.closePath();
-
-  if (fill) {
-
-    ctx.fill();
-  }
 }
 
 // ======================================================
 // START RECORDING
 // ======================================================
-async function startCanvasRecording(
-  imageURL,
-  audioURL
-) {
+async function startRecording() {
 
   try {
 
-    // ===== RESET =====
-    canvasChunks = [];
-
-    // ======================================================
-    // LOAD IMAGE
-    // ======================================================
-    await loadImage(
-      imageURL
-    );
-
-    // ======================================================
-    // LOAD AUDIO
-    // ======================================================
-    ttsAudio.src =
-      audioURL;
-
-    await new Promise(
-      resolve => {
-
-        ttsAudio.onloadeddata =
-          () => {
-
-            resolve();
-          };
-      }
-    );
-
-    // ======================================================
-    // START ANIMATION
-    // ======================================================
-    startTalkingEffect();
-
-    // ======================================================
-    // CAPTURE CANVAS VIDEO
-    // ======================================================
-    canvasStream =
-      canvas.captureStream(
-        30
-      );
-
-    // ======================================================
-    // AUDIO STREAM
-    // ======================================================
-    let audioStream;
-
-    if (
-      ttsAudio.captureStream
-    ) {
-
-      audioStream =
-        ttsAudio.captureStream();
-
-    } else if (
-      ttsAudio.mozCaptureStream
-    ) {
-
-      audioStream =
-        ttsAudio.mozCaptureStream();
-
-    } else {
+    if (!img) {
 
       alert(
-        "Audio capture not supported"
+        "पहले image upload करें"
       );
 
       return;
     }
 
-    // ======================================================
-    // MERGED STREAM
-    // ======================================================
-    mergedStream =
+    // ===== RESET =====
+    chunks = [];
+
+    // ===== START DRAW =====
+    drawCanvas();
+
+    // ===== VIDEO STREAM =====
+    const videoStream =
+      canvas.captureStream(30);
+
+    // ===== AUDIO STREAM =====
+    let audioStream;
+
+    if (
+      audio.captureStream
+    ) {
+
+      audioStream =
+        audio.captureStream();
+
+    } else {
+
+      alert(
+        "captureStream not supported"
+      );
+
+      return;
+    }
+
+    // ===== FINAL STREAM =====
+    const finalStream =
       new MediaStream();
 
     // ===== VIDEO =====
-    canvasStream
+    videoStream
       .getVideoTracks()
       .forEach(track => {
 
-        mergedStream.addTrack(
+        finalStream.addTrack(
           track
         );
       });
@@ -555,253 +223,106 @@ async function startCanvasRecording(
       .getAudioTracks()
       .forEach(track => {
 
-        mergedStream.addTrack(
+        finalStream.addTrack(
           track
         );
       });
 
-    // ======================================================
-    // MIME TYPE
-    // ======================================================
-    let mimeType =
-      "video/webm";
-
-    if (
-      MediaRecorder.isTypeSupported(
-        "video/webm;codecs=vp9,opus"
-      )
-    ) {
-
-      mimeType =
-        "video/webm;codecs=vp9,opus";
-
-    } else if (
-      MediaRecorder.isTypeSupported(
-        "video/webm;codecs=vp8,opus"
-      )
-    ) {
-
-      mimeType =
-        "video/webm;codecs=vp8,opus";
-    }
-
-    // ======================================================
-    // RECORDER
-    // ======================================================
-    canvasRecorder =
+    // ===== RECORDER =====
+    recorder =
       new MediaRecorder(
-        mergedStream,
+        finalStream,
         {
-          mimeType,
-          videoBitsPerSecond:
-            8000000,
-          audioBitsPerSecond:
-            128000
+          mimeType:
+            "video/webm"
         }
       );
 
-    // ======================================================
-    // DATA
-    // ======================================================
-    canvasRecorder.ondataavailable =
-      event => {
+    // ===== DATA =====
+    recorder.ondataavailable =
+      e => {
 
         if (
-          event.data &&
-          event.data.size > 0
+          e.data.size > 0
         ) {
 
-          canvasChunks.push(
-            event.data
+          chunks.push(
+            e.data
           );
         }
       };
 
-    // ======================================================
-    // ERROR
-    // ======================================================
-    canvasRecorder.onerror =
-      err => {
+    // ===== STOP =====
+    recorder.onstop =
+      function () {
 
-        console.log(err);
+        const blob =
+          new Blob(
+            chunks,
+            {
+              type:
+                "video/webm"
+            }
+          );
 
-        alert(
-          "Recording error"
+        const url =
+          URL.createObjectURL(
+            blob
+          );
+
+        const a =
+          document.createElement(
+            "a"
+          );
+
+        a.href = url;
+
+        a.download =
+          "video.webm";
+
+        a.click();
+
+        URL.revokeObjectURL(
+          url
         );
       };
 
-    // ======================================================
-    // STOP EVENT
-    // ======================================================
-    canvasRecorder.onstop =
-      () => {
+    // ===== START =====
+    recorder.start();
 
-        try {
+    // ===== PLAY AUDIO =====
+    await audio.play();
 
-          // ===== EMPTY =====
-          if (
-            canvasChunks.length === 0
-          ) {
+    // ===== AUTO STOP =====
+    audio.onended =
+      function () {
 
-            alert(
-              "Video data नहीं बना"
-            );
-
-            return;
-          }
-
-          // ===== VIDEO =====
-          const blob =
-            new Blob(
-              canvasChunks,
-              {
-                type: mimeType
-              }
-            );
-
-          // ===== URL =====
-          const videoURL =
-            URL.createObjectURL(
-              blob
-            );
-
-          // ===== DOWNLOAD =====
-          const a =
-            document.createElement(
-              "a"
-            );
-
-          a.style.display =
-            "none";
-
-          a.href =
-            videoURL;
-
-          a.download =
-            "reel-video.webm";
-
-          document.body.appendChild(
-            a
-          );
-
-          a.click();
-
-          // ===== CLEAN =====
-          setTimeout(() => {
-
-            URL.revokeObjectURL(
-              videoURL
-            );
-
-            a.remove();
-
-          }, 3000);
-
-          console.log(
-            "Video Downloaded"
-          );
-
-        } catch (err) {
-
-          console.log(err);
-
-          alert(
-            "Video save error"
-          );
-        }
-      };
-
-    // ======================================================
-    // START RECORDING
-    // ======================================================
-    canvasRecorder.start(
-      1000
-    );
-
-    // ======================================================
-    // PLAY AUDIO
-    // ======================================================
-    await ttsAudio.play();
-
-    console.log(
-      "Recording Started"
-    );
-
-    // ======================================================
-    // AUTO STOP
-    // ======================================================
-    ttsAudio.onended =
-      () => {
-
-        stopCanvasRecording();
+        stopRecording();
       };
 
   } catch (err) {
 
     console.log(err);
 
-    alert(
-      err.message
-    );
+    alert(err.message);
   }
 }
 
 // ======================================================
-// STOP RECORDING
+// STOP
 // ======================================================
-function stopCanvasRecording() {
+function stopRecording() {
 
-  try {
+  if (
+    recorder &&
+    recorder.state ===
+      "recording"
+  ) {
 
-    // ===== STOP RECORDER =====
-    if (
-      canvasRecorder &&
-      canvasRecorder.state ===
-        "recording"
-    ) {
-
-      canvasRecorder.stop();
-    }
-
-    // ===== STOP AUDIO =====
-    if (ttsAudio) {
-
-      ttsAudio.pause();
-
-      ttsAudio.currentTime = 0;
-    }
-
-    // ===== STOP ANIMATION =====
-    cancelAnimationFrame(
-      talkingAnimation
-    );
-
-    // ===== STOP STREAMS =====
-    if (mergedStream) {
-
-      mergedStream
-        .getTracks()
-        .forEach(track => {
-
-          track.stop();
-        });
-    }
-
-    console.log(
-      "Recording Stopped"
-    );
-
-  } catch (err) {
-
-    console.log(err);
+    recorder.stop();
   }
+
+  cancelAnimationFrame(
+    animationId
+  );
 }
-
-// ======================================================
-// USAGE
-// ======================================================
-
-// startCanvasRecording(
-//   "image.png",
-//   "tts.mp3"
-// );
