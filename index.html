@@ -1,21 +1,11 @@
 <!DOCTYPE html>
 <html lang="hi">
-
 <head>
-
 <meta charset="UTF-8">
-
-<meta
-  name="viewport"
-  content="width=device-width, initial-scale=1.0"
->
-
-<title>
-  Reel Creator
-</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reel Creator</title>
 
 <style>
-
 body {
   margin: 0;
   background: black;
@@ -63,7 +53,7 @@ textarea {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block;
+  display: none;
 }
 
 /* TEXT BOX */
@@ -101,7 +91,7 @@ textarea {
   box-sizing: border-box;
 }
 
-/* WATERMARK */
+/* WATERMARK BELOW TEXT BOX */
 .watermark {
   position: absolute;
   top: calc(50% + 140px);
@@ -203,7 +193,7 @@ textarea {
   font-size: 14px;
 }
 
-/* HIDE INPUTS */
+/* HIDE INPUTS ON PLAY */
 .hide-ui {
   display: none !important;
 }
@@ -213,11 +203,10 @@ textarea {
   display:none;
 }
 
-/* AUDIO */
+/* HIDDEN AUDIO */
 #ttsAudio{
   display:none;
 }
-
 </style>
 </head>
 
@@ -225,165 +214,152 @@ textarea {
 
 <div class="container">
 
-  <!-- IMAGE UPLOAD -->
-  <input
-    type="file"
-    id="fileInput"
-    accept="image/*"
-  >
+<!-- IMAGE UPLOAD -->
+<input type="file" id="fileInput" accept="image/*">
 
-  <!-- TEXT INPUT -->
-  <textarea
-    id="textInput"
-    placeholder="यहाँ अपना लेख लिखें..."
-  ></textarea>
+<!-- TEXT INPUT -->
+<textarea id="textInput" placeholder="यहाँ अपना लेख लिखें..."></textarea>
 
-  <!-- WATERMARK -->
-  <input
-    type="text"
-    id="userName"
-    placeholder="Watermark Name"
-  >
+<!-- WATERMARK NAME INPUT -->
+<input type="text" id="userName" placeholder="Watermark Name">
 
-  <!-- PREVIEW -->
-  <div
-    class="preview"
-    id="preview"
-  >
+<!-- PREVIEW -->
+<div class="preview" id="preview">
 
-    <!-- CANVAS -->
-    <canvas id="reelCanvas"></canvas>
+  <!-- CANVAS -->
+  <canvas id="reelCanvas"></canvas>
 
-    <!-- IMAGE -->
-    <img id="img">
+  <!-- IMAGE -->
+  <img id="img">
 
-    <!-- TEXT -->
-    <div
-      class="text-box"
-      id="textBox"
-    ></div>
+  <!-- TEXT -->
+  <div class="text-box" id="textBox"></div>
 
-    <!-- WATERMARK -->
-    <div
-      id="watermark"
-      class="watermark"
-    ></div>
+  <!-- WATERMARK BELOW TEXT -->
+  <div id="watermark" class="watermark"></div>
 
-    <!-- AUDIO -->
-    <audio
-      id="ttsAudio"
-      crossorigin="anonymous"
-    ></audio>
+  <!-- IMPORTANT AUDIO TAG -->
+  <audio
+    id="ttsAudio"
+    crossorigin="anonymous"
+  ></audio>
 
-    <!-- VOICE BUTTONS -->
-    <div
-      class="voice-controls"
-      id="voiceControls"
-    >
+  <!-- VOICE BUTTONS -->
+  <div class="voice-controls" id="voiceControls">
 
-      <button id="voiceToggle">
-        🎤 Voice
+    <button id="voiceToggle">🎤 Voice</button>
+
+    <div id="voiceOptions" style="display:none; margin-top:5px;">
+
+      <button onclick="setVoice('female')">
+        👩 Female
       </button>
 
-      <div
-        id="voiceOptions"
-        style="
-          display:none;
-          margin-top:5px;
-        "
-      >
+      <button onclick="setVoice('male')">
+        👨 Male
+      </button>
 
-        <button
-          onclick="setVoice('female')"
-        >
-          👩 Female
-        </button>
-
-        <button
-          onclick="setVoice('male')"
-        >
-          👨 Male
-        </button>
-
-        <button
-          onclick="setVoice('auto')"
-        >
-          Auto
-        </button>
-
-      </div>
+      <button onclick="setVoice('auto')">
+        Auto
+      </button>
 
     </div>
 
-    <!-- PLAY -->
-    <button
-      id="playBtn"
-      class="play-btn"
-    >
-      ▶
-    </button>
-
-    <!-- RESTART -->
-    <button
-      id="restartBtn"
-      class="restart-btn"
-    >
-      Restart
-    </button>
-
-    <!-- DOWNLOAD -->
-    <button
-      id="downloadBtn"
-      class="download-btn"
-    >
-      ⬇ Download
-    </button>
-
   </div>
+
+  <!-- PLAY BUTTON -->
+  <button id="playBtn" class="play-btn">
+    ▶
+  </button>
+
+  <!-- RESTART BUTTON -->
+  <button id="restartBtn" class="restart-btn">
+    Restart
+  </button>
+
+  <!-- DOWNLOAD BUTTON -->
+  <button id="downloadBtn" class="download-btn">
+    ⬇ Download
+  </button>
+
+</div>
 
 </div>
 
 <script>
 
 // ======================================================
-// ELEMENTS
+// EXISTING UI HIDE
 // ======================================================
 
-const fileInput =
-  document.getElementById(
-    "fileInput"
-  );
+document
+.getElementById("playBtn")
+.addEventListener(
+  "click",
+  function () {
 
-const img =
-  document.getElementById(
-    "img"
-  );
+    document
+    .getElementById("fileInput")
+    .classList.add("hide-ui");
 
-const textInput =
-  document.getElementById(
-    "textInput"
-  );
+    document
+    .getElementById("textInput")
+    .classList.add("hide-ui");
 
-const textBox =
-  document.getElementById(
-    "textBox"
-  );
+    document
+    .getElementById("userName")
+    .classList.add("hide-ui");
 
-const userName =
-  document.getElementById(
-    "userName"
-  );
+    document
+    .getElementById("voiceControls")
+    .classList.add("hide-ui");
 
-const watermark =
-  document.getElementById(
-    "watermark"
-  );
+  }
+);
 
 // ======================================================
-// IMAGE LOAD
+// LIVE PREVIEW TEXT
 // ======================================================
 
-fileInput.addEventListener(
+document
+.getElementById("textInput")
+.addEventListener(
+  "input",
+  function () {
+
+    document
+    .getElementById("textBox")
+    .innerText =
+      this.value;
+
+  }
+);
+
+// ======================================================
+// LIVE WATERMARK
+// ======================================================
+
+document
+.getElementById("userName")
+.addEventListener(
+  "input",
+  function () {
+
+    document
+    .getElementById("watermark")
+    .innerText =
+      this.value;
+
+  }
+);
+
+// ======================================================
+// IMAGE LOAD FIX
+// ======================================================
+
+document
+.getElementById("fileInput")
+.addEventListener(
   "change",
   function (e) {
 
@@ -398,6 +374,11 @@ fileInput.addEventListener(
     reader.onload =
       function (event) {
 
+        const img =
+          document.getElementById(
+            "img"
+          );
+
         img.src =
           event.target.result;
 
@@ -405,96 +386,23 @@ fileInput.addEventListener(
           "block";
       };
 
-    reader.readAsDataURL(
-      file
-    );
+    reader.readAsDataURL(file);
+
   }
 );
-
-// ======================================================
-// LIVE TEXT
-// ======================================================
-
-textInput.addEventListener(
-  "input",
-  function () {
-
-    textBox.innerText =
-      this.value;
-  }
-);
-
-// ======================================================
-// WATERMARK
-// ======================================================
-
-userName.addEventListener(
-  "input",
-  function () {
-
-    watermark.innerText =
-      this.value;
-  }
-);
-
-// ======================================================
-// PLAY BUTTON
-// ======================================================
-
-document
-  .getElementById(
-    "playBtn"
-  )
-  .addEventListener(
-    "click",
-    function () {
-
-      document
-        .getElementById(
-          "fileInput"
-        )
-        .classList.add(
-          "hide-ui"
-        );
-
-      document
-        .getElementById(
-          "textInput"
-        )
-        .classList.add(
-          "hide-ui"
-        );
-
-      document
-        .getElementById(
-          "userName"
-        )
-        .classList.add(
-          "hide-ui"
-        );
-
-      document
-        .getElementById(
-          "voiceControls"
-        )
-        .classList.add(
-          "hide-ui"
-        );
-    }
-  );
 
 </script>
 
 <!-- AUDIO ENGINE -->
 <script src="audio-engine.js"></script>
 
-<!-- TTS -->
+<!-- TTS AUDIO -->
 <script src="tts-audio-generator.js"></script>
 
-<!-- RECORDER -->
+<!-- CANVAS RECORDER -->
 <script src="canvas-recorder.js"></script>
 
-<!-- MAIN -->
+<!-- MAIN SCRIPT -->
 <script src="script.js"></script>
 
 </body>
