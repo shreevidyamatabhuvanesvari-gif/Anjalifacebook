@@ -521,38 +521,47 @@
     PLAYBACK MODE
     ====================================================
     */
+  .playback-mode #previewPanel {
 
-    .playback-mode #editorPanel {
+  width: 100vw;
 
-      display: none;
+  height: 100vh;
 
-    }
+  padding: 0;
 
-    .playback-mode #app {
+  overflow: hidden;
 
-      grid-template-columns: 1fr;
+  background: black;
 
-    }
+}
 
-    .playback-mode #previewPanel {
+.playback-mode #cinematicPreview {
 
-      padding: 0;
+  position: fixed;
 
-    }
+  inset: 0;
 
-    .playback-mode #cinematicPreview {
+  width: 100vw;
 
-      width: 100vw;
+  height: 100vh;
 
-      height: 100vh;
+  max-width: none;
 
-      max-width: none;
+  border-radius: 0;
 
-      border-radius: 0;
+  aspect-ratio: unset;
 
-      aspect-ratio: auto;
+  background: black;
 
-    }
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+  overflow: hidden;
+
+}
 
     /*
     ====================================================
