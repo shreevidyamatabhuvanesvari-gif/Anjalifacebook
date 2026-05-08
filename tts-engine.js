@@ -1,8 +1,21 @@
 /*
 ====================================================
 REEL CREATOR PRO
-TTS ENGINE
+ADVANCED INDIAN VOICE ENGINE
 tts-engine.js
+====================================================
+
+Features:
+
+✔ Locked Voice System
+✔ Stable Indian Female Voice
+✔ Stable Indian Male Voice
+✔ Auto Voice Mode
+✔ Cinematic Speech Tuning
+✔ No Robotic Voice Switching
+✔ Same Voice Across Entire Reel
+✔ Hindi Priority System
+
 ====================================================
 */
 
@@ -21,13 +34,26 @@ window.TTSEngine = (() => {
 
   let activeUtterance = null;
 
-  let currentVoiceMode = "female";
+  let currentVoiceMode =
+    "female";
 
   let initialized = false;
 
   /*
   ====================================================
-  INITIALIZE VOICES
+  LOCKED VOICES
+  ====================================================
+  */
+
+  let lockedFemaleVoice = null;
+
+  let lockedMaleVoice = null;
+
+  let lockedAutoVoice = null;
+
+  /*
+  ====================================================
+  INITIALIZE
   ====================================================
   */
 
@@ -41,13 +67,32 @@ window.TTSEngine = (() => {
 
     await loadVoices();
 
+    /*
+    ================================================
+    LOCK VOICES
+    ================================================
+    */
+
+    lockedFemaleVoice =
+      resolveFemaleVoice();
+
+    lockedMaleVoice =
+      resolveMaleVoice();
+
+    lockedAutoVoice =
+      resolveAutoVoice();
+
     initialized = true;
+
+    console.log(
+      "TTS voices initialized."
+    );
 
   }
 
   /*
   ====================================================
-  LOAD SYSTEM VOICES
+  LOAD VOICES
   ====================================================
   */
 
@@ -60,13 +105,16 @@ window.TTSEngine = (() => {
 
       /*
       ================================================
-      VOICES ALREADY AVAILABLE
+      IMMEDIATE LOAD
       ================================================
       */
 
-      if (availableVoices.length > 0) {
+      if (
+        availableVoices.length > 0
+      ) {
 
-        voices = availableVoices;
+        voices =
+          availableVoices;
 
         resolve();
 
@@ -76,17 +124,19 @@ window.TTSEngine = (() => {
 
       /*
       ================================================
-      WAIT FOR BROWSER VOICES
+      WAIT FOR BROWSER
       ================================================
       */
 
-      synth.onvoiceschanged = () => {
+      synth.onvoiceschanged =
+        () => {
 
-        voices = synth.getVoices();
+          voices =
+            synth.getVoices();
 
-        resolve();
+          resolve();
 
-      };
+        };
 
     });
 
@@ -94,7 +144,7 @@ window.TTSEngine = (() => {
 
   /*
   ====================================================
-  MAIN SPEAK FUNCTION
+  SPEAK
   ====================================================
   */
 
@@ -106,11 +156,12 @@ window.TTSEngine = (() => {
       config.text || "";
 
     currentVoiceMode =
-      config.voiceMode || "female";
+      config.voiceMode ||
+      "female";
 
     /*
     ================================================
-    EMPTY TEXT GUARD
+    EMPTY GUARD
     ================================================
     */
 
@@ -122,7 +173,7 @@ window.TTSEngine = (() => {
 
     /*
     ================================================
-    STOP PREVIOUS SPEECH
+    STOP PREVIOUS
     ================================================
     */
 
@@ -134,42 +185,114 @@ window.TTSEngine = (() => {
     ================================================
     */
 
-    const utterance =
-      new SpeechSynthesisUtterance(text);
+    const speech =
+      new SpeechSynthesisUtterance(
+        text
+      );
 
-    activeUtterance = utterance;
+    activeUtterance =
+      speech;
 
     /*
     ================================================
-    VOICE SELECTION
+    SELECT LOCKED VOICE
     ================================================
     */
 
-    const selectedVoice =
-      selectVoice(currentVoiceMode);
+    let selectedVoice =
+      null;
 
-    if (selectedVoice) {
+    if (
+      currentVoiceMode ===
+      "female"
+    ) {
 
-      utterance.voice =
-        selectedVoice;
+      selectedVoice =
+        lockedFemaleVoice;
+
+      /*
+      ==============================================
+      INDIAN FEMALE STYLE
+      ==============================================
+      */
+
+      speech.pitch =
+        1.06;
+
+      speech.rate =
+        0.93;
+
+      speech.volume =
+        1;
+
+    }
+
+    else if (
+      currentVoiceMode ===
+      "male"
+    ) {
+
+      selectedVoice =
+        lockedMaleVoice;
+
+      /*
+      ==============================================
+      INDIAN MALE STYLE
+      ==============================================
+      */
+
+      speech.pitch =
+        0.92;
+
+      speech.rate =
+        0.96;
+
+      speech.volume =
+        1;
+
+    }
+
+    else {
+
+      selectedVoice =
+        lockedAutoVoice;
+
+      /*
+      ==============================================
+      AUTO STYLE
+      ==============================================
+      */
+
+      speech.pitch =
+        1;
+
+      speech.rate =
+        0.95;
+
+      speech.volume =
+        1;
 
     }
 
     /*
     ================================================
-    CINEMATIC SPEECH SETTINGS
+    APPLY VOICE
     ================================================
     */
 
-    utterance.rate = 0.92;
+    if (selectedVoice) {
 
-    utterance.pitch = 1;
+      speech.voice =
+        selectedVoice;
 
-    utterance.volume = 1;
+      speech.lang =
+        selectedVoice.lang;
+
+    }
 
     /*
     ================================================
-    RETURN PROMISE
+    PROMISE
     ================================================
     */
 
@@ -177,11 +300,11 @@ window.TTSEngine = (() => {
 
       /*
       ==============================================
-      SPEECH START
+      START
       ==============================================
       */
 
-      utterance.onstart = () => {
+      speech.onstart = () => {
 
         console.log(
           "TTS started:",
@@ -192,41 +315,51 @@ window.TTSEngine = (() => {
 
       /*
       ==============================================
-      SPEECH COMPLETE
+      END
       ==============================================
       */
 
-      utterance.onend = () => {
+      speech.onend = () => {
 
-        console.log(
-          "TTS completed:",
-          text
-        );
+        activeUtterance =
+          null;
 
-        activeUtterance = null;
+        /*
+        ============================================
+        CINEMATIC GAP
+        ============================================
+        */
 
-        resolve();
+        setTimeout(() => {
+
+          resolve();
+
+        }, 350);
 
       };
 
       /*
       ==============================================
-      SPEECH ERROR
+      ERROR
       ==============================================
       */
 
-      utterance.onerror = (event) => {
+      speech.onerror =
+        (event) => {
 
-        console.error(
-          "TTS error:",
-          event.error
-        );
+          console.error(
+            "TTS error:",
+            event.error
+          );
 
-        activeUtterance = null;
+          activeUtterance =
+            null;
 
-        reject(event.error);
+          reject(
+            event.error
+          );
 
-      };
+        };
 
       /*
       ==============================================
@@ -234,7 +367,7 @@ window.TTSEngine = (() => {
       ==============================================
       */
 
-      synth.speak(utterance);
+      synth.speak(speech);
 
     });
 
@@ -242,161 +375,211 @@ window.TTSEngine = (() => {
 
   /*
   ====================================================
-  VOICE SELECTION
+  FEMALE VOICE RESOLVER
   ====================================================
   */
 
-  function selectVoice(mode) {
-
-    if (!voices.length) {
-
-      return null;
-
-    }
+  function resolveFemaleVoice() {
 
     /*
     ================================================
-    FEMALE VOICE
+    PRIORITY ORDER
     ================================================
     */
 
-    if (mode === "female") {
+    const femalePriority = [
 
-      return findFemaleVoice();
-
-    }
-
-    /*
-    ================================================
-    MALE VOICE
-    ================================================
-    */
-
-    if (mode === "male") {
-
-      return findMaleVoice();
-
-    }
-
-    /*
-    ================================================
-    AUTO VOICE
-    ================================================
-    */
-
-    return findAutoVoice();
-
-  }
-
-  /*
-  ====================================================
-  FEMALE VOICE FINDER
-  ====================================================
-  */
-
-  function findFemaleVoice() {
-
-    const femaleKeywords = [
-
+      "swara",
+      "heera",
+      "google हिन्दी",
+      "google hindi",
       "female",
       "woman",
       "zira",
       "samantha",
       "victoria",
-      "karen",
-      "moira",
-      "google uk english female"
+      "karen"
 
     ];
 
-    return voices.find((voice) => {
+    /*
+    ================================================
+    HINDI FEMALE
+    ================================================
+    */
 
-      const name =
-        voice.name.toLowerCase();
+    for (const keyword of femalePriority) {
 
-      return femaleKeywords.some(keyword =>
-        name.includes(keyword)
-      );
+      const match =
+        voices.find((voice) => {
 
-    }) || voices[0];
+          const name =
+            voice.name
+              .toLowerCase();
+
+          return name.includes(
+            keyword.toLowerCase()
+          );
+
+        });
+
+      if (match) {
+
+        console.log(
+          "Female voice locked:",
+          match.name
+        );
+
+        return match;
+
+      }
+
+    }
+
+    /*
+    ================================================
+    HINDI LANGUAGE FALLBACK
+    ================================================
+    */
+
+    const hindiVoice =
+      voices.find((voice) => {
+
+        return voice.lang
+          .toLowerCase()
+          .includes("hi");
+
+      });
+
+    if (hindiVoice) {
+
+      return hindiVoice;
+
+    }
+
+    /*
+    ================================================
+    FINAL FALLBACK
+    ================================================
+    */
+
+    return voices[0] || null;
 
   }
 
   /*
   ====================================================
-  MALE VOICE FINDER
+  MALE VOICE RESOLVER
   ====================================================
   */
 
-  function findMaleVoice() {
+  function resolveMaleVoice() {
 
-    const maleKeywords = [
+    const malePriority = [
 
+      "ravi",
       "male",
       "man",
       "david",
       "alex",
       "daniel",
-      "fred",
-      "google uk english male"
+      "fred"
 
     ];
 
-    return voices.find((voice) => {
+    for (const keyword of malePriority) {
 
-      const name =
-        voice.name.toLowerCase();
+      const match =
+        voices.find((voice) => {
 
-      return maleKeywords.some(keyword =>
-        name.includes(keyword)
-      );
+          const name =
+            voice.name
+              .toLowerCase();
 
-    }) || voices[0];
+          return name.includes(
+            keyword.toLowerCase()
+          );
 
-  }
+        });
 
-  /*
-  ====================================================
-  AUTO VOICE
-  ====================================================
-  */
+      if (match) {
 
-  function findAutoVoice() {
+        console.log(
+          "Male voice locked:",
+          match.name
+        );
+
+        return match;
+
+      }
+
+    }
 
     /*
     ================================================
-    PREFER ENGLISH VOICE
+    HINDI VOICE FALLBACK
     ================================================
     */
 
-    const englishVoice =
+    const hindiVoice =
       voices.find((voice) => {
 
         return voice.lang
           .toLowerCase()
-          .includes("en");
+          .includes("hi");
 
       });
 
-    return englishVoice || voices[0];
+    if (hindiVoice) {
+
+      return hindiVoice;
+
+    }
+
+    return voices[0] || null;
 
   }
 
   /*
   ====================================================
-  STOP SPEECH
+  AUTO VOICE RESOLVER
+  ====================================================
+  */
+
+  function resolveAutoVoice() {
+
+    /*
+    ================================================
+    PREFER FEMALE
+    ================================================
+    */
+
+    return (
+      lockedFemaleVoice ||
+      voices[0] ||
+      null
+    );
+
+  }
+
+  /*
+  ====================================================
+  STOP
   ====================================================
   */
 
   function stop() {
 
-    if (synth.speaking) {
+    if (
+      synth.speaking
+    ) {
 
       synth.cancel();
 
     }
 
-    activeUtterance = null;
+    activeUtterance =
+      null;
 
   }
 
@@ -414,7 +597,7 @@ window.TTSEngine = (() => {
 
   /*
   ====================================================
-  GET AVAILABLE VOICES
+  GET VOICES
   ====================================================
   */
 
@@ -426,7 +609,7 @@ window.TTSEngine = (() => {
 
   /*
   ====================================================
-  CURRENT VOICE MODE
+  CURRENT MODE
   ====================================================
   */
 
