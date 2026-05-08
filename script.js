@@ -1,8 +1,8 @@
 /*
 ====================================================
 REEL CREATOR PRO
-FINAL PRODUCTION CONTROLLER
-CORRECTED VERSION
+FINAL STABLE CONTROLLER
+script.js
 ====================================================
 */
 
@@ -18,11 +18,9 @@ CORRECTED VERSION
 
     scenes: [],
 
-    playbackState: "idle",
-
     isPlaying: false,
 
-    currentBlob: null
+    exportedBlob: null
 
   };
 
@@ -89,10 +87,16 @@ CORRECTED VERSION
 
     bindEvents();
 
+    bindSceneEvents(
+      document.querySelector(
+        ".scene-card"
+      )
+    );
+
     syncScenes();
 
     console.log(
-      "Reel Creator Pro Initialized"
+      "Reel Creator Pro Ready"
     );
 
   }
@@ -125,12 +129,6 @@ CORRECTED VERSION
       downloadVideo
     );
 
-    bindSceneEvents(
-      document.querySelector(
-        ".scene-card"
-      )
-    );
-
   }
 
   /*
@@ -141,7 +139,7 @@ CORRECTED VERSION
 
   function addScene() {
 
-    const sceneIndex =
+    const totalScenes =
       sceneContainer.children.length + 1;
 
     const scene =
@@ -153,10 +151,11 @@ CORRECTED VERSION
       "scene-card";
 
     scene.innerHTML = `
+
       <div class="scene-topbar">
 
         <div class="scene-title">
-          Scene ${sceneIndex}
+          Scene ${totalScenes}
         </div>
 
         <button
@@ -203,6 +202,7 @@ CORRECTED VERSION
         />
 
       </div>
+
     `;
 
     sceneContainer.appendChild(
@@ -217,7 +217,7 @@ CORRECTED VERSION
 
   /*
   ====================================================
-  SCENE EVENTS
+  BIND SCENE EVENTS
   ====================================================
   */
 
@@ -226,11 +226,6 @@ CORRECTED VERSION
     const imageInput =
       scene.querySelector(
         ".scene-image-input"
-      );
-
-    const removeBtn =
-      scene.querySelector(
-        ".scene-remove-btn"
       );
 
     const previewImage =
@@ -242,6 +237,17 @@ CORRECTED VERSION
       scene.querySelector(
         ".scene-text-input"
       );
+
+    const removeBtn =
+      scene.querySelector(
+        ".scene-remove-btn"
+      );
+
+    /*
+    ================================================
+    IMAGE CHANGE
+    ================================================
+    */
 
     imageInput.addEventListener(
       "change",
@@ -264,10 +270,22 @@ CORRECTED VERSION
       }
     );
 
+    /*
+    ================================================
+    TEXT CHANGE
+    ================================================
+    */
+
     textarea.addEventListener(
       "input",
       syncScenes
     );
+
+    /*
+    ================================================
+    REMOVE
+    ================================================
+    */
 
     removeBtn.addEventListener(
       "click",
@@ -287,7 +305,7 @@ CORRECTED VERSION
 
         scene.remove();
 
-        reindexScenes();
+        updateSceneTitles();
 
         syncScenes();
 
@@ -298,11 +316,11 @@ CORRECTED VERSION
 
   /*
   ====================================================
-  REINDEX
+  UPDATE TITLES
   ====================================================
   */
 
-  function reindexScenes() {
+  function updateSceneTitles() {
 
     const scenes =
       sceneContainer.querySelectorAll(
@@ -355,6 +373,9 @@ CORRECTED VERSION
       const text =
         textarea.value.trim();
 
+      const lines =
+        splitLines(text);
+
       AppState.scenes.push({
 
         image: file,
@@ -366,8 +387,7 @@ CORRECTED VERSION
 
         text,
 
-        lines:
-          parseLines(text)
+        lines
 
       });
 
@@ -377,11 +397,11 @@ CORRECTED VERSION
 
   /*
   ====================================================
-  PARSE
+  SPLIT LINES
   ====================================================
   */
 
-  function parseLines(text) {
+  function splitLines(text) {
 
     return text
       .split("\n")
@@ -415,7 +435,7 @@ CORRECTED VERSION
       if (!scene.image) {
 
         alert(
-          "हर scene में image आवश्यक है।"
+          "हर scene में फोटो आवश्यक है।"
         );
 
         return false;
@@ -432,6 +452,16 @@ CORRECTED VERSION
 
       }
 
+      if (!scene.lines.length) {
+
+        alert(
+          "Narration lines नहीं मिलीं।"
+        );
+
+        return false;
+
+      }
+
     }
 
     return true;
@@ -440,7 +470,7 @@ CORRECTED VERSION
 
   /*
   ====================================================
-  PLAYBACK
+  START PLAYBACK
   ====================================================
   */
 
@@ -456,7 +486,40 @@ CORRECTED VERSION
 
     syncScenes();
 
-    if (!validateScenes()) {
+    const valid =
+      validateScenes();
+
+    if (!valid) {
+
+      return;
+
+    }
+
+    /*
+    ================================================
+    DEPENDENCY CHECK
+    ================================================
+    */
+
+    if (
+      !window.CanvasRecorder
+    ) {
+
+      alert(
+        "CanvasRecorder उपलब्ध नहीं है।"
+      );
+
+      return;
+
+    }
+
+    if (
+      !window.TimelineEngine
+    ) {
+
+      alert(
+        "TimelineEngine उपलब्ध नहीं है।"
+      );
 
       return;
 
@@ -466,13 +529,19 @@ CORRECTED VERSION
 
       AppState.isPlaying = true;
 
+      /*
+      ================================================
+      ENTER PLAYBACK MODE
+      ================================================
+      */
+
       document.body.classList.add(
         "playback-mode"
       );
 
       /*
       ================================================
-      INIT CANVAS
+      INIT RENDER ENGINE
       ================================================
       */
 
@@ -501,13 +570,21 @@ CORRECTED VERSION
 
       /*
       ================================================
-      TIMELINE START
+      PLAY TIMELINE
       ================================================
+      */
+
+      /*
+      IMPORTANT:
+      TimelineEngine.start()
+      MUST complete only after
+      all scenes finish playback.
       */
 
       await window.TimelineEngine
         .start(
-          AppState.scenes
+          AppState.scenes,
+          voiceSelect.value
         );
 
       /*
@@ -520,7 +597,13 @@ CORRECTED VERSION
         await window.CanvasRecorder
           .stopRecording();
 
-      AppState.currentBlob =
+      /*
+      ================================================
+      SAVE EXPORT
+      ================================================
+      */
+
+      AppState.exportedBlob =
         blob;
 
       /*
@@ -535,12 +618,6 @@ CORRECTED VERSION
 
       }
 
-      AppState.isPlaying = false;
-
-      document.body.classList.remove(
-        "playback-mode"
-      );
-
     } catch (error) {
 
       console.error(error);
@@ -548,6 +625,8 @@ CORRECTED VERSION
       alert(
         "Playback failed."
       );
+
+    } finally {
 
       AppState.isPlaying = false;
 
@@ -569,9 +648,11 @@ CORRECTED VERSION
 
     AppState.isPlaying = false;
 
-    document.body.classList.remove(
-      "playback-mode"
-    );
+    /*
+    ================================================
+    STOP TTS
+    ================================================
+    */
 
     if (
       window.speechSynthesis
@@ -581,6 +662,16 @@ CORRECTED VERSION
 
     }
 
+    /*
+    ================================================
+    EXIT PLAYBACK MODE
+    ================================================
+    */
+
+    document.body.classList.remove(
+      "playback-mode"
+    );
+
     console.log(
       "Playback restarted."
     );
@@ -589,18 +680,18 @@ CORRECTED VERSION
 
   /*
   ====================================================
-  DOWNLOAD
+  DOWNLOAD VIDEO
   ====================================================
   */
 
   function downloadVideo() {
 
     if (
-      !AppState.currentBlob
+      !AppState.exportedBlob
     ) {
 
       alert(
-        "कोई वीडियो उपलब्ध नहीं है।"
+        "डाउनलोड के लिए वीडियो उपलब्ध नहीं है।"
       );
 
       return;
@@ -608,7 +699,7 @@ CORRECTED VERSION
     }
 
     triggerDownload(
-      AppState.currentBlob
+      AppState.exportedBlob
     );
 
   }
