@@ -1,25 +1,21 @@
 /*
 ====================================================
 REEL CREATOR PRO
-SAFE STABLE CONTROLLER
+FINAL PLAYBACK CONTROLLER
 script.js
 ====================================================
 
-IMPORTANT:
-यह version केवल controller layer संभालता है।
+Responsibilities:
 
-यह:
-✔ existing timeline-engine.js
-✔ existing canvas-recorder.js
-✔ existing tts-engine.js
-
-को break नहीं करेगा।
-
-इस version में:
-❌ premature export नहीं
-❌ forced stop नहीं
-❌ new API assumptions नहीं
-❌ callback assumptions नहीं
+✔ Scene Management
+✔ Scene Playback
+✔ Scene Sequencing
+✔ Line Rendering
+✔ TTS Synchronization
+✔ Fullscreen Playback
+✔ Recording Lifecycle
+✔ Auto Export
+✔ Auto Download
 
 ====================================================
 */
@@ -36,7 +32,9 @@ IMPORTANT:
 
     scenes: [],
 
-    isPlaying: false
+    isPlaying: false,
+
+    currentBlob: null
 
   };
 
@@ -66,6 +64,11 @@ IMPORTANT:
       "restartBtn"
     );
 
+  const downloadBtn =
+    document.getElementById(
+      "downloadBtn"
+    );
+
   const voiceSelect =
     document.getElementById(
       "voiceSelect"
@@ -88,7 +91,7 @@ IMPORTANT:
 
   /*
   ====================================================
-  INITIALIZE
+  INIT
   ====================================================
   */
 
@@ -133,6 +136,11 @@ IMPORTANT:
     restartBtn.addEventListener(
       "click",
       restartPlayback
+    );
+
+    downloadBtn.addEventListener(
+      "click",
+      manualDownload
     );
 
   }
@@ -289,7 +297,7 @@ IMPORTANT:
 
     /*
     ================================================
-    REMOVE SCENE
+    REMOVE
     ================================================
     */
 
@@ -336,12 +344,9 @@ IMPORTANT:
     scenes.forEach(
       (scene, index) => {
 
-        const title =
-          scene.querySelector(
-            ".scene-title"
-          );
-
-        title.textContent =
+        scene.querySelector(
+          ".scene-title"
+        ).textContent =
           `Scene ${index + 1}`;
 
       }
@@ -473,12 +478,6 @@ IMPORTANT:
 
   async function startPlayback() {
 
-    /*
-    ================================================
-    PLAYBACK LOCK
-    ================================================
-    */
-
     if (
       AppState.isPlaying
     ) {
@@ -487,54 +486,12 @@ IMPORTANT:
 
     }
 
-    /*
-    ================================================
-    REFRESH SCENES
-    ================================================
-    */
-
     syncScenes();
-
-    /*
-    ================================================
-    VALIDATE
-    ================================================
-    */
 
     const valid =
       validateScenes();
 
     if (!valid) {
-
-      return;
-
-    }
-
-    /*
-    ================================================
-    ENGINE CHECKS
-    ================================================
-    */
-
-    if (
-      !window.CanvasRecorder
-    ) {
-
-      alert(
-        "CanvasRecorder उपलब्ध नहीं है।"
-      );
-
-      return;
-
-    }
-
-    if (
-      !window.TimelineEngine
-    ) {
-
-      alert(
-        "TimelineEngine उपलब्ध नहीं है।"
-      );
 
       return;
 
@@ -546,7 +503,7 @@ IMPORTANT:
 
       /*
       ================================================
-      PLAYBACK MODE
+      ENTER PLAYBACK MODE
       ================================================
       */
 
@@ -556,7 +513,7 @@ IMPORTANT:
 
       /*
       ================================================
-      INITIALIZE RENDER ENGINE
+      INIT CANVAS ENGINE
       ================================================
       */
 
@@ -576,28 +533,162 @@ IMPORTANT:
 
       /*
       ================================================
-      IMPORTANT:
-      ONLY pass scenes.
-      NO NEW API FORMAT.
+      START RECORDING
       ================================================
       */
 
-      await window.TimelineEngine
-        .start(
-          AppState.scenes
-        );
+      await window.CanvasRecorder
+        .startRecording();
 
       /*
       ================================================
-      PLAYBACK COMPLETE
+      PLAY ALL SCENES
       ================================================
       */
 
-      AppState.isPlaying = false;
+      for (
+        let sceneIndex = 0;
+        sceneIndex < AppState.scenes.length;
+        sceneIndex++
+      ) {
 
-      document.body.classList.remove(
-        "playback-mode"
-      );
+        const scene =
+          AppState.scenes[
+            sceneIndex
+          ];
+
+        /*
+        ==============================================
+        LOAD SCENE IMAGE
+        ==============================================
+        */
+
+        await window.CanvasRecorder
+          .loadScene(scene);
+
+        /*
+        ==============================================
+        PLAY LINES
+        ==============================================
+        */
+
+        for (
+          let lineIndex = 0;
+          lineIndex < scene.lines.length;
+          lineIndex++
+        ) {
+
+          const line =
+            scene.lines[
+              lineIndex
+            ];
+
+          /*
+          ============================================
+          RENDER LINE
+          ============================================
+          */
+
+          await window.CanvasRecorder
+            .renderLine({
+
+              text: line
+
+            });
+
+          /*
+          ============================================
+          TTS SPEAK
+          ============================================
+          */
+
+          if (
+            window.TTSEngine &&
+            window.TTSEngine.speak
+          ) {
+
+            await window.TTSEngine
+              .speak({
+
+                text: line,
+
+                voiceMode:
+                  voiceSelect.value
+
+              });
+
+          } else {
+
+            /*
+            ==========================================
+            FALLBACK DELAY
+            ==========================================
+            */
+
+            await wait(2500);
+
+          }
+
+        }
+
+        /*
+        ==============================================
+        SCENE TRANSITION
+        ==============================================
+        */
+
+        if (
+          window.CanvasRecorder
+            .playSceneTransition
+        ) {
+
+          await window.CanvasRecorder
+            .playSceneTransition();
+
+        }
+
+      }
+
+      /*
+      ================================================
+      STOP RECORDING
+      ================================================
+      */
+
+      const blob =
+        await window.CanvasRecorder
+          .stopRecording();
+
+      AppState.currentBlob =
+        blob;
+
+      /*
+      ================================================
+      FINALIZE ENGINE
+      ================================================
+      */
+
+      if (
+        window.CanvasRecorder
+          .finalize
+      ) {
+
+        await window.CanvasRecorder
+          .finalize();
+
+      }
+
+      /*
+      ================================================
+      AUTO DOWNLOAD
+      ================================================
+      */
+
+      if (blob) {
+
+        triggerDownload(blob);
+
+      }
 
     } catch (error) {
 
@@ -606,6 +697,8 @@ IMPORTANT:
       alert(
         "Playback failed."
       );
+
+    } finally {
 
       AppState.isPlaying = false;
 
@@ -619,11 +712,30 @@ IMPORTANT:
 
   /*
   ====================================================
+  WAIT
+  ====================================================
+  */
+
+  function wait(duration) {
+
+    return new Promise((resolve) => {
+
+      setTimeout(
+        resolve,
+        duration
+      );
+
+    });
+
+  }
+
+  /*
+  ====================================================
   RESTART
   ====================================================
   */
 
-  function restartPlayback() {
+  async function restartPlayback() {
 
     AppState.isPlaying = false;
 
@@ -643,6 +755,22 @@ IMPORTANT:
 
     /*
     ================================================
+    FINALIZE
+    ================================================
+    */
+
+    if (
+      window.CanvasRecorder &&
+      window.CanvasRecorder.finalize
+    ) {
+
+      await window.CanvasRecorder
+        .finalize();
+
+    }
+
+    /*
+    ================================================
     EXIT PLAYBACK MODE
     ================================================
     */
@@ -654,6 +782,63 @@ IMPORTANT:
     console.log(
       "Playback restarted."
     );
+
+  }
+
+  /*
+  ====================================================
+  MANUAL DOWNLOAD
+  ====================================================
+  */
+
+  function manualDownload() {
+
+    if (
+      !AppState.currentBlob
+    ) {
+
+      alert(
+        "कोई exported वीडियो उपलब्ध नहीं है।"
+      );
+
+      return;
+
+    }
+
+    triggerDownload(
+      AppState.currentBlob
+    );
+
+  }
+
+  /*
+  ====================================================
+  DOWNLOAD
+  ====================================================
+  */
+
+  function triggerDownload(blob) {
+
+    const url =
+      URL.createObjectURL(blob);
+
+    const link =
+      document.createElement("a");
+
+    link.href = url;
+
+    link.download =
+      `reel-${Date.now()}.webm`;
+
+    document.body.appendChild(
+      link
+    );
+
+    link.click();
+
+    link.remove();
+
+    URL.revokeObjectURL(url);
 
   }
 
