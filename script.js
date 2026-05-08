@@ -2,7 +2,7 @@
 ====================================================
 REEL CREATOR PRO
 FINAL PRODUCTION CONTROLLER
-script.js
+CORRECTED VERSION
 ====================================================
 */
 
@@ -85,12 +85,6 @@ script.js
 
   initialize();
 
-  /*
-  ====================================================
-  INITIALIZE APP
-  ====================================================
-  */
-
   function initialize() {
 
     bindEvents();
@@ -105,7 +99,7 @@ script.js
 
   /*
   ====================================================
-  EVENT BINDINGS
+  EVENTS
   ====================================================
   */
 
@@ -131,12 +125,6 @@ script.js
       downloadVideo
     );
 
-    /*
-    ================================================
-    DEFAULT SCENE EVENTS
-    ================================================
-    */
-
     bindSceneEvents(
       document.querySelector(
         ".scene-card"
@@ -147,7 +135,7 @@ script.js
 
   /*
   ====================================================
-  ADD NEW SCENE
+  ADD SCENE
   ====================================================
   */
 
@@ -165,7 +153,6 @@ script.js
       "scene-card";
 
     scene.innerHTML = `
-
       <div class="scene-topbar">
 
         <div class="scene-title">
@@ -216,7 +203,6 @@ script.js
         />
 
       </div>
-
     `;
 
     sceneContainer.appendChild(
@@ -252,11 +238,10 @@ script.js
         ".scene-preview img"
       );
 
-    /*
-    ================================================
-    IMAGE PREVIEW
-    ================================================
-    */
+    const textarea =
+      scene.querySelector(
+        ".scene-text-input"
+      );
 
     imageInput.addEventListener(
       "change",
@@ -271,22 +256,18 @@ script.js
 
         }
 
-        const imageURL =
-          URL.createObjectURL(file);
-
         previewImage.src =
-          imageURL;
+          URL.createObjectURL(file);
 
         syncScenes();
 
       }
     );
 
-    /*
-    ================================================
-    REMOVE SCENE
-    ================================================
-    */
+    textarea.addEventListener(
+      "input",
+      syncScenes
+    );
 
     removeBtn.addEventListener(
       "click",
@@ -313,27 +294,11 @@ script.js
       }
     );
 
-    /*
-    ================================================
-    TEXT CHANGE
-    ================================================
-    */
-
-    const textarea =
-      scene.querySelector(
-        ".scene-text-input"
-      );
-
-    textarea.addEventListener(
-      "input",
-      syncScenes
-    );
-
   }
 
   /*
   ====================================================
-  REINDEX SCENES
+  REINDEX
   ====================================================
   */
 
@@ -347,12 +312,9 @@ script.js
     scenes.forEach(
       (scene, index) => {
 
-        const title =
-          scene.querySelector(
-            ".scene-title"
-          );
-
-        title.textContent =
+        scene.querySelector(
+          ".scene-title"
+        ).textContent =
           `Scene ${index + 1}`;
 
       }
@@ -368,14 +330,14 @@ script.js
 
   function syncScenes() {
 
-    const sceneCards =
+    AppState.scenes = [];
+
+    const cards =
       sceneContainer.querySelectorAll(
         ".scene-card"
       );
 
-    AppState.scenes = [];
-
-    sceneCards.forEach((card) => {
+    cards.forEach((card) => {
 
       const imageInput =
         card.querySelector(
@@ -393,23 +355,19 @@ script.js
       const text =
         textarea.value.trim();
 
-      const imageURL =
-        file
-          ? URL.createObjectURL(file)
-          : "";
-
-      const lines =
-        parseLines(text);
-
       AppState.scenes.push({
 
         image: file,
 
-        imageURL,
+        imageURL:
+          file
+            ? URL.createObjectURL(file)
+            : "",
 
         text,
 
-        lines
+        lines:
+          parseLines(text)
 
       });
 
@@ -419,7 +377,7 @@ script.js
 
   /*
   ====================================================
-  PARSE LINES
+  PARSE
   ====================================================
   */
 
@@ -434,7 +392,7 @@ script.js
 
   /*
   ====================================================
-  VALIDATE SCENES
+  VALIDATE
   ====================================================
   */
 
@@ -474,16 +432,6 @@ script.js
 
       }
 
-      if (!scene.lines.length) {
-
-        alert(
-          "Narration parsing failed."
-        );
-
-        return false;
-
-      }
-
     }
 
     return true;
@@ -492,7 +440,7 @@ script.js
 
   /*
   ====================================================
-  START PLAYBACK
+  PLAYBACK
   ====================================================
   */
 
@@ -508,10 +456,7 @@ script.js
 
     syncScenes();
 
-    const valid =
-      validateScenes();
-
-    if (!valid) {
+    if (!validateScenes()) {
 
       return;
 
@@ -521,29 +466,21 @@ script.js
 
       AppState.isPlaying = true;
 
-      AppState.playbackState =
-        "loading";
-
-      /*
-      ================================================
-      FULLSCREEN PLAYBACK
-      ================================================
-      */
-
       document.body.classList.add(
         "playback-mode"
       );
 
       /*
       ================================================
-      INITIALIZE RENDER ENGINE
+      INIT CANVAS
       ================================================
       */
 
       await window.CanvasRecorder
         .initialize({
 
-          canvas: renderCanvas,
+          canvas:
+            renderCanvas,
 
           previewElement:
             cinematicPreview,
@@ -555,7 +492,7 @@ script.js
 
       /*
       ================================================
-      RECORDING START
+      START RECORDING
       ================================================
       */
 
@@ -568,28 +505,16 @@ script.js
       ================================================
       */
 
-      AppState.playbackState =
-        "playing";
-
       await window.TimelineEngine
-        .start({
-
-          scenes:
-            AppState.scenes,
-
-          voiceMode:
-            voiceSelect.value
-
-        });
+        .start(
+          AppState.scenes
+        );
 
       /*
       ================================================
-      FINALIZE
+      STOP RECORDING
       ================================================
       */
-
-      AppState.playbackState =
-        "exporting";
 
       const blob =
         await window.CanvasRecorder
@@ -597,14 +522,6 @@ script.js
 
       AppState.currentBlob =
         blob;
-
-      await window.CanvasRecorder
-        .finalize();
-
-      AppState.playbackState =
-        "completed";
-
-      AppState.isPlaying = false;
 
       /*
       ================================================
@@ -618,11 +535,7 @@ script.js
 
       }
 
-      /*
-      ================================================
-      EXIT PLAYBACK MODE
-      ================================================
-      */
+      AppState.isPlaying = false;
 
       document.body.classList.remove(
         "playback-mode"
@@ -630,18 +543,13 @@ script.js
 
     } catch (error) {
 
-      console.error(
-        error
-      );
+      console.error(error);
 
       alert(
         "Playback failed."
       );
 
       AppState.isPlaying = false;
-
-      AppState.playbackState =
-        "idle";
 
       document.body.classList.remove(
         "playback-mode"
@@ -653,39 +561,25 @@ script.js
 
   /*
   ====================================================
-  RESTART PLAYBACK
+  RESTART
   ====================================================
   */
 
   async function restartPlayback() {
 
-    if (
-      AppState.isPlaying
-    ) {
-
-      try {
-
-        window.TTSEngine.stop();
-
-        await window.CanvasRecorder
-          .finalize();
-
-      } catch (error) {
-
-        console.error(error);
-
-      }
-
-    }
-
     AppState.isPlaying = false;
-
-    AppState.playbackState =
-      "idle";
 
     document.body.classList.remove(
       "playback-mode"
     );
+
+    if (
+      window.speechSynthesis
+    ) {
+
+      speechSynthesis.cancel();
+
+    }
 
     console.log(
       "Playback restarted."
@@ -695,7 +589,7 @@ script.js
 
   /*
   ====================================================
-  DOWNLOAD VIDEO
+  DOWNLOAD
   ====================================================
   */
 
@@ -706,7 +600,7 @@ script.js
     ) {
 
       alert(
-        "डाउनलोड के लिए कोई वीडियो उपलब्ध नहीं है।"
+        "कोई वीडियो उपलब्ध नहीं है।"
       );
 
       return;
@@ -721,7 +615,7 @@ script.js
 
   /*
   ====================================================
-  DOWNLOAD TRIGGER
+  TRIGGER DOWNLOAD
   ====================================================
   */
 
