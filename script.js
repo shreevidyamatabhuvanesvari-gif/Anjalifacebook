@@ -1,634 +1,753 @@
 /*
 ====================================================
 REEL CREATOR PRO
-MAIN APPLICATION CONTROLLER
+FINAL PRODUCTION CONTROLLER
 script.js
 ====================================================
 */
 
-/*
-====================================================
-DOM REFERENCES
-====================================================
-*/
+(() => {
 
-const app = document.querySelector("#app");
+  /*
+  ====================================================
+  APPLICATION STATE
+  ====================================================
+  */
 
-const sceneContainer = document.querySelector("#sceneContainer");
+  const AppState = {
 
-const addSceneBtn = document.querySelector("#addSceneBtn");
+    scenes: [],
 
-const playBtn = document.querySelector("#playBtn");
+    playbackState: "idle",
 
-const restartBtn = document.querySelector("#restartBtn");
-
-const downloadBtn = document.querySelector("#downloadBtn");
-
-const voiceSelect = document.querySelector("#voiceSelect");
-
-const watermarkInput = document.querySelector("#watermarkInput");
-
-const cinematicPreview = document.querySelector("#cinematicPreview");
-
-const renderCanvas = document.querySelector("#renderCanvas");
-
-/*
-====================================================
-APPLICATION STATE
-====================================================
-*/
-
-const appState = {
-
-  scenes: [],
-
-  playback: {
     isPlaying: false,
-    currentSceneIndex: 0,
-    currentLineIndex: 0
-  },
 
-  voiceMode: "female",
+    currentBlob: null
 
-  watermark: "",
-
-  exportedVideoBlob: null
-
-};
-
-/*
-====================================================
-SCENE MODEL
-====================================================
-*/
-
-function createSceneObject() {
-
-  return {
-    image: null,
-    imageURL: "",
-    text: "",
-    lines: []
   };
 
-}
-
-/*
-====================================================
-DEFAULT SCENE
-====================================================
-*/
-
-appState.scenes.push(
-  createSceneObject()
-);
-
-/*
-====================================================
-SCENE CARD TEMPLATE
-====================================================
-*/
-
-function createSceneCard(index) {
-
-  const sceneCard = document.createElement("article");
-
-  sceneCard.className = "scene-card";
-
-  sceneCard.dataset.index = index;
-
-  sceneCard.innerHTML = `
-    
-    <div class="scene-topbar">
-
-      <div class="scene-title">
-        Scene ${index + 1}
-      </div>
-
-      <button
-        type="button"
-        class="scene-remove-btn"
-      >
-        Remove
-      </button>
-
-    </div>
-
-    <div class="scene-field">
-
-      <label>
-        Upload Photo
-      </label>
-
-      <input
-        type="file"
-        accept="image/*"
-        class="scene-image-input"
-      />
-
-    </div>
-
-    <div class="scene-field">
-
-      <label>
-        Scene Narration
-      </label>
-
-      <textarea
-        class="scene-text-input"
-        placeholder="Write cinematic narration..."
-      ></textarea>
-
-    </div>
-
-    <div class="scene-preview">
-
-      <img
-        src=""
-        alt="Scene Preview"
-      />
-
-    </div>
-
-  `;
-
-  attachSceneCardEvents(sceneCard);
-
-  return sceneCard;
-
-}
-
-/*
-====================================================
-RENDER ALL SCENES
-====================================================
-*/
-
-function renderScenes() {
-
-  sceneContainer.innerHTML = "";
-
-  appState.scenes.forEach((scene, index) => {
-
-    const sceneCard = createSceneCard(index);
-
-    const imageInput =
-      sceneCard.querySelector(".scene-image-input");
-
-    const textInput =
-      sceneCard.querySelector(".scene-text-input");
-
-    const previewImage =
-      sceneCard.querySelector(".scene-preview img");
-
-    textInput.value = scene.text;
-
-    if (scene.imageURL) {
-
-      previewImage.src = scene.imageURL;
-
-    }
-
-    sceneContainer.appendChild(sceneCard);
-
-  });
-
-}
-
-/*
-====================================================
-ATTACH EVENTS
-====================================================
-*/
-
-function attachSceneCardEvents(sceneCard) {
-
-  const index =
-    Number(sceneCard.dataset.index);
-
-  const imageInput =
-    sceneCard.querySelector(".scene-image-input");
-
-  const textInput =
-    sceneCard.querySelector(".scene-text-input");
-
-  const removeBtn =
-    sceneCard.querySelector(".scene-remove-btn");
-
-  const previewImage =
-    sceneCard.querySelector(".scene-preview img");
-
   /*
-  ================================================
-  IMAGE INPUT
-  ================================================
+  ====================================================
+  DOM REFERENCES
+  ====================================================
   */
 
-  imageInput.addEventListener("change", (event) => {
-
-    const file = event.target.files[0];
-
-    if (!file) return;
-
-    const imageURL =
-      URL.createObjectURL(file);
-
-    appState.scenes[index].image = file;
-
-    appState.scenes[index].imageURL = imageURL;
-
-    previewImage.src = imageURL;
-
-  });
-
-  /*
-  ================================================
-  TEXT INPUT
-  ================================================
-  */
-
-  textInput.addEventListener("input", (event) => {
-
-    const text =
-      event.target.value;
-
-    appState.scenes[index].text = text;
-
-    appState.scenes[index].lines =
-      parseSceneLines(text);
-
-  });
-
-  /*
-  ================================================
-  REMOVE SCENE
-  ================================================
-  */
-
-  removeBtn.addEventListener("click", () => {
-
-    removeScene(index);
-
-  });
-
-}
-
-/*
-====================================================
-LINE PARSER
-====================================================
-*/
-
-function parseSceneLines(text) {
-
-  return text
-    .split("\n")
-    .map(line => line.trim())
-    .filter(line => line.length > 0);
-
-}
-
-/*
-====================================================
-ADD SCENE
-====================================================
-*/
-
-function addScene() {
-
-  const newScene =
-    createSceneObject();
-
-  appState.scenes.push(newScene);
-
-  renderScenes();
-
-}
-
-/*
-====================================================
-REMOVE SCENE
-====================================================
-*/
-
-function removeScene(index) {
-
-  if (appState.scenes.length === 1) {
-
-    alert("At least one scene is required.");
-
-    return;
-
-  }
-
-  appState.scenes.splice(index, 1);
-
-  renderScenes();
-
-}
-
-/*
-====================================================
-VALIDATE SCENES
-====================================================
-*/
-
-function validateScenes() {
-
-  if (appState.scenes.length === 0) {
-
-    alert("No scenes available.");
-
-    return false;
-
-  }
-
-  for (const scene of appState.scenes) {
-
-    if (!scene.image) {
-
-      alert("Every scene requires an image.");
-
-      return false;
-
-    }
-
-    if (!scene.text.trim()) {
-
-      alert("Every scene requires narration text.");
-
-      return false;
-
-    }
-
-    if (scene.lines.length === 0) {
-
-      alert("Narration lines missing.");
-
-      return false;
-
-    }
-
-  }
-
-  return true;
-
-}
-
-/*
-====================================================
-PLAYBACK MODE
-====================================================
-*/
-
-function enablePlaybackMode() {
-
-  document.body.classList.add(
-    "playback-mode"
-  );
-
-}
-
-function disablePlaybackMode() {
-
-  document.body.classList.remove(
-    "playback-mode"
-  );
-
-}
-
-/*
-====================================================
-PLAYBACK START
-====================================================
-*/
-
-async function startPlayback() {
-
-  if (appState.playback.isPlaying) {
-
-    return;
-
-  }
-
-  const valid =
-    validateScenes();
-
-  if (!valid) {
-
-    return;
-
-  }
-
-  appState.playback.isPlaying = true;
-
-  appState.playback.currentSceneIndex = 0;
-
-  appState.playback.currentLineIndex = 0;
-
-  appState.voiceMode =
-    voiceSelect.value;
-
-  appState.watermark =
-    watermarkInput.value.trim();
-
-  enablePlaybackMode();
-
-  /*
-  ================================================
-  START RENDER ENGINE
-  ================================================
-  */
-
-  if (
-    window.CanvasRecorder &&
-    typeof window.CanvasRecorder.initialize === "function"
-  ) {
-
-    await window.CanvasRecorder.initialize({
-      canvas: renderCanvas,
-      previewElement: cinematicPreview,
-      watermark: appState.watermark
-    });
-
-  }
-
-  /*
-  ================================================
-  START RECORDING
-  ================================================
-  */
-
-  if (
-    window.CanvasRecorder &&
-    typeof window.CanvasRecorder.startRecording === "function"
-  ) {
-
-    await window.CanvasRecorder.startRecording();
-
-  }
-
-  /*
-  ================================================
-  START TIMELINE ENGINE
-  ================================================
-  */
-
-  if (
-    window.TimelineEngine &&
-    typeof window.TimelineEngine.start === "function"
-  ) {
-
-    await window.TimelineEngine.start({
-      scenes: appState.scenes,
-      playbackState: appState.playback,
-      voiceMode: appState.voiceMode
-    });
-
-  }
-
-}
-
-/*
-====================================================
-PLAYBACK COMPLETE
-====================================================
-*/
-
-async function handlePlaybackComplete() {
-
-  /*
-  ================================================
-  STOP RECORDING
-  ================================================
-  */
-
-  if (
-    window.CanvasRecorder &&
-    typeof window.CanvasRecorder.stopRecording === "function"
-  ) {
-
-    const videoBlob =
-      await window.CanvasRecorder.stopRecording();
-
-    appState.exportedVideoBlob =
-      videoBlob;
-
-  }
-
-  disablePlaybackMode();
-
-  appState.playback.isPlaying = false;
-
-  appState.playback.currentSceneIndex = 0;
-
-  appState.playback.currentLineIndex = 0;
-
-}
-
-/*
-====================================================
-RESTART PLAYBACK
-====================================================
-*/
-
-async function restartPlayback() {
-
-  if (
-    appState.playback.isPlaying
-  ) {
-
-    location.reload();
-
-    return;
-
-  }
-
-}
-
-/*
-====================================================
-DOWNLOAD VIDEO
-====================================================
-*/
-
-function downloadVideo() {
-
-  if (!appState.exportedVideoBlob) {
-
-    alert("No exported video available.");
-
-    return;
-
-  }
-
-  const url =
-    URL.createObjectURL(
-      appState.exportedVideoBlob
+  const sceneContainer =
+    document.getElementById(
+      "sceneContainer"
     );
 
-  const a =
-    document.createElement("a");
+  const addSceneBtn =
+    document.getElementById(
+      "addSceneBtn"
+    );
 
-  a.href = url;
+  const playBtn =
+    document.getElementById(
+      "playBtn"
+    );
 
-  a.download =
-    `reel-${Date.now()}.webm`;
+  const restartBtn =
+    document.getElementById(
+      "restartBtn"
+    );
 
-  document.body.appendChild(a);
+  const downloadBtn =
+    document.getElementById(
+      "downloadBtn"
+    );
 
-  a.click();
+  const voiceSelect =
+    document.getElementById(
+      "voiceSelect"
+    );
 
-  a.remove();
+  const watermarkInput =
+    document.getElementById(
+      "watermarkInput"
+    );
 
-  URL.revokeObjectURL(url);
+  const cinematicPreview =
+    document.getElementById(
+      "cinematicPreview"
+    );
 
-}
+  const renderCanvas =
+    document.getElementById(
+      "renderCanvas"
+    );
 
-/*
-====================================================
-GLOBAL CALLBACKS
-====================================================
-*/
+  /*
+  ====================================================
+  INITIALIZE
+  ====================================================
+  */
 
-window.ReelCreatorApp = {
+  initialize();
 
-  appState,
+  /*
+  ====================================================
+  INITIALIZE APP
+  ====================================================
+  */
 
-  handlePlaybackComplete
+  function initialize() {
 
-};
+    bindEvents();
 
-/*
-====================================================
-BUTTON EVENTS
-====================================================
-*/
+    syncScenes();
 
-addSceneBtn.addEventListener(
-  "click",
-  addScene
-);
+    console.log(
+      "Reel Creator Pro Initialized"
+    );
 
-playBtn.addEventListener(
-  "click",
-  startPlayback
-);
+  }
 
-restartBtn.addEventListener(
-  "click",
-  restartPlayback
-);
+  /*
+  ====================================================
+  EVENT BINDINGS
+  ====================================================
+  */
 
-downloadBtn.addEventListener(
-  "click",
-  downloadVideo
-);
+  function bindEvents() {
 
-/*
-====================================================
-INITIAL RENDER
-====================================================
-*/
+    addSceneBtn.addEventListener(
+      "click",
+      addScene
+    );
 
-renderScenes();
+    playBtn.addEventListener(
+      "click",
+      startPlayback
+    );
+
+    restartBtn.addEventListener(
+      "click",
+      restartPlayback
+    );
+
+    downloadBtn.addEventListener(
+      "click",
+      downloadVideo
+    );
+
+    /*
+    ================================================
+    DEFAULT SCENE EVENTS
+    ================================================
+    */
+
+    bindSceneEvents(
+      document.querySelector(
+        ".scene-card"
+      )
+    );
+
+  }
+
+  /*
+  ====================================================
+  ADD NEW SCENE
+  ====================================================
+  */
+
+  function addScene() {
+
+    const sceneIndex =
+      sceneContainer.children.length + 1;
+
+    const scene =
+      document.createElement(
+        "article"
+      );
+
+    scene.className =
+      "scene-card";
+
+    scene.innerHTML = `
+
+      <div class="scene-topbar">
+
+        <div class="scene-title">
+          Scene ${sceneIndex}
+        </div>
+
+        <button
+          type="button"
+          class="scene-remove-btn"
+        >
+          Remove
+        </button>
+
+      </div>
+
+      <div class="scene-field">
+
+        <label>
+          Upload Photo
+        </label>
+
+        <input
+          type="file"
+          accept="image/*"
+          class="scene-image-input"
+        />
+
+      </div>
+
+      <div class="scene-field">
+
+        <label>
+          Scene Narration
+        </label>
+
+        <textarea
+          class="scene-text-input"
+          placeholder="Write cinematic narration..."
+        ></textarea>
+
+      </div>
+
+      <div class="scene-preview">
+
+        <img
+          src=""
+          alt="Scene Preview"
+        />
+
+      </div>
+
+    `;
+
+    sceneContainer.appendChild(
+      scene
+    );
+
+    bindSceneEvents(scene);
+
+    syncScenes();
+
+  }
+
+  /*
+  ====================================================
+  SCENE EVENTS
+  ====================================================
+  */
+
+  function bindSceneEvents(scene) {
+
+    const imageInput =
+      scene.querySelector(
+        ".scene-image-input"
+      );
+
+    const removeBtn =
+      scene.querySelector(
+        ".scene-remove-btn"
+      );
+
+    const previewImage =
+      scene.querySelector(
+        ".scene-preview img"
+      );
+
+    /*
+    ================================================
+    IMAGE PREVIEW
+    ================================================
+    */
+
+    imageInput.addEventListener(
+      "change",
+      (event) => {
+
+        const file =
+          event.target.files[0];
+
+        if (!file) {
+
+          return;
+
+        }
+
+        const imageURL =
+          URL.createObjectURL(file);
+
+        previewImage.src =
+          imageURL;
+
+        syncScenes();
+
+      }
+    );
+
+    /*
+    ================================================
+    REMOVE SCENE
+    ================================================
+    */
+
+    removeBtn.addEventListener(
+      "click",
+      () => {
+
+        if (
+          sceneContainer.children.length <= 1
+        ) {
+
+          alert(
+            "कम से कम एक scene आवश्यक है।"
+          );
+
+          return;
+
+        }
+
+        scene.remove();
+
+        reindexScenes();
+
+        syncScenes();
+
+      }
+    );
+
+    /*
+    ================================================
+    TEXT CHANGE
+    ================================================
+    */
+
+    const textarea =
+      scene.querySelector(
+        ".scene-text-input"
+      );
+
+    textarea.addEventListener(
+      "input",
+      syncScenes
+    );
+
+  }
+
+  /*
+  ====================================================
+  REINDEX SCENES
+  ====================================================
+  */
+
+  function reindexScenes() {
+
+    const scenes =
+      sceneContainer.querySelectorAll(
+        ".scene-card"
+      );
+
+    scenes.forEach(
+      (scene, index) => {
+
+        const title =
+          scene.querySelector(
+            ".scene-title"
+          );
+
+        title.textContent =
+          `Scene ${index + 1}`;
+
+      }
+    );
+
+  }
+
+  /*
+  ====================================================
+  SYNC SCENES
+  ====================================================
+  */
+
+  function syncScenes() {
+
+    const sceneCards =
+      sceneContainer.querySelectorAll(
+        ".scene-card"
+      );
+
+    AppState.scenes = [];
+
+    sceneCards.forEach((card) => {
+
+      const imageInput =
+        card.querySelector(
+          ".scene-image-input"
+        );
+
+      const textarea =
+        card.querySelector(
+          ".scene-text-input"
+        );
+
+      const file =
+        imageInput.files[0];
+
+      const text =
+        textarea.value.trim();
+
+      const imageURL =
+        file
+          ? URL.createObjectURL(file)
+          : "";
+
+      const lines =
+        parseLines(text);
+
+      AppState.scenes.push({
+
+        image: file,
+
+        imageURL,
+
+        text,
+
+        lines
+
+      });
+
+    });
+
+  }
+
+  /*
+  ====================================================
+  PARSE LINES
+  ====================================================
+  */
+
+  function parseLines(text) {
+
+    return text
+      .split("\n")
+      .map(line => line.trim())
+      .filter(Boolean);
+
+  }
+
+  /*
+  ====================================================
+  VALIDATE SCENES
+  ====================================================
+  */
+
+  function validateScenes() {
+
+    if (
+      !AppState.scenes.length
+    ) {
+
+      alert(
+        "कोई scene उपलब्ध नहीं है।"
+      );
+
+      return false;
+
+    }
+
+    for (const scene of AppState.scenes) {
+
+      if (!scene.image) {
+
+        alert(
+          "हर scene में image आवश्यक है।"
+        );
+
+        return false;
+
+      }
+
+      if (!scene.text) {
+
+        alert(
+          "हर scene में narration आवश्यक है।"
+        );
+
+        return false;
+
+      }
+
+      if (!scene.lines.length) {
+
+        alert(
+          "Narration parsing failed."
+        );
+
+        return false;
+
+      }
+
+    }
+
+    return true;
+
+  }
+
+  /*
+  ====================================================
+  START PLAYBACK
+  ====================================================
+  */
+
+  async function startPlayback() {
+
+    if (
+      AppState.isPlaying
+    ) {
+
+      return;
+
+    }
+
+    syncScenes();
+
+    const valid =
+      validateScenes();
+
+    if (!valid) {
+
+      return;
+
+    }
+
+    try {
+
+      AppState.isPlaying = true;
+
+      AppState.playbackState =
+        "loading";
+
+      /*
+      ================================================
+      FULLSCREEN PLAYBACK
+      ================================================
+      */
+
+      document.body.classList.add(
+        "playback-mode"
+      );
+
+      /*
+      ================================================
+      INITIALIZE RENDER ENGINE
+      ================================================
+      */
+
+      await window.CanvasRecorder
+        .initialize({
+
+          canvas: renderCanvas,
+
+          previewElement:
+            cinematicPreview,
+
+          watermark:
+            watermarkInput.value.trim()
+
+        });
+
+      /*
+      ================================================
+      RECORDING START
+      ================================================
+      */
+
+      await window.CanvasRecorder
+        .startRecording();
+
+      /*
+      ================================================
+      TIMELINE START
+      ================================================
+      */
+
+      AppState.playbackState =
+        "playing";
+
+      await window.TimelineEngine
+        .start({
+
+          scenes:
+            AppState.scenes,
+
+          voiceMode:
+            voiceSelect.value
+
+        });
+
+      /*
+      ================================================
+      FINALIZE
+      ================================================
+      */
+
+      AppState.playbackState =
+        "exporting";
+
+      const blob =
+        await window.CanvasRecorder
+          .stopRecording();
+
+      AppState.currentBlob =
+        blob;
+
+      await window.CanvasRecorder
+        .finalize();
+
+      AppState.playbackState =
+        "completed";
+
+      AppState.isPlaying = false;
+
+      /*
+      ================================================
+      AUTO DOWNLOAD
+      ================================================
+      */
+
+      if (blob) {
+
+        triggerDownload(blob);
+
+      }
+
+      /*
+      ================================================
+      EXIT PLAYBACK MODE
+      ================================================
+      */
+
+      document.body.classList.remove(
+        "playback-mode"
+      );
+
+    } catch (error) {
+
+      console.error(
+        error
+      );
+
+      alert(
+        "Playback failed."
+      );
+
+      AppState.isPlaying = false;
+
+      AppState.playbackState =
+        "idle";
+
+      document.body.classList.remove(
+        "playback-mode"
+      );
+
+    }
+
+  }
+
+  /*
+  ====================================================
+  RESTART PLAYBACK
+  ====================================================
+  */
+
+  async function restartPlayback() {
+
+    if (
+      AppState.isPlaying
+    ) {
+
+      try {
+
+        window.TTSEngine.stop();
+
+        await window.CanvasRecorder
+          .finalize();
+
+      } catch (error) {
+
+        console.error(error);
+
+      }
+
+    }
+
+    AppState.isPlaying = false;
+
+    AppState.playbackState =
+      "idle";
+
+    document.body.classList.remove(
+      "playback-mode"
+    );
+
+    console.log(
+      "Playback restarted."
+    );
+
+  }
+
+  /*
+  ====================================================
+  DOWNLOAD VIDEO
+  ====================================================
+  */
+
+  function downloadVideo() {
+
+    if (
+      !AppState.currentBlob
+    ) {
+
+      alert(
+        "डाउनलोड के लिए कोई वीडियो उपलब्ध नहीं है।"
+      );
+
+      return;
+
+    }
+
+    triggerDownload(
+      AppState.currentBlob
+    );
+
+  }
+
+  /*
+  ====================================================
+  DOWNLOAD TRIGGER
+  ====================================================
+  */
+
+  function triggerDownload(blob) {
+
+    const url =
+      URL.createObjectURL(blob);
+
+    const link =
+      document.createElement("a");
+
+    link.href = url;
+
+    link.download =
+      `reel-${Date.now()}.webm`;
+
+    document.body.appendChild(
+      link
+    );
+
+    link.click();
+
+    link.remove();
+
+    URL.revokeObjectURL(url);
+
+  }
+
+})();
