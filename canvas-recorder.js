@@ -2,7 +2,7 @@
 ====================================================
 REEL CREATOR PRO
 CANVAS RECORDER ENGINE
-canvas-recorder.js
+UPDATED PRODUCTION VERSION
 ====================================================
 */
 
@@ -20,35 +20,39 @@ window.CanvasRecorder = (() => {
 
   let previewElement = null;
 
+  let previewCanvas = null;
+
+  let previewCtx = null;
+
   let animationFrame = null;
 
   let mediaRecorder = null;
 
   let recordedChunks = [];
 
-  let combinedStream = null;
-
   let canvasStream = null;
 
-  let audioDestination = null;
+  let combinedStream = null;
 
   let audioContext = null;
 
-  let watermark = "";
+  let audioDestination = null;
 
   let currentImage = null;
 
   let currentText = "";
 
+  let watermark = "";
+
   let speaking = false;
 
   let zoomScale = 1;
 
-  let zoomDirection = 0.0004;
+  let zoomDirection = 0.00025;
 
   /*
   ====================================================
-  CANVAS SIZE
+  FINAL CINEMATIC SIZE
   ====================================================
   */
 
@@ -74,7 +78,7 @@ window.CanvasRecorder = (() => {
 
     /*
     ================================================
-    CANVAS SETUP
+    MAIN RENDER CANVAS
     ================================================
     */
 
@@ -86,7 +90,7 @@ window.CanvasRecorder = (() => {
 
     /*
     ================================================
-    PREVIEW CLEAN
+    CLEAN PREVIEW
     ================================================
     */
 
@@ -98,7 +102,7 @@ window.CanvasRecorder = (() => {
     ================================================
     */
 
-    const previewCanvas =
+    previewCanvas =
       document.createElement("canvas");
 
     previewCanvas.width = WIDTH;
@@ -113,22 +117,53 @@ window.CanvasRecorder = (() => {
 
     previewElement.appendChild(previewCanvas);
 
-    /*
-    ================================================
-    MIRROR CONTEXT
-    ================================================
-    */
-
-    const previewCtx =
+    previewCtx =
       previewCanvas.getContext("2d");
 
     /*
     ================================================
-    CONTINUOUS RENDER LOOP
+    AUDIO SYSTEM
     ================================================
     */
 
-    function renderLoop() {
+    setupAudioSystem();
+
+    /*
+    ================================================
+    START RENDER LOOP
+    ================================================
+    */
+
+    startRenderLoop();
+
+  }
+
+  /*
+  ====================================================
+  AUDIO SYSTEM
+  ====================================================
+  */
+
+  function setupAudioSystem() {
+
+    audioContext =
+      new AudioContext();
+
+    audioDestination =
+      audioContext
+        .createMediaStreamDestination();
+
+  }
+
+  /*
+  ====================================================
+  START LOOP
+  ====================================================
+  */
+
+  function startRenderLoop() {
+
+    function loop() {
 
       drawFrame(ctx);
 
@@ -146,35 +181,11 @@ window.CanvasRecorder = (() => {
       );
 
       animationFrame =
-        requestAnimationFrame(renderLoop);
+        requestAnimationFrame(loop);
 
     }
 
-    renderLoop();
-
-    /*
-    ================================================
-    AUDIO CONTEXT
-    ================================================
-    */
-
-    setupAudioSystem();
-
-  }
-
-  /*
-  ====================================================
-  AUDIO SYSTEM
-  ====================================================
-  */
-
-  function setupAudioSystem() {
-
-    audioContext =
-      new AudioContext();
-
-    audioDestination =
-      audioContext.createMediaStreamDestination();
+    loop();
 
   }
 
@@ -186,11 +197,10 @@ window.CanvasRecorder = (() => {
 
   async function loadScene(config) {
 
-    const imageURL =
-      config.imageURL;
-
     currentImage =
-      await loadImage(imageURL);
+      await loadImage(
+        config.imageURL
+      );
 
   }
 
@@ -231,19 +241,13 @@ window.CanvasRecorder = (() => {
     currentText =
       config.text || "";
 
-    /*
-    ================================================
-    TALKING EFFECT
-    ================================================
-    */
-
     speaking = true;
 
     setTimeout(() => {
 
       speaking = false;
 
-    }, 300);
+    }, 500);
 
   }
 
@@ -255,12 +259,6 @@ window.CanvasRecorder = (() => {
 
   function drawFrame(context) {
 
-    /*
-    ================================================
-    CLEAR
-    ================================================
-    */
-
     context.clearRect(
       0,
       0,
@@ -268,58 +266,39 @@ window.CanvasRecorder = (() => {
       HEIGHT
     );
 
-    /*
-    ================================================
-    BACKGROUND
-    ================================================
-    */
-
     drawBackground(context);
-
-    /*
-    ================================================
-    OVERLAY
-    ================================================
-    */
 
     drawOverlay(context);
 
-    /*
-    ================================================
-    TEXT
-    ================================================
-    */
-
     drawText(context);
-
-    /*
-    ================================================
-    WATERMARK
-    ================================================
-    */
-
-    drawWatermark(context);
 
   }
 
   /*
   ====================================================
-  DRAW BACKGROUND
+  FULL IMAGE FIT
+  NO CROPPING
   ====================================================
   */
 
   function drawBackground(context) {
 
+    /*
+    ================================================
+    BLACK BACKGROUND
+    ================================================
+    */
+
+    context.fillStyle = "black";
+
+    context.fillRect(
+      0,
+      0,
+      WIDTH,
+      HEIGHT
+    );
+
     if (!currentImage) {
-
-      context.fillStyle = "black";
-
-      context.fillRect(
-        0,
-        0,
-        WIDTH,
-        HEIGHT
-      );
 
       return;
 
@@ -327,14 +306,14 @@ window.CanvasRecorder = (() => {
 
     /*
     ================================================
-    BREATHING ZOOM
+    BREATHING ANIMATION
     ================================================
     */
 
     zoomScale += zoomDirection;
 
     if (
-      zoomScale > 1.08 ||
+      zoomScale > 1.025 ||
       zoomScale < 1
     ) {
 
@@ -342,31 +321,91 @@ window.CanvasRecorder = (() => {
 
     }
 
-    const scaledWidth =
-      WIDTH * zoomScale;
+    /*
+    ================================================
+    IMAGE DIMENSIONS
+    ================================================
+    */
 
-    const scaledHeight =
-      HEIGHT * zoomScale;
+    const imageWidth =
+      currentImage.width;
+
+    const imageHeight =
+      currentImage.height;
+
+    /*
+    ================================================
+    SAFE CONTAIN FIT
+    ================================================
+    */
+
+    const imageRatio =
+      imageWidth / imageHeight;
+
+    const canvasRatio =
+      WIDTH / HEIGHT;
+
+    let drawWidth;
+
+    let drawHeight;
+
+    if (imageRatio > canvasRatio) {
+
+      drawWidth = WIDTH;
+
+      drawHeight =
+        WIDTH / imageRatio;
+
+    } else {
+
+      drawHeight = HEIGHT;
+
+      drawWidth =
+        HEIGHT * imageRatio;
+
+    }
+
+    /*
+    ================================================
+    APPLY CINEMATIC ZOOM
+    ================================================
+    */
+
+    drawWidth *= zoomScale;
+
+    drawHeight *= zoomScale;
+
+    /*
+    ================================================
+    CENTER POSITION
+    ================================================
+    */
 
     const x =
-      (WIDTH - scaledWidth) / 2;
+      (WIDTH - drawWidth) / 2;
 
     const y =
-      (HEIGHT - scaledHeight) / 2;
+      (HEIGHT - drawHeight) / 2;
+
+    /*
+    ================================================
+    DRAW IMAGE
+    ================================================
+    */
 
     context.drawImage(
       currentImage,
       x,
       y,
-      scaledWidth,
-      scaledHeight
+      drawWidth,
+      drawHeight
     );
 
   }
 
   /*
   ====================================================
-  DRAW OVERLAY
+  CINEMATIC OVERLAY
   ====================================================
   */
 
@@ -382,12 +421,12 @@ window.CanvasRecorder = (() => {
 
     gradient.addColorStop(
       0,
-      "rgba(0,0,0,0.15)"
+      "rgba(0,0,0,0.12)"
     );
 
     gradient.addColorStop(
       1,
-      "rgba(0,0,0,0.75)"
+      "rgba(0,0,0,0.68)"
     );
 
     context.fillStyle =
@@ -404,7 +443,7 @@ window.CanvasRecorder = (() => {
 
   /*
   ====================================================
-  DRAW TEXT
+  CENTER MULTICOLOR TEXT
   ====================================================
   */
 
@@ -425,9 +464,9 @@ window.CanvasRecorder = (() => {
     if (speaking) {
 
       context.shadowColor =
-        "rgba(255,255,255,0.8)";
+        "rgba(255,255,255,0.9)";
 
-      context.shadowBlur = 30;
+      context.shadowBlur = 40;
 
     } else {
 
@@ -441,25 +480,25 @@ window.CanvasRecorder = (() => {
     ================================================
     */
 
-    context.font =
-      "bold 72px Arial";
-
     context.textAlign = "center";
 
     context.textBaseline = "middle";
 
+    context.font =
+      "bold 74px Arial";
+
     /*
     ================================================
-    MULTICOLOR TEXT
+    MULTICOLOR GRADIENT
     ================================================
     */
 
     const gradient =
       context.createLinearGradient(
         0,
-        HEIGHT * 0.55,
+        HEIGHT / 2,
         WIDTH,
-        HEIGHT * 0.55
+        HEIGHT / 2
       );
 
     gradient.addColorStop(
@@ -468,8 +507,13 @@ window.CanvasRecorder = (() => {
     );
 
     gradient.addColorStop(
-      1,
+      0.5,
       "#ffcc00"
+    );
+
+    gradient.addColorStop(
+      1,
+      "#ff4d6d"
     );
 
     context.fillStyle =
@@ -477,7 +521,7 @@ window.CanvasRecorder = (() => {
 
     /*
     ================================================
-    WRAPPED TEXT
+    WRAP TEXT
     ================================================
     */
 
@@ -485,15 +529,29 @@ window.CanvasRecorder = (() => {
       wrapText(
         context,
         currentText,
-        WIDTH * 0.8
+        WIDTH * 0.78
       );
 
-    const lineHeight = 92;
+    const lineHeight = 96;
+
+    const totalHeight =
+      lines.length * lineHeight;
+
+    /*
+    ================================================
+    TRUE CENTER
+    ================================================
+    */
 
     const startY =
-      HEIGHT * 0.72 -
-      ((lines.length - 1)
-        * lineHeight) / 2;
+      (HEIGHT / 2) -
+      (totalHeight / 2);
+
+    /*
+    ================================================
+    DRAW TEXT LINES
+    ================================================
+    */
 
     lines.forEach((line, index) => {
 
@@ -504,6 +562,32 @@ window.CanvasRecorder = (() => {
       );
 
     });
+
+    /*
+    ================================================
+    WATERMARK BELOW TEXT
+    ================================================
+    */
+
+    if (watermark) {
+
+      context.shadowBlur = 0;
+
+      context.font =
+        "36px Arial";
+
+      context.fillStyle =
+        "rgba(255,255,255,0.72)";
+
+      context.fillText(
+        watermark,
+        WIDTH / 2,
+        startY +
+        totalHeight +
+        80
+      );
+
+    }
 
   }
 
@@ -532,7 +616,9 @@ window.CanvasRecorder = (() => {
         currentLine + word + " ";
 
       const width =
-        context.measureText(testLine).width;
+        context.measureText(
+          testLine
+        ).width;
 
       if (
         width > maxWidth &&
@@ -565,59 +651,14 @@ window.CanvasRecorder = (() => {
 
   /*
   ====================================================
-  DRAW WATERMARK
-  ====================================================
-  */
-
-  function drawWatermark(context) {
-
-    if (!watermark) {
-
-      return;
-
-    }
-
-    context.shadowBlur = 0;
-
-    context.font =
-      "36px Arial";
-
-    context.fillStyle =
-      "rgba(255,255,255,0.8)";
-
-    context.textAlign =
-      "center";
-
-    context.fillText(
-      watermark,
-      WIDTH / 2,
-      HEIGHT - 80
-    );
-
-  }
-
-  /*
-  ====================================================
   START RECORDING
   ====================================================
   */
 
   async function startRecording() {
 
-    /*
-    ================================================
-    CANVAS VIDEO STREAM
-    ================================================
-    */
-
     canvasStream =
       canvas.captureStream(30);
-
-    /*
-    ================================================
-    MERGED STREAM
-    ================================================
-    */
 
     combinedStream =
       new MediaStream();
@@ -656,7 +697,7 @@ window.CanvasRecorder = (() => {
 
     /*
     ================================================
-    MEDIA RECORDER
+    RECORDER
     ================================================
     */
 
@@ -669,12 +710,6 @@ window.CanvasRecorder = (() => {
       );
 
     recordedChunks = [];
-
-    /*
-    ================================================
-    DATA AVAILABLE
-    ================================================
-    */
 
     mediaRecorder.ondataavailable =
       (event) => {
@@ -691,12 +726,6 @@ window.CanvasRecorder = (() => {
         }
 
       };
-
-    /*
-    ================================================
-    START
-    ================================================
-    */
 
     mediaRecorder.start();
 
@@ -741,7 +770,7 @@ window.CanvasRecorder = (() => {
       mediaRecorder.stop();
 
       console.log(
-        "Recording stopped."
+        "Recording completed."
       );
 
     });
@@ -750,7 +779,7 @@ window.CanvasRecorder = (() => {
 
   /*
   ====================================================
-  OPTIONAL SCENE TRANSITION
+  SCENE TRANSITION
   ====================================================
   */
 
@@ -773,6 +802,14 @@ window.CanvasRecorder = (() => {
   async function finalize() {
 
     speaking = false;
+
+    if (animationFrame) {
+
+      cancelAnimationFrame(
+        animationFrame
+      );
+
+    }
 
   }
 
