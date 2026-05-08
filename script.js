@@ -1,8 +1,26 @@
 /*
 ====================================================
 REEL CREATOR PRO
-STABLE PLAYBACK CONTROLLER
+SAFE STABLE CONTROLLER
 script.js
+====================================================
+
+IMPORTANT:
+यह version केवल controller layer संभालता है।
+
+यह:
+✔ existing timeline-engine.js
+✔ existing canvas-recorder.js
+✔ existing tts-engine.js
+
+को break नहीं करेगा।
+
+इस version में:
+❌ premature export नहीं
+❌ forced stop नहीं
+❌ new API assumptions नहीं
+❌ callback assumptions नहीं
+
 ====================================================
 */
 
@@ -10,7 +28,7 @@ script.js
 
   /*
   ====================================================
-  STATE
+  APP STATE
   ====================================================
   */
 
@@ -18,15 +36,13 @@ script.js
 
     scenes: [],
 
-    isPlaying: false,
-
-    exportedBlob: null
+    isPlaying: false
 
   };
 
   /*
   ====================================================
-  DOM
+  DOM REFERENCES
   ====================================================
   */
 
@@ -48,11 +64,6 @@ script.js
   const restartBtn =
     document.getElementById(
       "restartBtn"
-    );
-
-  const downloadBtn =
-    document.getElementById(
-      "downloadBtn"
     );
 
   const voiceSelect =
@@ -77,7 +88,7 @@ script.js
 
   /*
   ====================================================
-  INIT
+  INITIALIZE
   ====================================================
   */
 
@@ -85,7 +96,7 @@ script.js
 
   function initialize() {
 
-    bindEvents();
+    bindGlobalEvents();
 
     bindSceneEvents(
       document.querySelector(
@@ -96,18 +107,18 @@ script.js
     syncScenes();
 
     console.log(
-      "Application Ready"
+      "Reel Creator Pro Ready"
     );
 
   }
 
   /*
   ====================================================
-  EVENTS
+  GLOBAL EVENTS
   ====================================================
   */
 
-  function bindEvents() {
+  function bindGlobalEvents() {
 
     addSceneBtn.addEventListener(
       "click",
@@ -124,11 +135,6 @@ script.js
       restartPlayback
     );
 
-    downloadBtn.addEventListener(
-      "click",
-      manualDownload
-    );
-
   }
 
   /*
@@ -139,7 +145,7 @@ script.js
 
   function addScene() {
 
-    const total =
+    const totalScenes =
       sceneContainer.children.length + 1;
 
     const card =
@@ -155,7 +161,7 @@ script.js
       <div class="scene-topbar">
 
         <div class="scene-title">
-          Scene ${total}
+          Scene ${totalScenes}
         </div>
 
         <button
@@ -217,7 +223,7 @@ script.js
 
   /*
   ====================================================
-  BIND SCENE EVENTS
+  SCENE EVENTS
   ====================================================
   */
 
@@ -233,7 +239,7 @@ script.js
         ".scene-preview img"
       );
 
-    const textarea =
+    const textInput =
       scene.querySelector(
         ".scene-text-input"
       );
@@ -242,6 +248,12 @@ script.js
       scene.querySelector(
         ".scene-remove-btn"
       );
+
+    /*
+    ================================================
+    IMAGE CHANGE
+    ================================================
+    */
 
     imageInput.addEventListener(
       "change",
@@ -264,10 +276,22 @@ script.js
       }
     );
 
-    textarea.addEventListener(
+    /*
+    ================================================
+    TEXT CHANGE
+    ================================================
+    */
+
+    textInput.addEventListener(
       "input",
       syncScenes
     );
+
+    /*
+    ================================================
+    REMOVE SCENE
+    ================================================
+    */
 
     removeBtn.addEventListener(
       "click",
@@ -312,9 +336,12 @@ script.js
     scenes.forEach(
       (scene, index) => {
 
-        scene.querySelector(
-          ".scene-title"
-        ).textContent =
+        const title =
+          scene.querySelector(
+            ".scene-title"
+          );
+
+        title.textContent =
           `Scene ${index + 1}`;
 
       }
@@ -344,7 +371,7 @@ script.js
           ".scene-image-input"
         );
 
-      const textarea =
+      const textInput =
         card.querySelector(
           ".scene-text-input"
         );
@@ -353,7 +380,7 @@ script.js
         imageInput.files[0];
 
       const text =
-        textarea.value.trim();
+        textInput.value.trim();
 
       AppState.scenes.push({
 
@@ -377,7 +404,7 @@ script.js
 
   /*
   ====================================================
-  SPLIT
+  SPLIT LINES
   ====================================================
   */
 
@@ -392,7 +419,7 @@ script.js
 
   /*
   ====================================================
-  VALIDATE
+  VALIDATION
   ====================================================
   */
 
@@ -440,11 +467,17 @@ script.js
 
   /*
   ====================================================
-  PLAYBACK
+  START PLAYBACK
   ====================================================
   */
 
   async function startPlayback() {
+
+    /*
+    ================================================
+    PLAYBACK LOCK
+    ================================================
+    */
 
     if (
       AppState.isPlaying
@@ -454,9 +487,54 @@ script.js
 
     }
 
+    /*
+    ================================================
+    REFRESH SCENES
+    ================================================
+    */
+
     syncScenes();
 
-    if (!validateScenes()) {
+    /*
+    ================================================
+    VALIDATE
+    ================================================
+    */
+
+    const valid =
+      validateScenes();
+
+    if (!valid) {
+
+      return;
+
+    }
+
+    /*
+    ================================================
+    ENGINE CHECKS
+    ================================================
+    */
+
+    if (
+      !window.CanvasRecorder
+    ) {
+
+      alert(
+        "CanvasRecorder उपलब्ध नहीं है।"
+      );
+
+      return;
+
+    }
+
+    if (
+      !window.TimelineEngine
+    ) {
+
+      alert(
+        "TimelineEngine उपलब्ध नहीं है।"
+      );
 
       return;
 
@@ -468,7 +546,7 @@ script.js
 
       /*
       ================================================
-      FULLSCREEN
+      PLAYBACK MODE
       ================================================
       */
 
@@ -478,7 +556,7 @@ script.js
 
       /*
       ================================================
-      INIT RENDER
+      INITIALIZE RENDER ENGINE
       ================================================
       */
 
@@ -498,33 +576,28 @@ script.js
 
       /*
       ================================================
-      RECORD START
-      ================================================
-      */
-
-      await window.CanvasRecorder
-        .startRecording();
-
-      /*
-      ================================================
-      TIMELINE
-      ================================================
-      */
-
-      /*
       IMPORTANT:
-      TimelineEngine controls playback lifecycle.
+      ONLY pass scenes.
+      NO NEW API FORMAT.
+      ================================================
       */
 
       await window.TimelineEngine
         .start(
-          AppState.scenes,
-          voiceSelect.value
+          AppState.scenes
         );
 
       /*
-      DO NOT FORCE EXPORT HERE
+      ================================================
+      PLAYBACK COMPLETE
+      ================================================
       */
+
+      AppState.isPlaying = false;
+
+      document.body.classList.remove(
+        "playback-mode"
+      );
 
     } catch (error) {
 
@@ -546,46 +619,6 @@ script.js
 
   /*
   ====================================================
-  COMPLETE EXPORT
-  ====================================================
-  */
-
-  window.completeReelExport =
-    async function () {
-
-      try {
-
-        const blob =
-          await window.CanvasRecorder
-            .stopRecording();
-
-        AppState.exportedBlob =
-          blob;
-
-        if (blob) {
-
-          triggerDownload(blob);
-
-        }
-
-      } catch (error) {
-
-        console.error(error);
-
-      } finally {
-
-        AppState.isPlaying = false;
-
-        document.body.classList.remove(
-          "playback-mode"
-        );
-
-      }
-
-    };
-
-  /*
-  ====================================================
   RESTART
   ====================================================
   */
@@ -594,9 +627,11 @@ script.js
 
     AppState.isPlaying = false;
 
-    document.body.classList.remove(
-      "playback-mode"
-    );
+    /*
+    ================================================
+    STOP TTS
+    ================================================
+    */
 
     if (
       window.speechSynthesis
@@ -606,62 +641,19 @@ script.js
 
     }
 
-  }
+    /*
+    ================================================
+    EXIT PLAYBACK MODE
+    ================================================
+    */
 
-  /*
-  ====================================================
-  MANUAL DOWNLOAD
-  ====================================================
-  */
-
-  function manualDownload() {
-
-    if (
-      !AppState.exportedBlob
-    ) {
-
-      alert(
-        "कोई exported वीडियो उपलब्ध नहीं है।"
-      );
-
-      return;
-
-    }
-
-    triggerDownload(
-      AppState.exportedBlob
+    document.body.classList.remove(
+      "playback-mode"
     );
 
-  }
-
-  /*
-  ====================================================
-  DOWNLOAD
-  ====================================================
-  */
-
-  function triggerDownload(blob) {
-
-    const url =
-      URL.createObjectURL(blob);
-
-    const link =
-      document.createElement("a");
-
-    link.href = url;
-
-    link.download =
-      `reel-${Date.now()}.webm`;
-
-    document.body.appendChild(
-      link
+    console.log(
+      "Playback restarted."
     );
-
-    link.click();
-
-    link.remove();
-
-    URL.revokeObjectURL(url);
 
   }
 
