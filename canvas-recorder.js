@@ -1,7 +1,8 @@
 /*
 ====================================================
 REEL CREATOR PRO
-ADVANCED CINEMATIC RENDER ENGINE
+FINAL CINEMATIC RENDER ENGINE V2
+FROZEN BLUEPRINT IMPLEMENTATION
 canvas-recorder.js
 ====================================================
 */
@@ -15,31 +16,24 @@ window.CanvasRecorder = (() => {
   */
 
   let canvas = null;
-
   let ctx = null;
 
   let previewCanvas = null;
-
   let previewCtx = null;
-
   let previewElement = null;
 
   let animationFrame = null;
 
   let mediaRecorder = null;
-
   let recordedChunks = [];
 
   let canvasStream = null;
-
   let combinedStream = null;
 
   let audioContext = null;
-
   let audioDestination = null;
 
   let currentImage = null;
-
   let currentText = "";
 
   let watermark = "";
@@ -48,23 +42,30 @@ window.CanvasRecorder = (() => {
 
   /*
   ====================================================
-  CINEMATIC ZOOM
+  BREATHING ANIMATION
   ====================================================
   */
 
   let zoomScale = 1;
-
-  let zoomDirection = 0.00018;
+  let zoomDirection = 0.00015;
 
   /*
   ====================================================
-  FINAL RENDER SIZE
+  FINAL VIDEO SIZE
   ====================================================
   */
 
   const WIDTH = 1080;
-
   const HEIGHT = 1920;
+
+  /*
+  ====================================================
+  TYPOGRAPHY
+  ====================================================
+  */
+
+  const FONT_FAMILY =
+    "Inter, Poppins, Montserrat, Arial, sans-serif";
 
   /*
   ====================================================
@@ -84,19 +85,19 @@ window.CanvasRecorder = (() => {
 
     /*
     ================================================
-    MAIN RENDER CANVAS
+    MAIN CANVAS
     ================================================
     */
 
     canvas.width = WIDTH;
-
     canvas.height = HEIGHT;
 
-    ctx = canvas.getContext("2d");
+    ctx =
+      canvas.getContext("2d");
 
     /*
     ================================================
-    RESET PREVIEW
+    CLEAN PREVIEW
     ================================================
     */
 
@@ -104,7 +105,7 @@ window.CanvasRecorder = (() => {
 
     /*
     ================================================
-    LIVE PREVIEW CANVAS
+    PREVIEW CANVAS
     ================================================
     */
 
@@ -112,14 +113,7 @@ window.CanvasRecorder = (() => {
       document.createElement("canvas");
 
     previewCanvas.width = WIDTH;
-
     previewCanvas.height = HEIGHT;
-
-    /*
-    ================================================
-    TRUE FULLSCREEN MOBILE FIT
-    ================================================
-    */
 
     previewCanvas.style.position =
       "absolute";
@@ -260,7 +254,7 @@ window.CanvasRecorder = (() => {
 
   /*
   ====================================================
-  RENDER ACTIVE LINE
+  ACTIVE LINE
   ====================================================
   */
 
@@ -281,7 +275,7 @@ window.CanvasRecorder = (() => {
 
   /*
   ====================================================
-  DRAW FRAME
+  MAIN FRAME
   ====================================================
   */
 
@@ -294,39 +288,122 @@ window.CanvasRecorder = (() => {
       HEIGHT
     );
 
-    drawBackground(context);
+    drawBlurBackground(context);
+
+    drawForegroundImage(context);
 
     drawOverlay(context);
 
-    drawCinematicStrip(context);
+    const textLayout =
+      measureTextLayout(context);
 
-    drawText(context);
+    drawGlassStrip(
+      context,
+      textLayout
+    );
+
+    drawAdaptiveText(
+      context,
+      textLayout
+    );
+
+    drawWatermark(
+      context,
+      textLayout
+    );
 
   }
 
   /*
   ====================================================
-  FULLSCREEN SAFE IMAGE FIT
-  NO CROPPING
+  BLUR BACKGROUND
   ====================================================
   */
 
-  function drawBackground(context) {
+  function drawBlurBackground(context) {
+
+    if (!currentImage) {
+
+      context.fillStyle =
+        "black";
+
+      context.fillRect(
+        0,
+        0,
+        WIDTH,
+        HEIGHT
+      );
+
+      return;
+
+    }
+
+    context.save();
 
     /*
     ================================================
-    BASE BLACK
+    BLUR SIMULATION
     ================================================
     */
 
-    context.fillStyle = "black";
+    context.filter =
+      "blur(14px) brightness(0.55)";
 
-    context.fillRect(
-      0,
-      0,
-      WIDTH,
-      HEIGHT
+    /*
+    ================================================
+    FULLSCREEN FILL
+    ================================================
+    */
+
+    const imageRatio =
+      currentImage.width /
+      currentImage.height;
+
+    const canvasRatio =
+      WIDTH / HEIGHT;
+
+    let drawWidth;
+    let drawHeight;
+
+    if (imageRatio > canvasRatio) {
+
+      drawHeight = HEIGHT;
+      drawWidth =
+        HEIGHT * imageRatio;
+
+    } else {
+
+      drawWidth = WIDTH;
+      drawHeight =
+        WIDTH / imageRatio;
+
+    }
+
+    const x =
+      (WIDTH - drawWidth) / 2;
+
+    const y =
+      (HEIGHT - drawHeight) / 2;
+
+    context.drawImage(
+      currentImage,
+      x,
+      y,
+      drawWidth,
+      drawHeight
     );
+
+    context.restore();
+
+  }
+
+  /*
+  ====================================================
+  SAFE FOREGROUND IMAGE
+  ====================================================
+  */
+
+  function drawForegroundImage(context) {
 
     if (!currentImage) {
 
@@ -351,58 +428,55 @@ window.CanvasRecorder = (() => {
 
     }
 
-    /*
-    ================================================
-    IMAGE SIZE
-    ================================================
-    */
-
     const imageWidth =
       currentImage.width;
 
     const imageHeight =
       currentImage.height;
 
-    /*
-    ================================================
-    SMART FIT
-    ================================================
-    */
-
     const imageRatio =
       imageWidth / imageHeight;
 
-    const canvasRatio =
-      WIDTH / HEIGHT;
+    /*
+    ================================================
+    SAFE MARGINS
+    ================================================
+    */
+
+    const maxWidth =
+      WIDTH * 0.92;
+
+    const maxHeight =
+      HEIGHT * 0.72;
 
     let drawWidth;
-
     let drawHeight;
 
-    if (imageRatio > canvasRatio) {
+    if (
+      imageWidth > imageHeight
+    ) {
 
-      drawWidth = WIDTH;
+      drawWidth = maxWidth;
 
       drawHeight =
-        WIDTH / imageRatio;
+        drawWidth / imageRatio;
 
     } else {
 
-      drawHeight = HEIGHT;
+      drawHeight = maxHeight;
 
       drawWidth =
-        HEIGHT * imageRatio;
+        drawHeight * imageRatio;
 
     }
 
     /*
     ================================================
-    APPLY SUBTLE ZOOM
+    SUBTLE ZOOM
     ================================================
     */
 
     drawWidth *= zoomScale;
-
     drawHeight *= zoomScale;
 
     /*
@@ -415,13 +489,21 @@ window.CanvasRecorder = (() => {
       (WIDTH - drawWidth) / 2;
 
     const y =
-      (HEIGHT - drawHeight) / 2;
+      (HEIGHT * 0.40) -
+      (drawHeight / 2);
 
     /*
     ================================================
-    DRAW IMAGE
+    CINEMATIC SHADOW
     ================================================
     */
+
+    context.save();
+
+    context.shadowColor =
+      "rgba(0,0,0,0.45)";
+
+    context.shadowBlur = 40;
 
     context.drawImage(
       currentImage,
@@ -431,11 +513,13 @@ window.CanvasRecorder = (() => {
       drawHeight
     );
 
+    context.restore();
+
   }
 
   /*
   ====================================================
-  CINEMATIC OVERLAY
+  OVERLAY
   ====================================================
   */
 
@@ -456,7 +540,7 @@ window.CanvasRecorder = (() => {
 
     gradient.addColorStop(
       1,
-      "rgba(0,0,0,0.65)"
+      "rgba(0,0,0,0.50)"
     );
 
     context.fillStyle =
@@ -473,50 +557,136 @@ window.CanvasRecorder = (() => {
 
   /*
   ====================================================
-  CINEMATIC GLASS STRIP
+  MEASURE TEXT LAYOUT
   ====================================================
   */
 
-  function drawCinematicStrip(context) {
+  function measureTextLayout(context) {
 
-    const stripHeight = 420;
+    const fontSize =
+      calculateFontSize(
+        currentText
+      );
 
-    const stripY =
-      HEIGHT - 620;
+    context.font =
+      `500 ${fontSize}px ${FONT_FAMILY}`;
+
+    const lines =
+      wrapText(
+        context,
+        currentText,
+        WIDTH * 0.78
+      );
+
+    const lineHeight =
+      fontSize * 1.35;
+
+    const textHeight =
+      lines.length * lineHeight;
+
+    const watermarkHeight = 70;
+
+    const padding = 90;
+
+    let stripHeight =
+      textHeight +
+      watermarkHeight +
+      padding;
 
     /*
     ================================================
-    GLASS STRIP
+    MIN / MAX LIMITS
+    ================================================
+    */
+
+    stripHeight =
+      Math.max(
+        220,
+        stripHeight
+      );
+
+    stripHeight =
+      Math.min(
+        480,
+        stripHeight
+      );
+
+    return {
+
+      fontSize,
+      lines,
+      lineHeight,
+      textHeight,
+      stripHeight
+
+    };
+
+  }
+
+  /*
+  ====================================================
+  GLASS STRIP
+  ====================================================
+  */
+
+  function drawGlassStrip(
+    context,
+    layout
+  ) {
+
+    const stripWidth =
+      WIDTH * 0.92;
+
+    const stripHeight =
+      layout.stripHeight;
+
+    const x =
+      (WIDTH - stripWidth) / 2;
+
+    const y =
+      HEIGHT - stripHeight - 110;
+
+    const radius = 40;
+
+    context.save();
+
+    /*
+    ================================================
+    GLASS BASE
     ================================================
     */
 
     context.fillStyle =
       "rgba(0,0,0,0.42)";
 
-    context.fillRect(
-      0,
-      stripY,
-      WIDTH,
-      stripHeight
+    roundRect(
+      context,
+      x,
+      y,
+      stripWidth,
+      stripHeight,
+      radius
     );
+
+    context.fill();
 
     /*
     ================================================
-    TOP HIGHLIGHT
+    TOP LIGHT
     ================================================
     */
 
     const gradient =
       context.createLinearGradient(
         0,
-        stripY,
+        y,
         0,
-        stripY + stripHeight
+        y + stripHeight
       );
 
     gradient.addColorStop(
       0,
-      "rgba(255,255,255,0.06)"
+      "rgba(255,255,255,0.08)"
     );
 
     gradient.addColorStop(
@@ -527,22 +697,31 @@ window.CanvasRecorder = (() => {
     context.fillStyle =
       gradient;
 
-    context.fillRect(
-      0,
-      stripY,
-      WIDTH,
-      stripHeight
+    roundRect(
+      context,
+      x,
+      y,
+      stripWidth,
+      stripHeight,
+      radius
     );
+
+    context.fill();
+
+    context.restore();
 
   }
 
   /*
   ====================================================
-  CENTER MULTICOLOR TEXT
+  ADAPTIVE TEXT
   ====================================================
   */
 
-  function drawText(context) {
+  function drawAdaptiveText(
+    context,
+    layout
+  ) {
 
     if (!currentText) {
 
@@ -550,48 +729,33 @@ window.CanvasRecorder = (() => {
 
     }
 
-    /*
-    ================================================
-    TALKING GLOW
-    ================================================
-    */
-
-    if (speaking) {
-
-      context.shadowColor =
-        "rgba(255,255,255,0.85)";
-
-      context.shadowBlur = 35;
-
-    } else {
-
-      context.shadowBlur = 0;
-
-    }
+    context.save();
 
     /*
     ================================================
-    TEXT STYLE
+    FONT
     ================================================
     */
-
-    context.textAlign = "center";
-
-    context.textBaseline = "middle";
 
     context.font =
-      "bold 72px Arial";
+      `500 ${layout.fontSize}px ${FONT_FAMILY}`;
+
+    context.textAlign =
+      "center";
+
+    context.textBaseline =
+      "middle";
 
     /*
     ================================================
-    MULTICOLOR GRADIENT
+    5 COLOR CINEMATIC GRADIENT
     ================================================
     */
 
     const gradient =
       context.createLinearGradient(
         0,
-        HEIGHT - 500,
+        HEIGHT - 600,
         WIDTH,
         HEIGHT - 300
       );
@@ -602,13 +766,23 @@ window.CanvasRecorder = (() => {
     );
 
     gradient.addColorStop(
-      0.5,
-      "#ffcc00"
+      0.25,
+      "#ffd166"
+    );
+
+    gradient.addColorStop(
+      0.50,
+      "#fca311"
+    );
+
+    gradient.addColorStop(
+      0.75,
+      "#ff4d8d"
     );
 
     gradient.addColorStop(
       1,
-      "#ff4d6d"
+      "#4cc9f0"
     );
 
     context.fillStyle =
@@ -616,72 +790,164 @@ window.CanvasRecorder = (() => {
 
     /*
     ================================================
-    WRAPPED TEXT
+    READABILITY
     ================================================
     */
 
-    const lines =
-      wrapText(
-        context,
-        currentText,
-        WIDTH * 0.82
-      );
+    context.shadowColor =
+      "rgba(0,0,0,0.45)";
 
-    const lineHeight = 92;
-
-    const totalHeight =
-      lines.length * lineHeight;
+    context.shadowBlur = 14;
 
     /*
     ================================================
-    TEXT START POSITION
+    SUBTLE SPEAKING GLOW
     ================================================
     */
 
-    const startY =
-      HEIGHT - 500;
+    if (speaking) {
 
-    /*
-    ================================================
-    DRAW TEXT
-    ================================================
-    */
+      context.shadowColor =
+        "rgba(255,255,255,0.22)";
 
-    lines.forEach((line, index) => {
-
-      context.fillText(
-        line,
-        WIDTH / 2,
-        startY + (index * lineHeight)
-      );
-
-    });
-
-    /*
-    ================================================
-    COPYRIGHT WATERMARK
-    ================================================
-    */
-
-    if (watermark) {
-
-      context.shadowBlur = 0;
-
-      context.font =
-        "34px Arial";
-
-      context.fillStyle =
-        "rgba(255,255,255,0.75)";
-
-      context.fillText(
-        `© ${watermark}`,
-        WIDTH / 2,
-        startY +
-        totalHeight +
-        90
-      );
+      context.shadowBlur = 22;
 
     }
+
+    /*
+    ================================================
+    STROKE
+    ================================================
+    */
+
+    context.strokeStyle =
+      "rgba(0,0,0,0.30)";
+
+    context.lineWidth = 2;
+
+    /*
+    ================================================
+    POSITIONING
+    ================================================
+    */
+
+    const totalHeight =
+      layout.lines.length *
+      layout.lineHeight;
+
+    const startY =
+      HEIGHT -
+      layout.stripHeight -
+      10 +
+      90;
+
+    /*
+    ================================================
+    DRAW
+    ================================================
+    */
+
+    layout.lines.forEach(
+      (line, index) => {
+
+        const y =
+          startY +
+          (index *
+            layout.lineHeight);
+
+        context.strokeText(
+          line,
+          WIDTH / 2,
+          y
+        );
+
+        context.fillText(
+          line,
+          WIDTH / 2,
+          y
+        );
+
+      }
+    );
+
+    context.restore();
+
+  }
+
+  /*
+  ====================================================
+  WATERMARK
+  ====================================================
+  */
+
+  function drawWatermark(
+    context,
+    layout
+  ) {
+
+    if (!watermark) {
+
+      return;
+
+    }
+
+    context.save();
+
+    context.font =
+      `400 30px ${FONT_FAMILY}`;
+
+    context.textAlign =
+      "center";
+
+    context.fillStyle =
+      "rgba(255,255,255,0.72)";
+
+    const y =
+      HEIGHT -
+      120;
+
+    context.fillText(
+      `© ${watermark}`,
+      WIDTH / 2,
+      y
+    );
+
+    context.restore();
+
+  }
+
+  /*
+  ====================================================
+  FONT SIZE
+  ====================================================
+  */
+
+  function calculateFontSize(
+    text
+  ) {
+
+    const length =
+      text.length;
+
+    if (length < 40) {
+
+      return 76;
+
+    }
+
+    if (length < 90) {
+
+      return 68;
+
+    }
+
+    if (length < 150) {
+
+      return 60;
+
+    }
+
+    return 54;
 
   }
 
@@ -707,7 +973,9 @@ window.CanvasRecorder = (() => {
     for (const word of words) {
 
       const testLine =
-        currentLine + word + " ";
+        currentLine +
+        word +
+        " ";
 
       const width =
         context.measureText(
@@ -739,7 +1007,87 @@ window.CanvasRecorder = (() => {
       currentLine.trim()
     );
 
-    return lines;
+    /*
+    ================================================
+    MAX 4 LINES
+    ================================================
+    */
+
+    return lines.slice(0, 4);
+
+  }
+
+  /*
+  ====================================================
+  ROUND RECT
+  ====================================================
+  */
+
+  function roundRect(
+    context,
+    x,
+    y,
+    width,
+    height,
+    radius
+  ) {
+
+    context.beginPath();
+
+    context.moveTo(
+      x + radius,
+      y
+    );
+
+    context.lineTo(
+      x + width - radius,
+      y
+    );
+
+    context.quadraticCurveTo(
+      x + width,
+      y,
+      x + width,
+      y + radius
+    );
+
+    context.lineTo(
+      x + width,
+      y + height - radius
+    );
+
+    context.quadraticCurveTo(
+      x + width,
+      y + height,
+      x + width - radius,
+      y + height
+    );
+
+    context.lineTo(
+      x + radius,
+      y + height
+    );
+
+    context.quadraticCurveTo(
+      x,
+      y + height,
+      x,
+      y + height - radius
+    );
+
+    context.lineTo(
+      x,
+      y + radius
+    );
+
+    context.quadraticCurveTo(
+      x,
+      y,
+      x + radius,
+      y
+    );
+
+    context.closePath();
 
   }
 
@@ -757,25 +1105,15 @@ window.CanvasRecorder = (() => {
     combinedStream =
       new MediaStream();
 
-    /*
-    ================================================
-    VIDEO TRACKS
-    ================================================
-    */
-
     canvasStream
       .getVideoTracks()
       .forEach(track => {
 
-        combinedStream.addTrack(track);
+        combinedStream.addTrack(
+          track
+        );
 
       });
-
-    /*
-    ================================================
-    AUDIO TRACKS
-    ================================================
-    */
 
     if (audioDestination) {
 
@@ -783,23 +1121,20 @@ window.CanvasRecorder = (() => {
         .getAudioTracks()
         .forEach(track => {
 
-          combinedStream.addTrack(track);
+          combinedStream.addTrack(
+            track
+          );
 
         });
 
     }
 
-    /*
-    ================================================
-    MEDIA RECORDER
-    ================================================
-    */
-
     mediaRecorder =
       new MediaRecorder(
         combinedStream,
         {
-          mimeType: "video/webm"
+          mimeType:
+            "video/webm"
         }
       );
 
@@ -843,19 +1178,21 @@ window.CanvasRecorder = (() => {
 
       }
 
-      mediaRecorder.onstop = () => {
+      mediaRecorder.onstop =
+        () => {
 
-        const blob =
-          new Blob(
-            recordedChunks,
-            {
-              type: "video/webm"
-            }
-          );
+          const blob =
+            new Blob(
+              recordedChunks,
+              {
+                type:
+                  "video/webm"
+              }
+            );
 
-        resolve(blob);
+          resolve(blob);
 
-      };
+        };
 
       mediaRecorder.stop();
 
@@ -865,7 +1202,7 @@ window.CanvasRecorder = (() => {
 
   /*
   ====================================================
-  SCENE TRANSITION
+  TRANSITION
   ====================================================
   */
 
@@ -873,7 +1210,10 @@ window.CanvasRecorder = (() => {
 
     return new Promise((resolve) => {
 
-      setTimeout(resolve, 400);
+      setTimeout(
+        resolve,
+        350
+      );
 
     });
 
