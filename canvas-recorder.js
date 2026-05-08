@@ -109,9 +109,13 @@ window.CanvasRecorder = (() => {
 
     previewCanvas.height = HEIGHT;
 
-    previewCanvas.style.width = "100%";
+    previewCanvas.style.width = "100vw";
 
-    previewCanvas.style.height = "100%";
+    previewCanvas.style.height = "100vh";
+
+    previewCanvas.style.objectFit = "contain";
+
+    previewCanvas.style.background = "black";
 
     previewCanvas.style.display = "block";
 
