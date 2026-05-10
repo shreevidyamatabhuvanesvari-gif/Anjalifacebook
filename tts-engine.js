@@ -1,20 +1,23 @@
 /*
 ====================================================
 REEL CREATOR PRO
-ADVANCED INDIAN VOICE ENGINE
+ULTRA STABLE INDIAN TTS ENGINE
+NO VOICE CUT VERSION
 tts-engine.js
 ====================================================
 
 Features:
 
-✔ Locked Voice System
+✔ No Voice Cutting
 ✔ Stable Indian Female Voice
 ✔ Stable Indian Male Voice
-✔ Auto Voice Mode
-✔ Cinematic Speech Tuning
-✔ No Robotic Voice Switching
-✔ Same Voice Across Entire Reel
-✔ Hindi Priority System
+✔ Locked Voice System
+✔ Queue Safe
+✔ Long Text Safe
+✔ Mobile Browser Safe
+✔ Chrome Android Stable
+✔ Cinematic Timing
+✔ Safe Speech Cleanup
 
 ====================================================
 */
@@ -27,17 +30,15 @@ window.TTSEngine = (() => {
   ====================================================
   */
 
-  let synth =
+  const synth =
     window.speechSynthesis;
 
   let voices = [];
 
-  let activeUtterance = null;
+  let initialized = false;
 
   let currentVoiceMode =
     "female";
-
-  let initialized = false;
 
   /*
   ====================================================
@@ -45,11 +46,32 @@ window.TTSEngine = (() => {
   ====================================================
   */
 
-  let lockedFemaleVoice = null;
+  let lockedFemaleVoice =
+    null;
 
-  let lockedMaleVoice = null;
+  let lockedMaleVoice =
+    null;
 
-  let lockedAutoVoice = null;
+  let lockedAutoVoice =
+    null;
+
+  /*
+  ====================================================
+  ACTIVE SPEECH
+  ====================================================
+  */
+
+  let activeSpeech =
+    null;
+
+  /*
+  ====================================================
+  SPEECH LOCK
+  ====================================================
+  */
+
+  let speaking =
+    false;
 
   /*
   ====================================================
@@ -67,12 +89,6 @@ window.TTSEngine = (() => {
 
     await loadVoices();
 
-    /*
-    ================================================
-    LOCK VOICES
-    ================================================
-    */
-
     lockedFemaleVoice =
       resolveFemaleVoice();
 
@@ -85,7 +101,7 @@ window.TTSEngine = (() => {
     initialized = true;
 
     console.log(
-      "TTS voices initialized."
+      "TTS initialized."
     );
 
   }
@@ -100,43 +116,46 @@ window.TTSEngine = (() => {
 
     return new Promise((resolve) => {
 
-      const availableVoices =
-        synth.getVoices();
+      let loaded = false;
 
-      /*
-      ================================================
-      IMMEDIATE LOAD
-      ================================================
-      */
+      function finalize() {
 
-      if (
-        availableVoices.length > 0
-      ) {
+        if (loaded) {
+
+          return;
+
+        }
 
         voices =
-          availableVoices;
+          synth.getVoices();
 
-        resolve();
+        if (
+          voices.length > 0
+        ) {
 
-        return;
-
-      }
-
-      /*
-      ================================================
-      WAIT FOR BROWSER
-      ================================================
-      */
-
-      synth.onvoiceschanged =
-        () => {
-
-          voices =
-            synth.getVoices();
+          loaded = true;
 
           resolve();
 
-        };
+        }
+
+      }
+
+      finalize();
+
+      synth.onvoiceschanged =
+        finalize;
+
+      /*
+      ================================================
+      SAFETY FALLBACK
+      ================================================
+      */
+
+      setTimeout(
+        finalize,
+        1200
+      );
 
     });
 
@@ -144,7 +163,7 @@ window.TTSEngine = (() => {
 
   /*
   ====================================================
-  SPEAK
+  MAIN SPEAK
   ====================================================
   */
 
@@ -153,7 +172,9 @@ window.TTSEngine = (() => {
     await initialize();
 
     const text =
-      config.text || "";
+      sanitizeText(
+        config.text || ""
+      );
 
     currentVoiceMode =
       config.voiceMode ||
@@ -173,15 +194,31 @@ window.TTSEngine = (() => {
 
     /*
     ================================================
-    STOP PREVIOUS
+    WAIT PREVIOUS SPEECH
     ================================================
     */
 
-    stop();
+    await waitForSpeechFinish();
 
     /*
     ================================================
-    CREATE UTTERANCE
+    HARD CLEANUP
+    ================================================
+    */
+
+    hardStop();
+
+    /*
+    ================================================
+    MOBILE SAFETY DELAY
+    ================================================
+    */
+
+    await wait(120);
+
+    /*
+    ================================================
+    CREATE SPEECH
     ================================================
     */
 
@@ -190,89 +227,10 @@ window.TTSEngine = (() => {
         text
       );
 
-    activeUtterance =
+    activeSpeech =
       speech;
 
-    /*
-    ================================================
-    SELECT LOCKED VOICE
-    ================================================
-    */
-
-    let selectedVoice =
-      null;
-
-    if (
-      currentVoiceMode ===
-      "female"
-    ) {
-
-      selectedVoice =
-        lockedFemaleVoice;
-
-      /*
-      ==============================================
-      INDIAN FEMALE STYLE
-      ==============================================
-      */
-
-      speech.pitch =
-        1.06;
-
-      speech.rate =
-        0.93;
-
-      speech.volume =
-        1;
-
-    }
-
-    else if (
-      currentVoiceMode ===
-      "male"
-    ) {
-
-      selectedVoice =
-        lockedMaleVoice;
-
-      /*
-      ==============================================
-      INDIAN MALE STYLE
-      ==============================================
-      */
-
-      speech.pitch =
-        0.92;
-
-      speech.rate =
-        0.96;
-
-      speech.volume =
-        1;
-
-    }
-
-    else {
-
-      selectedVoice =
-        lockedAutoVoice;
-
-      /*
-      ==============================================
-      AUTO STYLE
-      ==============================================
-      */
-
-      speech.pitch =
-        1;
-
-      speech.rate =
-        0.95;
-
-      speech.volume =
-        1;
-
-    }
+    speaking = true;
 
     /*
     ================================================
@@ -280,23 +238,21 @@ window.TTSEngine = (() => {
     ================================================
     */
 
-    if (selectedVoice) {
-
-      speech.voice =
-        selectedVoice;
-
-      speech.lang =
-        selectedVoice.lang;
-
-    }
+    applyVoiceSettings(
+      speech,
+      currentVoiceMode
+    );
 
     /*
     ================================================
-    PROMISE
+    SPEAK PROMISE
     ================================================
     */
 
     return new Promise((resolve, reject) => {
+
+      let resolved =
+        false;
 
       /*
       ==============================================
@@ -307,7 +263,7 @@ window.TTSEngine = (() => {
       speech.onstart = () => {
 
         console.log(
-          "TTS started:",
+          "Speaking:",
           text
         );
 
@@ -321,8 +277,15 @@ window.TTSEngine = (() => {
 
       speech.onend = () => {
 
-        activeUtterance =
-          null;
+        if (resolved) {
+
+          return;
+
+        }
+
+        resolved = true;
+
+        cleanupSpeech();
 
         /*
         ============================================
@@ -334,7 +297,7 @@ window.TTSEngine = (() => {
 
           resolve();
 
-        }, 350);
+        }, 260);
 
       };
 
@@ -347,13 +310,27 @@ window.TTSEngine = (() => {
       speech.onerror =
         (event) => {
 
+          /*
+          ============================================
+          IGNORE INTERRUPTED
+          ============================================
+          */
+
+          if (
+            event.error ===
+            "interrupted"
+          ) {
+
+            return;
+
+          }
+
           console.error(
-            "TTS error:",
+            "TTS Error:",
             event.error
           );
 
-          activeUtterance =
-            null;
+          cleanupSpeech();
 
           reject(
             event.error
@@ -369,25 +346,133 @@ window.TTSEngine = (() => {
 
       synth.speak(speech);
 
+      /*
+      ==============================================
+      ANDROID SAFETY WATCHDOG
+      ==============================================
+      */
+
+      startWatchdog(
+        speech,
+        text,
+        resolve
+      );
+
     });
 
   }
 
   /*
   ====================================================
-  FEMALE VOICE RESOLVER
+  APPLY VOICE SETTINGS
+  ====================================================
+  */
+
+  function applyVoiceSettings(
+    speech,
+    mode
+  ) {
+
+    let selectedVoice =
+      null;
+
+    /*
+    ================================================
+    FEMALE
+    ================================================
+    */
+
+    if (
+      mode === "female"
+    ) {
+
+      selectedVoice =
+        lockedFemaleVoice;
+
+      speech.pitch =
+        1.04;
+
+      speech.rate =
+        0.90;
+
+      speech.volume =
+        1;
+
+    }
+
+    /*
+    ================================================
+    MALE
+    ================================================
+    */
+
+    else if (
+      mode === "male"
+    ) {
+
+      selectedVoice =
+        lockedMaleVoice;
+
+      speech.pitch =
+        0.92;
+
+      speech.rate =
+        0.94;
+
+      speech.volume =
+        1;
+
+    }
+
+    /*
+    ================================================
+    AUTO
+    ================================================
+    */
+
+    else {
+
+      selectedVoice =
+        lockedAutoVoice;
+
+      speech.pitch =
+        1;
+
+      speech.rate =
+        0.92;
+
+      speech.volume =
+        1;
+
+    }
+
+    /*
+    ================================================
+    APPLY
+    ================================================
+    */
+
+    if (selectedVoice) {
+
+      speech.voice =
+        selectedVoice;
+
+      speech.lang =
+        selectedVoice.lang;
+
+    }
+
+  }
+
+  /*
+  ====================================================
+  FEMALE VOICE
   ====================================================
   */
 
   function resolveFemaleVoice() {
 
-    /*
-    ================================================
-    PRIORITY ORDER
-    ================================================
-    */
-
-    const femalePriority = [
+    const priority = [
 
       "swara",
       "heera",
@@ -396,163 +481,48 @@ window.TTSEngine = (() => {
       "female",
       "woman",
       "zira",
-      "samantha",
-      "victoria",
-      "karen"
+      "samantha"
 
     ];
 
-    /*
-    ================================================
-    HINDI FEMALE
-    ================================================
-    */
-
-    for (const keyword of femalePriority) {
-
-      const match =
-        voices.find((voice) => {
-
-          const name =
-            voice.name
-              .toLowerCase();
-
-          return name.includes(
-            keyword.toLowerCase()
-          );
-
-        });
-
-      if (match) {
-
-        console.log(
-          "Female voice locked:",
-          match.name
-        );
-
-        return match;
-
-      }
-
-    }
-
-    /*
-    ================================================
-    HINDI LANGUAGE FALLBACK
-    ================================================
-    */
-
-    const hindiVoice =
-      voices.find((voice) => {
-
-        return voice.lang
-          .toLowerCase()
-          .includes("hi");
-
-      });
-
-    if (hindiVoice) {
-
-      return hindiVoice;
-
-    }
-
-    /*
-    ================================================
-    FINAL FALLBACK
-    ================================================
-    */
-
-    return voices[0] || null;
+    return resolveVoiceByPriority(
+      priority
+    );
 
   }
 
   /*
   ====================================================
-  MALE VOICE RESOLVER
+  MALE VOICE
   ====================================================
   */
 
   function resolveMaleVoice() {
 
-    const malePriority = [
+    const priority = [
 
       "ravi",
       "male",
       "man",
       "david",
       "alex",
-      "daniel",
-      "fred"
+      "daniel"
 
     ];
 
-    for (const keyword of malePriority) {
-
-      const match =
-        voices.find((voice) => {
-
-          const name =
-            voice.name
-              .toLowerCase();
-
-          return name.includes(
-            keyword.toLowerCase()
-          );
-
-        });
-
-      if (match) {
-
-        console.log(
-          "Male voice locked:",
-          match.name
-        );
-
-        return match;
-
-      }
-
-    }
-
-    /*
-    ================================================
-    HINDI VOICE FALLBACK
-    ================================================
-    */
-
-    const hindiVoice =
-      voices.find((voice) => {
-
-        return voice.lang
-          .toLowerCase()
-          .includes("hi");
-
-      });
-
-    if (hindiVoice) {
-
-      return hindiVoice;
-
-    }
-
-    return voices[0] || null;
+    return resolveVoiceByPriority(
+      priority
+    );
 
   }
 
   /*
   ====================================================
-  AUTO VOICE RESOLVER
+  AUTO VOICE
   ====================================================
   */
 
   function resolveAutoVoice() {
-
-    /*
-    ================================================
-    PREFER FEMALE
-    ================================================
-    */
 
     return (
       lockedFemaleVoice ||
@@ -564,22 +534,232 @@ window.TTSEngine = (() => {
 
   /*
   ====================================================
+  PRIORITY MATCHER
+  ====================================================
+  */
+
+  function resolveVoiceByPriority(
+    priority
+  ) {
+
+    for (
+      const keyword
+      of priority
+    ) {
+
+      const match =
+        voices.find((voice) => {
+
+          return voice.name
+            .toLowerCase()
+            .includes(
+              keyword.toLowerCase()
+            );
+
+        });
+
+      if (match) {
+
+        console.log(
+          "Locked voice:",
+          match.name
+        );
+
+        return match;
+
+      }
+
+    }
+
+    /*
+    ================================================
+    HINDI FALLBACK
+    ================================================
+    */
+
+    const hindiVoice =
+      voices.find((voice) => {
+
+        return voice.lang
+          .toLowerCase()
+          .includes("hi");
+
+      });
+
+    if (hindiVoice) {
+
+      return hindiVoice;
+
+    }
+
+    return voices[0] || null;
+
+  }
+
+  /*
+  ====================================================
+  WATCHDOG
+  ====================================================
+  */
+
+  function startWatchdog(
+    speech,
+    text,
+    resolve
+  ) {
+
+    /*
+    ================================================
+    SOME MOBILE BROWSERS
+    RANDOMLY STOP TTS
+    ================================================
+    */
+
+    const estimatedTime =
+      Math.max(
+        4000,
+        text.length * 90
+      );
+
+    setTimeout(() => {
+
+      /*
+      ==============================================
+      FORCE COMPLETE
+      ==============================================
+      */
+
+      if (
+        speaking &&
+        !synth.speaking
+      ) {
+
+        console.warn(
+          "TTS watchdog recovered speech."
+        );
+
+        cleanupSpeech();
+
+        resolve();
+
+      }
+
+    }, estimatedTime);
+
+  }
+
+  /*
+  ====================================================
+  WAIT FOR SPEECH
+  ====================================================
+  */
+
+  async function waitForSpeechFinish() {
+
+    return new Promise((resolve) => {
+
+      const interval =
+        setInterval(() => {
+
+          if (
+            !synth.speaking &&
+            !speaking
+          ) {
+
+            clearInterval(
+              interval
+            );
+
+            resolve();
+
+          }
+
+        }, 60);
+
+    });
+
+  }
+
+  /*
+  ====================================================
+  CLEANUP
+  ====================================================
+  */
+
+  function cleanupSpeech() {
+
+    activeSpeech =
+      null;
+
+    speaking =
+      false;
+
+  }
+
+  /*
+  ====================================================
+  HARD STOP
+  ====================================================
+  */
+
+  function hardStop() {
+
+    try {
+
+      synth.cancel();
+
+    } catch (error) {
+
+      console.warn(error);
+
+    }
+
+    cleanupSpeech();
+
+  }
+
+  /*
+  ====================================================
+  SANITIZE TEXT
+  ====================================================
+  */
+
+  function sanitizeText(text) {
+
+    return text
+      .replace(/\s+/g, " ")
+      .trim();
+
+  }
+
+  /*
+  ====================================================
+  WAIT
+  ====================================================
+  */
+
+  function wait(duration) {
+
+    return new Promise((resolve) => {
+
+      setTimeout(
+        resolve,
+        duration
+      );
+
+    });
+
+  }
+
+  /*
+  ====================================================
   STOP
   ====================================================
   */
 
   function stop() {
 
-    if (
-      synth.speaking
-    ) {
-
-      synth.cancel();
-
-    }
-
-    activeUtterance =
-      null;
+    hardStop();
 
   }
 
@@ -591,7 +771,10 @@ window.TTSEngine = (() => {
 
   function isSpeaking() {
 
-    return synth.speaking;
+    return (
+      synth.speaking ||
+      speaking
+    );
 
   }
 
