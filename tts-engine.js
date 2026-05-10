@@ -1,8 +1,7 @@
 /*
 ====================================================
 REEL CREATOR PRO
-STABLE HINDI CINEMATIC TTS ENGINE
-FIRST SPEECH FIX VERSION
+FINAL ULTRA STABLE TTS ENGINE
 tts-engine.js
 ====================================================
 */
@@ -17,27 +16,18 @@ window.TTSEngine = (() => {
   let initialized =
     false;
 
-  let currentVoiceMode =
-    "female";
-
-  let lockedFemaleVoice =
+  let femaleVoice =
     null;
 
-  let lockedMaleVoice =
-    null;
-
-  let lockedAutoVoice =
+  let maleVoice =
     null;
 
   let speaking =
     false;
 
-  const MAX_CHUNK_LENGTH =
-    52;
-
   /*
   ====================================================
-  INITIALIZE
+  INIT
   ====================================================
   */
 
@@ -51,20 +41,13 @@ window.TTSEngine = (() => {
 
     await loadVoices();
 
-    lockedFemaleVoice =
+    femaleVoice =
       resolveFemaleVoice();
 
-    lockedMaleVoice =
+    maleVoice =
       resolveMaleVoice();
 
-    lockedAutoVoice =
-      resolveAutoVoice();
-
     initialized = true;
-
-    console.log(
-      "Stable Hindi TTS ready."
-    );
 
   }
 
@@ -78,16 +61,7 @@ window.TTSEngine = (() => {
 
     return new Promise((resolve) => {
 
-      let loaded =
-        false;
-
-      function finalize() {
-
-        if (loaded) {
-
-          return;
-
-        }
+      const load = () => {
 
         voices =
           synth.getVoices();
@@ -96,22 +70,20 @@ window.TTSEngine = (() => {
           voices.length > 0
         ) {
 
-          loaded = true;
-
           resolve();
 
         }
 
-      }
+      };
 
-      finalize();
+      load();
 
-      synth.onvoiceschanged =
-        finalize;
+      speechSynthesis.onvoiceschanged =
+        load;
 
       setTimeout(
-        finalize,
-        1500
+        load,
+        1200
       );
 
     });
@@ -120,7 +92,7 @@ window.TTSEngine = (() => {
 
   /*
   ====================================================
-  MAIN SPEAK
+  SPEAK
   ====================================================
   */
 
@@ -128,16 +100,12 @@ window.TTSEngine = (() => {
 
     await initialize();
 
-    const originalText =
-      sanitizeText(
+    const text =
+      sanitize(
         config.text || ""
       );
 
-    currentVoiceMode =
-      config.voiceMode ||
-      "female";
-
-    if (!originalText) {
+    if (!text) {
 
       return;
 
@@ -145,71 +113,7 @@ window.TTSEngine = (() => {
 
     await waitUntilFree();
 
-    /*
-    ================================================
-    ANDROID STABILIZATION
-    ================================================
-    */
-
-    await wait(180);
-
-    const chunks =
-      createSemanticChunks(
-        originalText
-      );
-
-    for (
-      let i = 0;
-      i < chunks.length;
-      i++
-    ) {
-
-      const chunk =
-        chunks[i];
-
-      await speakChunk(
-        chunk
-      );
-
-      /*
-      ==============================================
-      PAUSE
-      ==============================================
-      */
-
-      await wait(
-        getAdaptivePause(
-          chunk
-        )
-      );
-
-      /*
-      ==============================================
-      SOFT RECOVERY
-      ==============================================
-      */
-
-      if (i > 0) {
-
-        softRecover();
-
-      }
-
-    }
-
-    await wait(500);
-
-  }
-
-  /*
-  ====================================================
-  SPEAK CHUNK
-  ====================================================
-  */
-
-  async function speakChunk(text) {
-
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
 
       const speech =
         new SpeechSynthesisUtterance(
@@ -218,151 +122,79 @@ window.TTSEngine = (() => {
 
       speaking = true;
 
-      applyVoiceSettings(
-        speech,
-        currentVoiceMode
-      );
+      /*
+      ================================================
+      VOICE
+      ================================================
+      */
 
-      let completed =
-        false;
+      if (
+        config.voiceMode ===
+        "male"
+      ) {
 
-      speech.onstart =
-        () => {
+        speech.voice =
+          maleVoice;
 
-          console.log(
-            "Speaking:",
-            text
-          );
+        speech.pitch =
+          0.94;
 
-        };
+        speech.rate =
+          0.90;
+
+      }
+
+      else {
+
+        speech.voice =
+          femaleVoice;
+
+        speech.pitch =
+          1.03;
+
+        speech.rate =
+          0.88;
+
+      }
+
+      speech.volume = 1;
+
+      /*
+      ================================================
+      LANGUAGE
+      ================================================
+      */
+
+      speech.lang =
+        "hi-IN";
+
+      /*
+      ================================================
+      EVENTS
+      ================================================
+      */
 
       speech.onend =
         () => {
 
-          if (completed) {
-
-            return;
-
-          }
-
-          completed =
-            true;
-
-          cleanupSpeech();
+          speaking = false;
 
           resolve();
 
         };
 
       speech.onerror =
-        (event) => {
+        () => {
 
-          if (
-            event.error ===
-            "interrupted"
-          ) {
+          speaking = false;
 
-            cleanupSpeech();
-
-            resolve();
-
-            return;
-
-          }
-
-          console.error(
-            event.error
-          );
-
-          cleanupSpeech();
-
-          reject(
-            event.error
-          );
+          resolve();
 
         };
 
-      synth.speak(
-        speech
-      );
-
-      startWatchdog(
-        text,
-        resolve
-      );
+      synth.speak(speech);
 
     });
-
-  }
-
-  /*
-  ====================================================
-  APPLY VOICE
-  ====================================================
-  */
-
-  function applyVoiceSettings(
-    speech,
-    mode
-  ) {
-
-    let selectedVoice =
-      null;
-
-    if (
-      mode === "female"
-    ) {
-
-      selectedVoice =
-        lockedFemaleVoice;
-
-      speech.pitch =
-        1.04;
-
-      speech.rate =
-        0.84;
-
-    }
-
-    else if (
-      mode === "male"
-    ) {
-
-      selectedVoice =
-        lockedMaleVoice;
-
-      speech.pitch =
-        0.92;
-
-      speech.rate =
-        0.88;
-
-    }
-
-    else {
-
-      selectedVoice =
-        lockedAutoVoice;
-
-      speech.pitch =
-        1;
-
-      speech.rate =
-        0.86;
-
-    }
-
-    speech.volume = 1;
-
-    if (selectedVoice) {
-
-      speech.voice =
-        selectedVoice;
-
-      speech.lang =
-        selectedVoice.lang;
-
-    }
 
   }
 
@@ -374,12 +206,10 @@ window.TTSEngine = (() => {
 
   function resolveFemaleVoice() {
 
-    return resolveVoice([
+    return findVoice([
 
       "swara",
       "heera",
-      "google हिन्दी",
-      "google hindi",
       "female",
       "zira",
       "samantha"
@@ -396,12 +226,11 @@ window.TTSEngine = (() => {
 
   function resolveMaleVoice() {
 
-    return resolveVoice([
+    return findVoice([
 
       "ravi",
-      "male",
       "david",
-      "alex"
+      "male"
 
     ]);
 
@@ -409,28 +238,11 @@ window.TTSEngine = (() => {
 
   /*
   ====================================================
-  AUTO VOICE
+  FIND VOICE
   ====================================================
   */
 
-  function resolveAutoVoice() {
-
-    return (
-      lockedFemaleVoice ||
-      voices[0]
-    );
-
-  }
-
-  /*
-  ====================================================
-  RESOLVE VOICE
-  ====================================================
-  */
-
-  function resolveVoice(
-    keywords
-  ) {
+  function findVoice(keywords) {
 
     for (
       const keyword
@@ -456,187 +268,13 @@ window.TTSEngine = (() => {
 
     }
 
-    const hindiVoice =
-      voices.find((voice) => {
-
-        return voice.lang
-          .toLowerCase()
-          .includes("hi");
-
-      });
-
-    return (
-      hindiVoice ||
-      voices[0]
-    );
+    return voices[0];
 
   }
 
   /*
   ====================================================
-  SEMANTIC CHUNKS
-  ====================================================
-  */
-
-  function createSemanticChunks(
-    text
-  ) {
-
-    if (
-      text.length <=
-      MAX_CHUNK_LENGTH
-    ) {
-
-      return [text];
-
-    }
-
-    const parts =
-      text.split(
-        /(,|।|!|\?|…|\.)/g
-      );
-
-    const chunks = [];
-
-    let current =
-      "";
-
-    for (
-      const part
-      of parts
-    ) {
-
-      if (
-        (
-          current + part
-        ).length <
-        MAX_CHUNK_LENGTH
-      ) {
-
-        current += part;
-
-      }
-
-      else {
-
-        if (
-          current.trim()
-        ) {
-
-          chunks.push(
-            current.trim()
-          );
-
-        }
-
-        current =
-          part;
-
-      }
-
-    }
-
-    if (
-      current.trim()
-    ) {
-
-      chunks.push(
-        current.trim()
-      );
-
-    }
-
-    return chunks.filter(Boolean);
-
-  }
-
-  /*
-  ====================================================
-  PAUSE ENGINE
-  ====================================================
-  */
-
-  function getAdaptivePause(
-    text
-  ) {
-
-    if (
-      text.includes("।")
-    ) {
-
-      return 950;
-
-    }
-
-    if (
-      text.includes(",")
-    ) {
-
-      return 500;
-
-    }
-
-    return 650;
-
-  }
-
-  /*
-  ====================================================
-  WATCHDOG
-  ====================================================
-  */
-
-  function startWatchdog(
-    text,
-    resolve
-  ) {
-
-    const estimated =
-      Math.max(
-        5000,
-        text.length * 130
-      );
-
-    setTimeout(() => {
-
-      if (
-        speaking &&
-        !synth.speaking
-      ) {
-
-        cleanupSpeech();
-
-        resolve();
-
-      }
-
-    }, estimated);
-
-  }
-
-  /*
-  ====================================================
-  SOFT RECOVERY
-  ====================================================
-  */
-
-  function softRecover() {
-
-    try {
-
-      synth.resume();
-
-    } catch (error) {
-
-      console.warn(error);
-
-    }
-
-  }
-
-  /*
-  ====================================================
-  WAIT FREE
+  WAIT
   ====================================================
   */
 
@@ -648,7 +286,7 @@ window.TTSEngine = (() => {
         setInterval(() => {
 
           if (
-            !synth.speaking &&
+            !speechSynthesis.speaking &&
             !speaking
           ) {
 
@@ -660,21 +298,9 @@ window.TTSEngine = (() => {
 
           }
 
-        }, 120);
+        }, 100);
 
     });
-
-  }
-
-  /*
-  ====================================================
-  CLEANUP
-  ====================================================
-  */
-
-  function cleanupSpeech() {
-
-    speaking = false;
 
   }
 
@@ -684,32 +310,12 @@ window.TTSEngine = (() => {
   ====================================================
   */
 
-  function sanitizeText(
-    text
-  ) {
+  function sanitize(text) {
 
     return text
+      .replace(/[,:;]/g, "")
       .replace(/\s+/g, " ")
       .trim();
-
-  }
-
-  /*
-  ====================================================
-  WAIT
-  ====================================================
-  */
-
-  function wait(duration) {
-
-    return new Promise((resolve) => {
-
-      setTimeout(
-        resolve,
-        duration
-      );
-
-    });
 
   }
 
@@ -721,23 +327,15 @@ window.TTSEngine = (() => {
 
   function stop() {
 
-    try {
+    speaking = false;
 
-      synth.cancel();
-
-    } catch (error) {
-
-      console.warn(error);
-
-    }
-
-    cleanupSpeech();
+    synth.cancel();
 
   }
 
   /*
   ====================================================
-  PUBLIC API
+  API
   ====================================================
   */
 
@@ -747,28 +345,7 @@ window.TTSEngine = (() => {
 
     speak,
 
-    stop,
-
-    isSpeaking() {
-
-      return (
-        synth.speaking ||
-        speaking
-      );
-
-    },
-
-    getVoices() {
-
-      return voices;
-
-    },
-
-    getCurrentVoiceMode() {
-
-      return currentVoiceMode;
-
-    }
+    stop
 
   };
 
