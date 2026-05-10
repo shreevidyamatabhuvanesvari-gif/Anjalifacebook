@@ -1,32 +1,12 @@
 /*
 ====================================================
 REEL CREATOR PRO
-FINAL PLAYBACK CONTROLLER
+FINAL STABLE PLAYBACK CONTROLLER
 script.js
-====================================================
-
-Responsibilities:
-
-✔ Scene Management
-✔ Scene Playback
-✔ Scene Sequencing
-✔ Line Rendering
-✔ TTS Synchronization
-✔ Fullscreen Playback
-✔ Recording Lifecycle
-✔ Auto Export
-✔ Auto Download
-
 ====================================================
 */
 
 (() => {
-
-  /*
-  ====================================================
-  APP STATE
-  ====================================================
-  */
 
   const AppState = {
 
@@ -40,7 +20,7 @@ Responsibilities:
 
   /*
   ====================================================
-  DOM REFERENCES
+  DOM
   ====================================================
   */
 
@@ -109,15 +89,11 @@ Responsibilities:
 
     syncScenes();
 
-    console.log(
-      "Reel Creator Pro Ready"
-    );
-
   }
 
   /*
   ====================================================
-  GLOBAL EVENTS
+  EVENTS
   ====================================================
   */
 
@@ -203,17 +179,14 @@ Responsibilities:
 
         <textarea
           class="scene-text-input"
-          placeholder="Write cinematic narration..."
+          placeholder="Write narration..."
         ></textarea>
 
       </div>
 
       <div class="scene-preview">
 
-        <img
-          src=""
-          alt="Scene Preview"
-        />
+        <img src="" />
 
       </div>
 
@@ -257,12 +230,6 @@ Responsibilities:
         ".scene-remove-btn"
       );
 
-    /*
-    ================================================
-    IMAGE CHANGE
-    ================================================
-    */
-
     imageInput.addEventListener(
       "change",
       (event) => {
@@ -284,22 +251,10 @@ Responsibilities:
       }
     );
 
-    /*
-    ================================================
-    TEXT CHANGE
-    ================================================
-    */
-
     textInput.addEventListener(
       "input",
       syncScenes
     );
-
-    /*
-    ================================================
-    REMOVE
-    ================================================
-    */
 
     removeBtn.addEventListener(
       "click",
@@ -308,10 +263,6 @@ Responsibilities:
         if (
           sceneContainer.children.length <= 1
         ) {
-
-          alert(
-            "कम से कम एक scene आवश्यक है।"
-          );
 
           return;
 
@@ -409,110 +360,90 @@ Responsibilities:
 
   /*
   ====================================================
-  SPLIT LINES
+  FINAL STABLE SPLITTER
   ====================================================
   */
 
   function splitLines(text) {
 
-  if (!text) {
+    if (!text) {
 
-    return [];
+      return [];
 
-  }
+    }
 
-  /*
-  ================================================
-  NORMALIZE
-  ================================================
-  */
-
-  const normalized =
-    text
-      .replace(/\n+/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-
-  /*
-  ================================================
-  SPLIT BY HINDI SEMANTIC PUNCTUATION
-  ================================================
-  */
-
-  const parts =
-    normalized.match(
-      /[^।!?]+[।!?]?|[^,]+,/g
-    );
-
-  if (!parts) {
-
-    return [normalized];
-
-  }
-
-  /*
-  ================================================
-  CLEAN
-  ================================================
-  */
-
-  return parts
-    .map(part => {
-
-      return part
-        .replace(/,+$/, "")
+    const normalized =
+      text
+        .replace(/\n+/g, " ")
+        .replace(/\s+/g, " ")
         .trim();
 
-    })
-    .filter(Boolean);
+    const rawParts =
+      normalized.split(/(?<=[।!?])/);
 
-}
+    const finalLines = [];
 
-  /*
-  ====================================================
-  VALIDATION
-  ====================================================
-  */
+    rawParts.forEach((part) => {
 
-  function validateScenes() {
+      const cleaned =
+        part
+          .replace(/[,:;]+/g, "")
+          .trim();
 
-    if (
-      !AppState.scenes.length
-    ) {
+      if (!cleaned) {
 
-      alert(
-        "कोई scene उपलब्ध नहीं है।"
-      );
-
-      return false;
-
-    }
-
-    for (const scene of AppState.scenes) {
-
-      if (!scene.image) {
-
-        alert(
-          "हर scene में फोटो आवश्यक है।"
-        );
-
-        return false;
+        return;
 
       }
 
-      if (!scene.text) {
+      if (cleaned.length <= 120) {
 
-        alert(
-          "हर scene में narration आवश्यक है।"
-        );
+        finalLines.push(cleaned);
 
-        return false;
+        return;
 
       }
 
-    }
+      const words =
+        cleaned.split(" ");
 
-    return true;
+      let current = "";
+
+      words.forEach((word) => {
+
+        if (
+          (current + word).length > 100
+        ) {
+
+          finalLines.push(
+            current.trim()
+          );
+
+          current =
+            word + " ";
+
+        }
+
+        else {
+
+          current +=
+            word + " ";
+
+        }
+
+      });
+
+      if (current.trim()) {
+
+        finalLines.push(
+          current.trim()
+        );
+
+      }
+
+    });
+
+    return finalLines;
 
   }
 
@@ -524,9 +455,7 @@ Responsibilities:
 
   async function startPlayback() {
 
-    if (
-      AppState.isPlaying
-    ) {
+    if (AppState.isPlaying) {
 
       return;
 
@@ -534,34 +463,9 @@ Responsibilities:
 
     syncScenes();
 
-    const valid =
-      validateScenes();
-
-    if (!valid) {
-
-      return;
-
-    }
+    AppState.isPlaying = true;
 
     try {
-
-      AppState.isPlaying = true;
-
-      /*
-      ================================================
-      ENTER PLAYBACK MODE
-      ================================================
-      */
-
-      document.body.classList.add(
-        "playback-mode"
-      );
-
-      /*
-      ================================================
-      INIT CANVAS ENGINE
-      ================================================
-      */
 
       await window.CanvasRecorder
         .initialize({
@@ -577,21 +481,6 @@ Responsibilities:
 
         });
 
-      /*
-      ================================================
-      START RECORDING
-      ================================================
-      */
-
-      await window.CanvasRecorder
-        .startRecording();
-
-      /*
-      ================================================
-      PLAY ALL SCENES
-      ================================================
-      */
-
       for (
         let sceneIndex = 0;
         sceneIndex < AppState.scenes.length;
@@ -603,20 +492,10 @@ Responsibilities:
             sceneIndex
           ];
 
-        /*
-        ==============================================
-        LOAD SCENE IMAGE
-        ==============================================
-        */
-
         await window.CanvasRecorder
           .loadScene(scene);
 
-        /*
-        ==============================================
-        PLAY LINES
-        ==============================================
-        */
+        await wait(700);
 
         for (
           let lineIndex = 0;
@@ -629,12 +508,6 @@ Responsibilities:
               lineIndex
             ];
 
-          /*
-          ============================================
-          RENDER LINE
-          ============================================
-          */
-
           await window.CanvasRecorder
             .renderLine({
 
@@ -642,97 +515,23 @@ Responsibilities:
 
             });
 
-          /*
-          ============================================
-          TTS SPEAK
-          ============================================
-          */
+          await wait(450);
 
-          if (
-            window.TTSEngine &&
-            window.TTSEngine.speak
-          ) {
+          await window.TTSEngine
+            .speak({
 
-            await window.TTSEngine
-              .speak({
+              text: line,
 
-                text: line,
+              voiceMode:
+                voiceSelect.value
 
-                voiceMode:
-                  voiceSelect.value
+            });
 
-              });
-
-          } else {
-
-            /*
-            ==========================================
-            FALLBACK DELAY
-            ==========================================
-            */
-
-            await wait(2500);
-
-          }
+          await wait(900);
 
         }
 
-        /*
-        ==============================================
-        SCENE TRANSITION
-        ==============================================
-        */
-
-        if (
-          window.CanvasRecorder
-            .playSceneTransition
-        ) {
-
-          await window.CanvasRecorder
-            .playSceneTransition();
-
-        }
-
-      }
-
-      /*
-      ================================================
-      STOP RECORDING
-      ================================================
-      */
-
-      const blob =
-        await window.CanvasRecorder
-          .stopRecording();
-
-      AppState.currentBlob =
-        blob;
-
-      /*
-      ================================================
-      FINALIZE ENGINE
-      ================================================
-      */
-
-      if (
-        window.CanvasRecorder
-          .finalize
-      ) {
-
-        await window.CanvasRecorder
-          .finalize();
-
-      }
-
-      /*
-      ================================================
-      AUTO DOWNLOAD
-      ================================================
-      */
-
-      if (blob) {
-
-        triggerDownload(blob);
+        await wait(1200);
 
       }
 
@@ -740,19 +539,9 @@ Responsibilities:
 
       console.error(error);
 
-      alert(
-        "Playback failed."
-      );
-
-    } finally {
-
-      AppState.isPlaying = false;
-
-      document.body.classList.remove(
-        "playback-mode"
-      );
-
     }
+
+    AppState.isPlaying = false;
 
   }
 
@@ -785,75 +574,13 @@ Responsibilities:
 
     AppState.isPlaying = false;
 
-    /*
-    ================================================
-    STOP TTS
-    ================================================
-    */
-
     if (
-      window.speechSynthesis
+      window.TTSEngine
     ) {
 
-      speechSynthesis.cancel();
+      window.TTSEngine.stop();
 
     }
-
-    /*
-    ================================================
-    FINALIZE
-    ================================================
-    */
-
-    if (
-      window.CanvasRecorder &&
-      window.CanvasRecorder.finalize
-    ) {
-
-      await window.CanvasRecorder
-        .finalize();
-
-    }
-
-    /*
-    ================================================
-    EXIT PLAYBACK MODE
-    ================================================
-    */
-
-    document.body.classList.remove(
-      "playback-mode"
-    );
-
-    console.log(
-      "Playback restarted."
-    );
-
-  }
-
-  /*
-  ====================================================
-  MANUAL DOWNLOAD
-  ====================================================
-  */
-
-  function manualDownload() {
-
-    if (
-      !AppState.currentBlob
-    ) {
-
-      alert(
-        "कोई exported वीडियो उपलब्ध नहीं है।"
-      );
-
-      return;
-
-    }
-
-    triggerDownload(
-      AppState.currentBlob
-    );
 
   }
 
@@ -863,29 +590,6 @@ Responsibilities:
   ====================================================
   */
 
-  function triggerDownload(blob) {
-
-    const url =
-      URL.createObjectURL(blob);
-
-    const link =
-      document.createElement("a");
-
-    link.href = url;
-
-    link.download =
-      `reel-${Date.now()}.webm`;
-
-    document.body.appendChild(
-      link
-    );
-
-    link.click();
-
-    link.remove();
-
-    URL.revokeObjectURL(url);
-
-  }
+  function manualDownload() {}
 
 })();
