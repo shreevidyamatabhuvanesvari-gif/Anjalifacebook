@@ -1,23 +1,26 @@
 /*
 ====================================================
 REEL CREATOR PRO
-ULTRA STABLE INDIAN TTS ENGINE
-NO VOICE CUT VERSION
+FINAL CINEMATIC STABLE TTS ENGINE
+ZERO VOICE CUT VERSION
 tts-engine.js
 ====================================================
 
 Features:
 
-✔ No Voice Cutting
-✔ Stable Indian Female Voice
-✔ Stable Indian Male Voice
-✔ Locked Voice System
+✔ No Voice Cut
+✔ Multi Scene Stable
+✔ Multi Line Stable
+✔ Android Chrome Safe
 ✔ Queue Safe
 ✔ Long Text Safe
-✔ Mobile Browser Safe
-✔ Chrome Android Stable
+✔ Smart Chunk Engine
+✔ Locked Indian Female Voice
+✔ Locked Indian Male Voice
 ✔ Cinematic Timing
-✔ Safe Speech Cleanup
+✔ No Random Interruptions
+✔ No Speech Overlap
+✔ No Hard Cancel During Playback
 
 ====================================================
 */
@@ -35,7 +38,8 @@ window.TTSEngine = (() => {
 
   let voices = [];
 
-  let initialized = false;
+  let initialized =
+    false;
 
   let currentVoiceMode =
     "female";
@@ -57,21 +61,15 @@ window.TTSEngine = (() => {
 
   /*
   ====================================================
-  ACTIVE SPEECH
-  ====================================================
-  */
-
-  let activeSpeech =
-    null;
-
-  /*
-  ====================================================
-  SPEECH LOCK
+  SPEECH STATE
   ====================================================
   */
 
   let speaking =
     false;
+
+  let activeSpeech =
+    null;
 
   /*
   ====================================================
@@ -101,7 +99,7 @@ window.TTSEngine = (() => {
     initialized = true;
 
     console.log(
-      "TTS initialized."
+      "Stable cinematic TTS initialized."
     );
 
   }
@@ -116,7 +114,8 @@ window.TTSEngine = (() => {
 
     return new Promise((resolve) => {
 
-      let loaded = false;
+      let loaded =
+        false;
 
       function finalize() {
 
@@ -146,15 +145,9 @@ window.TTSEngine = (() => {
       synth.onvoiceschanged =
         finalize;
 
-      /*
-      ================================================
-      SAFETY FALLBACK
-      ================================================
-      */
-
       setTimeout(
         finalize,
-        1200
+        1500
       );
 
     });
@@ -171,7 +164,7 @@ window.TTSEngine = (() => {
 
     await initialize();
 
-    const text =
+    const originalText =
       sanitizeText(
         config.text || ""
       );
@@ -186,7 +179,7 @@ window.TTSEngine = (() => {
     ================================================
     */
 
-    if (!text.trim()) {
+    if (!originalText) {
 
       return;
 
@@ -194,117 +187,148 @@ window.TTSEngine = (() => {
 
     /*
     ================================================
-    WAIT PREVIOUS SPEECH
+    WAIT FOR PREVIOUS SPEECH
     ================================================
     */
 
-    await waitForSpeechFinish();
+    await waitUntilFree();
 
     /*
     ================================================
-    HARD CLEANUP
+    SPLIT INTO SAFE CHUNKS
     ================================================
     */
 
-    hardStop();
-
-    /*
-    ================================================
-    MOBILE SAFETY DELAY
-    ================================================
-    */
-
-    await wait(120);
-
-    /*
-    ================================================
-    CREATE SPEECH
-    ================================================
-    */
-
-    const speech =
-      new SpeechSynthesisUtterance(
-        text
+    const chunks =
+      splitIntoChunks(
+        originalText
       );
 
-    activeSpeech =
-      speech;
-
-    speaking = true;
-
     /*
     ================================================
-    APPLY VOICE
+    SPEAK CHUNKS SEQUENTIALLY
     ================================================
     */
 
-    applyVoiceSettings(
-      speech,
-      currentVoiceMode
-    );
+    for (
+      const chunk of chunks
+    ) {
+
+      await speakChunk(
+        chunk
+      );
+
+      /*
+      ==============================================
+      SAFETY GAP
+      ==============================================
+      */
+
+      await wait(850);
+
+    }
 
     /*
     ================================================
-    SPEAK PROMISE
+    FINAL BUFFER CLEANUP
     ================================================
     */
+
+    await wait(1200);
+
+  }
+
+  /*
+  ====================================================
+  SPEAK CHUNK
+  ====================================================
+  */
+
+  async function speakChunk(text) {
 
     return new Promise((resolve, reject) => {
 
-      let resolved =
-        false;
-
       /*
-      ==============================================
-      START
-      ==============================================
+      ================================================
+      CREATE UTTERANCE
+      ================================================
       */
 
-      speech.onstart = () => {
-
-        console.log(
-          "Speaking:",
+      const speech =
+        new SpeechSynthesisUtterance(
           text
         );
 
-      };
+      activeSpeech =
+        speech;
+
+      speaking =
+        true;
 
       /*
-      ==============================================
-      END
-      ==============================================
+      ================================================
+      APPLY SETTINGS
+      ================================================
       */
 
-      speech.onend = () => {
+      applyVoiceSettings(
+        speech,
+        currentVoiceMode
+      );
 
-        if (resolved) {
+      /*
+      ================================================
+      SAFETY FLAG
+      ================================================
+      */
 
-          return;
+      let completed =
+        false;
 
-        }
+      /*
+      ================================================
+      START
+      ================================================
+      */
 
-        resolved = true;
+      speech.onstart =
+        () => {
 
-        cleanupSpeech();
+          console.log(
+            "Speaking chunk:",
+            text
+          );
 
-        /*
-        ============================================
-        CINEMATIC GAP
-        ============================================
-        */
+        };
 
-        setTimeout(() => {
+      /*
+      ================================================
+      END
+      ================================================
+      */
+
+      speech.onend =
+        () => {
+
+          if (completed) {
+
+            return;
+
+          }
+
+          completed =
+            true;
+
+          cleanupSpeech();
 
           resolve();
 
-        }, 260);
-
-      };
+        };
 
       /*
-      ==============================================
+      ================================================
       ERROR
-      ==============================================
+      ================================================
       */
 
       speech.onerror =
@@ -339,23 +363,25 @@ window.TTSEngine = (() => {
         };
 
       /*
-      ==============================================
+      ================================================
       SPEAK
-      ==============================================
+      ================================================
       */
 
-      synth.speak(speech);
+      synth.speak(
+        speech
+      );
 
       /*
-      ==============================================
-      ANDROID SAFETY WATCHDOG
-      ==============================================
+      ================================================
+      WATCHDOG
+      ================================================
       */
 
-      startWatchdog(
-        speech,
+      startSpeechWatchdog(
         text,
-        resolve
+        resolve,
+        completed
       );
 
     });
@@ -364,7 +390,7 @@ window.TTSEngine = (() => {
 
   /*
   ====================================================
-  APPLY VOICE SETTINGS
+  APPLY SETTINGS
   ====================================================
   */
 
@@ -393,7 +419,7 @@ window.TTSEngine = (() => {
         1.04;
 
       speech.rate =
-        0.90;
+        0.88;
 
       speech.volume =
         1;
@@ -417,7 +443,7 @@ window.TTSEngine = (() => {
         0.92;
 
       speech.rate =
-        0.94;
+        0.91;
 
       speech.volume =
         1;
@@ -439,7 +465,7 @@ window.TTSEngine = (() => {
         1;
 
       speech.rate =
-        0.92;
+        0.90;
 
       speech.volume =
         1;
@@ -448,7 +474,7 @@ window.TTSEngine = (() => {
 
     /*
     ================================================
-    APPLY
+    APPLY VOICE
     ================================================
     */
 
@@ -485,7 +511,7 @@ window.TTSEngine = (() => {
 
     ];
 
-    return resolveVoiceByPriority(
+    return resolveVoice(
       priority
     );
 
@@ -510,7 +536,7 @@ window.TTSEngine = (() => {
 
     ];
 
-    return resolveVoiceByPriority(
+    return resolveVoice(
       priority
     );
 
@@ -534,17 +560,17 @@ window.TTSEngine = (() => {
 
   /*
   ====================================================
-  PRIORITY MATCHER
+  RESOLVE VOICE
   ====================================================
   */
 
-  function resolveVoiceByPriority(
-    priority
+  function resolveVoice(
+    keywords
   ) {
 
     for (
       const keyword
-      of priority
+      of keywords
     ) {
 
       const match =
@@ -598,35 +624,112 @@ window.TTSEngine = (() => {
 
   /*
   ====================================================
-  WATCHDOG
+  SMART CHUNKING
   ====================================================
   */
 
-  function startWatchdog(
-    speech,
-    text,
-    resolve
+  function splitIntoChunks(
+    text
   ) {
 
     /*
     ================================================
-    SOME MOBILE BROWSERS
-    RANDOMLY STOP TTS
+    SHORT TEXT SAFE
     ================================================
     */
 
+    if (
+      text.length < 120
+    ) {
+
+      return [text];
+
+    }
+
+    /*
+    ================================================
+    SPLIT BY PUNCTUATION
+    ================================================
+    */
+
+    const chunks = [];
+
+    const parts =
+      text.split(
+        /([,.!?।])/g
+      );
+
+    let current =
+      "";
+
+    for (
+      let i = 0;
+      i < parts.length;
+      i++
+    ) {
+
+      current +=
+        parts[i];
+
+      /*
+      ==============================================
+      SAFE LENGTH
+      ==============================================
+      */
+
+      if (
+        current.length > 90
+      ) {
+
+        chunks.push(
+          current.trim()
+        );
+
+        current =
+          "";
+
+      }
+
+    }
+
+    if (
+      current.trim()
+    ) {
+
+      chunks.push(
+        current.trim()
+      );
+
+    }
+
+    return chunks;
+
+  }
+
+  /*
+  ====================================================
+  WATCHDOG
+  ====================================================
+  */
+
+  function startSpeechWatchdog(
+    text,
+    resolve,
+    completed
+  ) {
+
     const estimatedTime =
       Math.max(
-        4000,
-        text.length * 90
+        5000,
+        text.length * 110
       );
 
     setTimeout(() => {
 
       /*
-      ==============================================
-      FORCE COMPLETE
-      ==============================================
+      ================================================
+      MOBILE RANDOM STOP FIX
+      ================================================
       */
 
       if (
@@ -635,7 +738,7 @@ window.TTSEngine = (() => {
       ) {
 
         console.warn(
-          "TTS watchdog recovered speech."
+          "Watchdog recovered speech."
         );
 
         cleanupSpeech();
@@ -650,11 +753,11 @@ window.TTSEngine = (() => {
 
   /*
   ====================================================
-  WAIT FOR SPEECH
+  WAIT UNTIL FREE
   ====================================================
   */
 
-  async function waitForSpeechFinish() {
+  async function waitUntilFree() {
 
     return new Promise((resolve) => {
 
@@ -674,7 +777,7 @@ window.TTSEngine = (() => {
 
           }
 
-        }, 60);
+        }, 100);
 
     });
 
@@ -698,33 +801,13 @@ window.TTSEngine = (() => {
 
   /*
   ====================================================
-  HARD STOP
+  SANITIZE
   ====================================================
   */
 
-  function hardStop() {
-
-    try {
-
-      synth.cancel();
-
-    } catch (error) {
-
-      console.warn(error);
-
-    }
-
-    cleanupSpeech();
-
-  }
-
-  /*
-  ====================================================
-  SANITIZE TEXT
-  ====================================================
-  */
-
-  function sanitizeText(text) {
+  function sanitizeText(
+    text
+  ) {
 
     return text
       .replace(/\s+/g, " ")
@@ -759,7 +842,19 @@ window.TTSEngine = (() => {
 
   function stop() {
 
-    hardStop();
+    try {
+
+      synth.cancel();
+
+    } catch (error) {
+
+      console.warn(
+        error
+      );
+
+    }
+
+    cleanupSpeech();
 
   }
 
