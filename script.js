@@ -8,6 +8,12 @@ script.js
 
 (() => {
 
+  /*
+  ====================================================
+  APP STATE
+  ====================================================
+  */
+
   const AppState = {
 
     scenes: [],
@@ -20,7 +26,7 @@ script.js
 
   /*
   ====================================================
-  DOM
+  DOM REFERENCES
   ====================================================
   */
 
@@ -81,19 +87,30 @@ script.js
 
     bindGlobalEvents();
 
-    bindSceneEvents(
+    const firstScene =
       document.querySelector(
         ".scene-card"
-      )
-    );
+      );
+
+    if (firstScene) {
+
+      bindSceneEvents(
+        firstScene
+      );
+
+    }
 
     syncScenes();
+
+    console.log(
+      "Reel Creator Pro Ready"
+    );
 
   }
 
   /*
   ====================================================
-  EVENTS
+  GLOBAL EVENTS
   ====================================================
   */
 
@@ -186,7 +203,10 @@ script.js
 
       <div class="scene-preview">
 
-        <img src="" />
+        <img
+          src=""
+          alt="Scene Preview"
+        />
 
       </div>
 
@@ -230,6 +250,12 @@ script.js
         ".scene-remove-btn"
       );
 
+    /*
+    ================================================
+    IMAGE CHANGE
+    ================================================
+    */
+
     imageInput.addEventListener(
       "change",
       (event) => {
@@ -251,10 +277,22 @@ script.js
       }
     );
 
+    /*
+    ================================================
+    TEXT CHANGE
+    ================================================
+    */
+
     textInput.addEventListener(
       "input",
       syncScenes
     );
+
+    /*
+    ================================================
+    REMOVE SCENE
+    ================================================
+    */
 
     removeBtn.addEventListener(
       "click",
@@ -263,6 +301,10 @@ script.js
         if (
           sceneContainer.children.length <= 1
         ) {
+
+          alert(
+            "कम से कम एक scene आवश्यक है।"
+          );
 
           return;
 
@@ -360,7 +402,7 @@ script.js
 
   /*
   ====================================================
-  FINAL STABLE SPLITTER
+  FINAL STABLE LINE SPLITTER
   ====================================================
   */
 
@@ -372,22 +414,42 @@ script.js
 
     }
 
+    /*
+    ================================================
+    NORMALIZE
+    ================================================
+    */
+
     const normalized =
       text
         .replace(/\n+/g, " ")
         .replace(/\s+/g, " ")
         .trim();
 
-    const rawParts =
-      normalized.split(/(?<=[।!?])/);
+    /*
+    ================================================
+    SPLIT BY HINDI SENTENCE
+    ================================================
+    */
+
+    const sentenceParts =
+      normalized.split(
+        /(?<=[।!?])/
+      );
 
     const finalLines = [];
 
-    rawParts.forEach((part) => {
+    sentenceParts.forEach((part) => {
+
+      /*
+      ==============================================
+      REMOVE PUNCTUATION
+      ==============================================
+      */
 
       const cleaned =
         part
-          .replace(/[,:;]+/g, "")
+          .replace(/[,:;]/g, "")
           .trim();
 
       if (!cleaned) {
@@ -396,23 +458,42 @@ script.js
 
       }
 
-      if (cleaned.length <= 120) {
+      /*
+      ==============================================
+      SHORT SAFE
+      ==============================================
+      */
 
-        finalLines.push(cleaned);
+      if (
+        cleaned.length <= 120
+      ) {
+
+        finalLines.push(
+          cleaned
+        );
 
         return;
 
       }
 
+      /*
+      ==============================================
+      LONG TEXT SAFE SPLIT
+      ==============================================
+      */
+
       const words =
         cleaned.split(" ");
 
-      let current = "";
+      let current =
+        "";
 
       words.forEach((word) => {
 
         if (
-          (current + word).length > 100
+          (
+            current + word
+          ).length > 100
         ) {
 
           finalLines.push(
@@ -433,7 +514,9 @@ script.js
 
       });
 
-      if (current.trim()) {
+      if (
+        current.trim()
+      ) {
 
         finalLines.push(
           current.trim()
@@ -449,13 +532,66 @@ script.js
 
   /*
   ====================================================
+  VALIDATE
+  ====================================================
+  */
+
+  function validateScenes() {
+
+    if (
+      !AppState.scenes.length
+    ) {
+
+      alert(
+        "कोई scene उपलब्ध नहीं है।"
+      );
+
+      return false;
+
+    }
+
+    for (
+      const scene
+      of AppState.scenes
+    ) {
+
+      if (!scene.image) {
+
+        alert(
+          "हर scene में फोटो आवश्यक है।"
+        );
+
+        return false;
+
+      }
+
+      if (!scene.text) {
+
+        alert(
+          "हर scene में narration आवश्यक है।"
+        );
+
+        return false;
+
+      }
+
+    }
+
+    return true;
+
+  }
+
+  /*
+  ====================================================
   START PLAYBACK
   ====================================================
   */
 
   async function startPlayback() {
 
-    if (AppState.isPlaying) {
+    if (
+      AppState.isPlaying
+    ) {
 
       return;
 
@@ -463,9 +599,35 @@ script.js
 
     syncScenes();
 
-    AppState.isPlaying = true;
+    const valid =
+      validateScenes();
+
+    if (!valid) {
+
+      return;
+
+    }
 
     try {
+
+      AppState.isPlaying =
+        true;
+
+      /*
+      ================================================
+      ENABLE PLAYBACK MODE
+      ================================================
+      */
+
+      document.body.classList.add(
+        "playback-mode"
+      );
+
+      /*
+      ================================================
+      INIT RENDER ENGINE
+      ================================================
+      */
 
       await window.CanvasRecorder
         .initialize({
@@ -481,6 +643,12 @@ script.js
 
         });
 
+      /*
+      ================================================
+      LOOP SCENES
+      ================================================
+      */
+
       for (
         let sceneIndex = 0;
         sceneIndex < AppState.scenes.length;
@@ -492,10 +660,22 @@ script.js
             sceneIndex
           ];
 
+        /*
+        ==============================================
+        LOAD IMAGE
+        ==============================================
+        */
+
         await window.CanvasRecorder
           .loadScene(scene);
 
         await wait(700);
+
+        /*
+        ==============================================
+        LOOP LINES
+        ==============================================
+        */
 
         for (
           let lineIndex = 0;
@@ -508,6 +688,12 @@ script.js
               lineIndex
             ];
 
+          /*
+          ============================================
+          DISPLAY TEXT
+          ============================================
+          */
+
           await window.CanvasRecorder
             .renderLine({
 
@@ -515,21 +701,53 @@ script.js
 
             });
 
+          /*
+          ============================================
+          SMALL RENDER BUFFER
+          ============================================
+          */
+
           await wait(450);
 
-          await window.TTSEngine
-            .speak({
+          /*
+          ============================================
+          SPEAK
+          ============================================
+          */
 
-              text: line,
+          if (
+            window.TTSEngine &&
+            typeof window.TTSEngine.speak ===
+            "function"
+          ) {
 
-              voiceMode:
-                voiceSelect.value
+            await window.TTSEngine
+              .speak({
 
-            });
+                text: line,
+
+                voiceMode:
+                  voiceSelect.value
+
+              });
+
+          }
+
+          /*
+          ============================================
+          LINE BUFFER
+          ============================================
+          */
 
           await wait(900);
 
         }
+
+        /*
+        ==============================================
+        SCENE TRANSITION
+        ==============================================
+        */
 
         await wait(1200);
 
@@ -537,11 +755,32 @@ script.js
 
     } catch (error) {
 
-      console.error(error);
+      console.error(
+        error
+      );
+
+      alert(
+        "Playback failed."
+      );
 
     }
 
-    AppState.isPlaying = false;
+    finally {
+
+      AppState.isPlaying =
+        false;
+
+      /*
+      ================================================
+      DISABLE PLAYBACK MODE
+      ================================================
+      */
+
+      document.body.classList.remove(
+        "playback-mode"
+      );
+
+    }
 
   }
 
@@ -566,21 +805,44 @@ script.js
 
   /*
   ====================================================
-  RESTART
+  RESTART PLAYBACK
   ====================================================
   */
 
   async function restartPlayback() {
 
-    AppState.isPlaying = false;
+    AppState.isPlaying =
+      false;
+
+    /*
+    ================================================
+    STOP TTS
+    ================================================
+    */
 
     if (
-      window.TTSEngine
+      window.TTSEngine &&
+      typeof window.TTSEngine.stop ===
+      "function"
     ) {
 
       window.TTSEngine.stop();
 
     }
+
+    /*
+    ================================================
+    EXIT PLAYBACK MODE
+    ================================================
+    */
+
+    document.body.classList.remove(
+      "playback-mode"
+    );
+
+    console.log(
+      "Playback restarted."
+    );
 
   }
 
@@ -590,6 +852,52 @@ script.js
   ====================================================
   */
 
-  function manualDownload() {}
+  function manualDownload() {
+
+    if (
+      !AppState.currentBlob
+    ) {
+
+      return;
+
+    }
+
+    triggerDownload(
+      AppState.currentBlob
+    );
+
+  }
+
+  /*
+  ====================================================
+  TRIGGER DOWNLOAD
+  ====================================================
+  */
+
+  function triggerDownload(blob) {
+
+    const url =
+      URL.createObjectURL(blob);
+
+    const link =
+      document.createElement("a");
+
+    link.href =
+      url;
+
+    link.download =
+      `reel-${Date.now()}.webm`;
+
+    document.body.appendChild(
+      link
+    );
+
+    link.click();
+
+    link.remove();
+
+    URL.revokeObjectURL(url);
+
+  }
 
 })();
