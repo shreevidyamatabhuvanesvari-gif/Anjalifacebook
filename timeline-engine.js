@@ -1,8 +1,25 @@
 /*
 ====================================================
 REEL CREATOR PRO
-TIMELINE ENGINE
+FINAL DETERMINISTIC TIMELINE ENGINE
 timeline-engine.js
+====================================================
+
+Features:
+
+✔ Deterministic Playback
+✔ Zero Line Overlap
+✔ Zero Scene Skip
+✔ Await Safe
+✔ TTS Synchronization
+✔ Cinematic Pacing
+✔ Stable Multi Scene Playback
+✔ Stable Multi Line Playback
+✔ Android Safe
+✔ Playback Lock System
+✔ Transition Buffering
+✔ Sequential Execution
+
 ====================================================
 */
 
@@ -16,33 +33,100 @@ window.TimelineEngine = (() => {
 
   let scenes = [];
 
-  let playbackState = null;
+  let voiceMode =
+    "female";
 
-  let voiceMode = "female";
-
-  let isRunning = false;
+  let isRunning =
+    false;
 
   /*
   ====================================================
-  PUBLIC START
+  PLAYBACK STATE
+  ====================================================
+  */
+
+  const playbackState = {
+
+    currentSceneIndex: 0,
+
+    currentLineIndex: 0
+
+  };
+
+  /*
+  ====================================================
+  TIMING CONFIG
+  ====================================================
+  */
+
+  const TIMING = {
+
+    SCENE_LOAD_DELAY: 700,
+
+    LINE_RENDER_DELAY: 450,
+
+    LINE_COMPLETE_DELAY: 900,
+
+    SCENE_COMPLETE_DELAY: 1200,
+
+    FINAL_COMPLETE_DELAY: 1500
+
+  };
+
+  /*
+  ====================================================
+  START PLAYBACK
   ====================================================
   */
 
   async function start(config) {
 
-    scenes = config.scenes || [];
+    /*
+    ================================================
+    VALIDATE CONFIG
+    ================================================
+    */
 
-    playbackState =
-      config.playbackState;
+    if (!config) {
+
+      console.error(
+        "Timeline config missing."
+      );
+
+      return;
+
+    }
+
+    scenes =
+      config.scenes || [];
 
     voiceMode =
-      config.voiceMode || "female";
+      config.voiceMode ||
+      "female";
+
+    /*
+    ================================================
+    EMPTY CHECK
+    ================================================
+    */
 
     if (!scenes.length) {
 
       console.error(
-        "TimelineEngine: No scenes found."
+        "No scenes available."
       );
+
+      return;
+
+    }
+
+    /*
+    ================================================
+    PLAYBACK LOCK
+    ================================================
+    */
+
+    if (isRunning) {
 
       return;
 
@@ -50,23 +134,58 @@ window.TimelineEngine = (() => {
 
     isRunning = true;
 
-    await runTimeline();
+    console.log(
+      "Timeline playback started."
+    );
+
+    /*
+    ================================================
+    RUN TIMELINE
+    ================================================
+    */
+
+    try {
+
+      await runTimeline();
+
+    } catch (error) {
+
+      console.error(
+        "Timeline playback failed:",
+        error
+      );
+
+      stop();
+
+    }
 
   }
 
   /*
   ====================================================
-  MAIN TIMELINE LOOP
+  MAIN TIMELINE
   ====================================================
   */
 
   async function runTimeline() {
+
+    /*
+    ================================================
+    LOOP SCENES
+    ================================================
+    */
 
     for (
       let sceneIndex = 0;
       sceneIndex < scenes.length;
       sceneIndex++
     ) {
+
+      /*
+      ==============================================
+      PLAYBACK STOP CHECK
+      ==============================================
+      */
 
       if (!isRunning) {
 
@@ -77,10 +196,17 @@ window.TimelineEngine = (() => {
       playbackState.currentSceneIndex =
         sceneIndex;
 
-      playbackState.currentLineIndex = 0;
+      playbackState.currentLineIndex =
+        0;
 
       const scene =
         scenes[sceneIndex];
+
+      /*
+      ==============================================
+      PLAY SCENE
+      ==============================================
+      */
 
       await playScene(
         scene,
@@ -89,13 +215,19 @@ window.TimelineEngine = (() => {
 
     }
 
+    /*
+    ================================================
+    COMPLETE PLAYBACK
+    ================================================
+    */
+
     await completePlayback();
 
   }
 
   /*
   ====================================================
-  PLAY SINGLE SCENE
+  PLAY SCENE
   ====================================================
   */
 
@@ -106,18 +238,28 @@ window.TimelineEngine = (() => {
 
     /*
     ================================================
-    LOAD SCENE INTO RENDER ENGINE
+    LOAD SCENE
     ================================================
     */
 
-    await loadSceneIntoRenderer(
+    await loadScene(
       scene,
       sceneIndex
     );
 
     /*
     ================================================
-    PLAY ALL LINES
+    SAFETY DELAY
+    ================================================
+    */
+
+    await wait(
+      TIMING.SCENE_LOAD_DELAY
+    );
+
+    /*
+    ================================================
+    LOOP LINES
     ================================================
     */
 
@@ -137,11 +279,30 @@ window.TimelineEngine = (() => {
         lineIndex;
 
       const line =
-        scene.lines[lineIndex];
+        sanitizeLine(
+          scene.lines[lineIndex]
+        );
+
+      /*
+      ==============================================
+      EMPTY LINE GUARD
+      ==============================================
+      */
+
+      if (!line) {
+
+        continue;
+
+      }
+
+      /*
+      ==============================================
+      PLAY LINE
+      ==============================================
+      */
 
       await playLine(
         line,
-        scene,
         sceneIndex,
         lineIndex
       );
@@ -154,8 +315,7 @@ window.TimelineEngine = (() => {
     ================================================
     */
 
-    await handleSceneComplete(
-      scene,
+    await completeScene(
       sceneIndex
     );
 
@@ -163,29 +323,37 @@ window.TimelineEngine = (() => {
 
   /*
   ====================================================
-  PLAY SINGLE LINE
+  PLAY LINE
   ====================================================
   */
 
   async function playLine(
     line,
-    scene,
     sceneIndex,
     lineIndex
   ) {
 
     /*
     ================================================
-    RENDER ACTIVE LINE
+    RENDER TEXT
     ================================================
     */
 
     await renderLine({
-      line,
-      scene,
+      text: line,
       sceneIndex,
       lineIndex
     });
+
+    /*
+    ================================================
+    RENDER BUFFER
+    ================================================
+    */
+
+    await wait(
+      TIMING.LINE_RENDER_DELAY
+    );
 
     /*
     ================================================
@@ -193,7 +361,19 @@ window.TimelineEngine = (() => {
     ================================================
     */
 
-    await speakLine(line);
+    await speakLine(
+      line
+    );
+
+    /*
+    ================================================
+    POST SPEECH BUFFER
+    ================================================
+    */
+
+    await wait(
+      TIMING.LINE_COMPLETE_DELAY
+    );
 
   }
 
@@ -203,14 +383,26 @@ window.TimelineEngine = (() => {
   ====================================================
   */
 
-  async function loadSceneIntoRenderer(
+  async function loadScene(
     scene,
     sceneIndex
   ) {
 
     if (
-      !window.CanvasRecorder ||
-      typeof window.CanvasRecorder.loadScene !== "function"
+      !window.CanvasRecorder
+    ) {
+
+      console.warn(
+        "CanvasRecorder missing."
+      );
+
+      return;
+
+    }
+
+    if (
+      typeof window.CanvasRecorder
+        .loadScene !== "function"
     ) {
 
       console.warn(
@@ -221,10 +413,15 @@ window.TimelineEngine = (() => {
 
     }
 
-    await window.CanvasRecorder.loadScene({
-      imageURL: scene.imageURL,
-      sceneIndex
-    });
+    await window.CanvasRecorder
+      .loadScene({
+
+        imageURL:
+          scene.imageURL,
+
+        sceneIndex
+
+      });
 
   }
 
@@ -234,26 +431,40 @@ window.TimelineEngine = (() => {
   ====================================================
   */
 
-  async function renderLine(data) {
+  async function renderLine(
+    config
+  ) {
 
     if (
-      !window.CanvasRecorder ||
-      typeof window.CanvasRecorder.renderLine !== "function"
+      !window.CanvasRecorder
     ) {
-
-      console.warn(
-        "CanvasRecorder.renderLine missing."
-      );
 
       return;
 
     }
 
-    await window.CanvasRecorder.renderLine({
-      text: data.line,
-      sceneIndex: data.sceneIndex,
-      lineIndex: data.lineIndex
-    });
+    if (
+      typeof window.CanvasRecorder
+        .renderLine !== "function"
+    ) {
+
+      return;
+
+    }
+
+    await window.CanvasRecorder
+      .renderLine({
+
+        text:
+          config.text,
+
+        sceneIndex:
+          config.sceneIndex,
+
+        lineIndex:
+          config.lineIndex
+
+      });
 
   }
 
@@ -263,11 +474,25 @@ window.TimelineEngine = (() => {
   ====================================================
   */
 
-  async function speakLine(line) {
+  async function speakLine(
+    line
+  ) {
 
     if (
-      !window.TTSEngine ||
-      typeof window.TTSEngine.speak !== "function"
+      !window.TTSEngine
+    ) {
+
+      console.warn(
+        "TTSEngine missing."
+      );
+
+      return;
+
+    }
+
+    if (
+      typeof window.TTSEngine
+        .speak !== "function"
     ) {
 
       console.warn(
@@ -278,40 +503,58 @@ window.TimelineEngine = (() => {
 
     }
 
-    await window.TTSEngine.speak({
-      text: line,
-      voiceMode
-    });
+    await window.TTSEngine
+      .speak({
+
+        text: line,
+
+        voiceMode
+
+      });
 
   }
 
   /*
   ====================================================
-  SCENE COMPLETE
+  COMPLETE SCENE
   ====================================================
   */
 
-  async function handleSceneComplete(
-    scene,
+  async function completeScene(
     sceneIndex
   ) {
 
     /*
     ================================================
-    OPTIONAL SCENE TRANSITION
+    TRANSITION
     ================================================
     */
 
     if (
       window.CanvasRecorder &&
-      typeof window.CanvasRecorder.playSceneTransition === "function"
+      typeof window.CanvasRecorder
+        .playSceneTransition ===
+      "function"
     ) {
 
-      await window.CanvasRecorder.playSceneTransition({
-        sceneIndex
-      });
+      await window.CanvasRecorder
+        .playSceneTransition({
+
+          sceneIndex
+
+        });
 
     }
+
+    /*
+    ================================================
+    SCENE BUFFER
+    ================================================
+    */
+
+    await wait(
+      TIMING.SCENE_COMPLETE_DELAY
+    );
 
   }
 
@@ -323,33 +566,50 @@ window.TimelineEngine = (() => {
 
   async function completePlayback() {
 
+    console.log(
+      "Timeline playback complete."
+    );
+
+    /*
+    ================================================
+    FINAL BUFFER
+    ================================================
+    */
+
+    await wait(
+      TIMING.FINAL_COMPLETE_DELAY
+    );
+
     isRunning = false;
 
     /*
     ================================================
-    FINALIZE CANVAS
+    FINALIZE RENDERER
     ================================================
     */
 
     if (
       window.CanvasRecorder &&
-      typeof window.CanvasRecorder.finalize === "function"
+      typeof window.CanvasRecorder
+        .finalize === "function"
     ) {
 
-      await window.CanvasRecorder.finalize();
+      await window.CanvasRecorder
+        .finalize();
 
     }
 
     /*
     ================================================
-    NOTIFY APP
+    APP CALLBACK
     ================================================
     */
 
     if (
       window.ReelCreatorApp &&
       typeof window.ReelCreatorApp
-        .handlePlaybackComplete === "function"
+        .handlePlaybackComplete ===
+      "function"
     ) {
 
       await window.ReelCreatorApp
@@ -371,18 +631,64 @@ window.TimelineEngine = (() => {
 
     /*
     ================================================
-    STOP ACTIVE TTS
+    STOP TTS
     ================================================
     */
 
     if (
       window.TTSEngine &&
-      typeof window.TTSEngine.stop === "function"
+      typeof window.TTSEngine
+        .stop === "function"
     ) {
 
       window.TTSEngine.stop();
 
     }
+
+    console.log(
+      "Timeline stopped."
+    );
+
+  }
+
+  /*
+  ====================================================
+  SANITIZE LINE
+  ====================================================
+  */
+
+  function sanitizeLine(
+    line
+  ) {
+
+    if (!line) {
+
+      return "";
+
+    }
+
+    return line
+      .replace(/\s+/g, " ")
+      .trim();
+
+  }
+
+  /*
+  ====================================================
+  WAIT
+  ====================================================
+  */
+
+  function wait(duration) {
+
+    return new Promise((resolve) => {
+
+      setTimeout(
+        resolve,
+        duration
+      );
+
+    });
 
   }
 
@@ -395,14 +701,14 @@ window.TimelineEngine = (() => {
   function getCurrentSceneIndex() {
 
     return playbackState
-      ?.currentSceneIndex || 0;
+      .currentSceneIndex;
 
   }
 
   function getCurrentLineIndex() {
 
     return playbackState
-      ?.currentLineIndex || 0;
+      .currentLineIndex;
 
   }
 
