@@ -1,26 +1,25 @@
 /*
 ====================================================
 REEL CREATOR PRO
-FINAL CINEMATIC STABLE TTS ENGINE
-ZERO VOICE CUT VERSION
+HINDI SEMANTIC STABILIZED TTS ENGINE
+FINAL ANTI-VOICE-CUT VERSION
 tts-engine.js
 ====================================================
 
 Features:
 
-✔ No Voice Cut
+✔ Hindi Semantic Chunking
+✔ Zero Voice Cut Strategy
+✔ Android Chrome Stabilization
+✔ Warmup Speech
+✔ Adaptive Pause Engine
+✔ Locked Indian Voices
+✔ Long Suvichar Safe
 ✔ Multi Scene Stable
 ✔ Multi Line Stable
-✔ Android Chrome Safe
-✔ Queue Safe
-✔ Long Text Safe
-✔ Smart Chunk Engine
-✔ Locked Indian Female Voice
-✔ Locked Indian Male Voice
-✔ Cinematic Timing
-✔ No Random Interruptions
+✔ Cinematic Narration Timing
 ✔ No Speech Overlap
-✔ No Hard Cancel During Playback
+✔ Soft Recovery System
 
 ====================================================
 */
@@ -73,6 +72,15 @@ window.TTSEngine = (() => {
 
   /*
   ====================================================
+  CHUNK SETTINGS
+  ====================================================
+  */
+
+  const MAX_CHUNK_LENGTH =
+    52;
+
+  /*
+  ====================================================
   INITIALIZE
   ====================================================
   */
@@ -96,10 +104,18 @@ window.TTSEngine = (() => {
     lockedAutoVoice =
       resolveAutoVoice();
 
+    /*
+    ================================================
+    WARMUP SPEECH
+    ================================================
+    */
+
+    await warmupSpeech();
+
     initialized = true;
 
     console.log(
-      "Stable cinematic TTS initialized."
+      "Hindi semantic TTS initialized."
     );
 
   }
@@ -156,6 +172,36 @@ window.TTSEngine = (() => {
 
   /*
   ====================================================
+  WARMUP
+  ====================================================
+  */
+
+  async function warmupSpeech() {
+
+    return new Promise((resolve) => {
+
+      const speech =
+        new SpeechSynthesisUtterance(
+          " "
+        );
+
+      speech.volume = 0;
+
+      speech.onend =
+        () => {
+
+          resolve();
+
+        };
+
+      synth.speak(speech);
+
+    });
+
+  }
+
+  /*
+  ====================================================
   MAIN SPEAK
   ====================================================
   */
@@ -187,7 +233,7 @@ window.TTSEngine = (() => {
 
     /*
     ================================================
-    WAIT FOR PREVIOUS SPEECH
+    WAIT PREVIOUS
     ================================================
     */
 
@@ -195,18 +241,18 @@ window.TTSEngine = (() => {
 
     /*
     ================================================
-    SPLIT INTO SAFE CHUNKS
+    HINDI SEMANTIC CHUNKS
     ================================================
     */
 
     const chunks =
-      splitIntoChunks(
+      createSemanticChunks(
         originalText
       );
 
     /*
     ================================================
-    SPEAK CHUNKS SEQUENTIALLY
+    SPEAK SEQUENTIALLY
     ================================================
     */
 
@@ -220,17 +266,29 @@ window.TTSEngine = (() => {
 
       /*
       ==============================================
-      SAFETY GAP
+      ADAPTIVE PAUSE
       ==============================================
       */
 
-      await wait(850);
+      await wait(
+        getAdaptivePause(
+          chunk
+        )
+      );
+
+      /*
+      ==============================================
+      SOFT RECOVERY
+      ==============================================
+      */
+
+      softRecover();
 
     }
 
     /*
     ================================================
-    FINAL BUFFER CLEANUP
+    FINAL RECOVERY
     ================================================
     */
 
@@ -248,12 +306,6 @@ window.TTSEngine = (() => {
 
     return new Promise((resolve, reject) => {
 
-      /*
-      ================================================
-      CREATE UTTERANCE
-      ================================================
-      */
-
       const speech =
         new SpeechSynthesisUtterance(
           text
@@ -265,22 +317,10 @@ window.TTSEngine = (() => {
       speaking =
         true;
 
-      /*
-      ================================================
-      APPLY SETTINGS
-      ================================================
-      */
-
       applyVoiceSettings(
         speech,
         currentVoiceMode
       );
-
-      /*
-      ================================================
-      SAFETY FLAG
-      ================================================
-      */
 
       let completed =
         false;
@@ -295,7 +335,7 @@ window.TTSEngine = (() => {
         () => {
 
           console.log(
-            "Speaking chunk:",
+            "Speaking:",
             text
           );
 
@@ -334,16 +374,14 @@ window.TTSEngine = (() => {
       speech.onerror =
         (event) => {
 
-          /*
-          ============================================
-          IGNORE INTERRUPTED
-          ============================================
-          */
-
           if (
             event.error ===
             "interrupted"
           ) {
+
+            cleanupSpeech();
+
+            resolve();
 
             return;
 
@@ -378,10 +416,9 @@ window.TTSEngine = (() => {
       ================================================
       */
 
-      startSpeechWatchdog(
+      startWatchdog(
         text,
-        resolve,
-        completed
+        resolve
       );
 
     });
@@ -390,7 +427,7 @@ window.TTSEngine = (() => {
 
   /*
   ====================================================
-  APPLY SETTINGS
+  APPLY VOICE SETTINGS
   ====================================================
   */
 
@@ -419,7 +456,7 @@ window.TTSEngine = (() => {
         1.04;
 
       speech.rate =
-        0.88;
+        0.84;
 
       speech.volume =
         1;
@@ -443,7 +480,7 @@ window.TTSEngine = (() => {
         0.92;
 
       speech.rate =
-        0.91;
+        0.88;
 
       speech.volume =
         1;
@@ -465,7 +502,7 @@ window.TTSEngine = (() => {
         1;
 
       speech.rate =
-        0.90;
+        0.86;
 
       speech.volume =
         1;
@@ -498,22 +535,17 @@ window.TTSEngine = (() => {
 
   function resolveFemaleVoice() {
 
-    const priority = [
+    return resolveVoice([
 
       "swara",
       "heera",
       "google हिन्दी",
       "google hindi",
       "female",
-      "woman",
       "zira",
       "samantha"
 
-    ];
-
-    return resolveVoice(
-      priority
-    );
+    ]);
 
   }
 
@@ -525,26 +557,21 @@ window.TTSEngine = (() => {
 
   function resolveMaleVoice() {
 
-    const priority = [
+    return resolveVoice([
 
       "ravi",
       "male",
-      "man",
       "david",
       "alex",
       "daniel"
 
-    ];
-
-    return resolveVoice(
-      priority
-    );
+    ]);
 
   }
 
   /*
   ====================================================
-  AUTO VOICE
+  AUTO
   ====================================================
   */
 
@@ -597,12 +624,6 @@ window.TTSEngine = (() => {
 
     }
 
-    /*
-    ================================================
-    HINDI FALLBACK
-    ================================================
-    */
-
     const hindiVoice =
       voices.find((voice) => {
 
@@ -624,22 +645,23 @@ window.TTSEngine = (() => {
 
   /*
   ====================================================
-  SMART CHUNKING
+  SEMANTIC CHUNKING
   ====================================================
   */
 
-  function splitIntoChunks(
+  function createSemanticChunks(
     text
   ) {
 
     /*
     ================================================
-    SHORT TEXT SAFE
+    SHORT SAFE
     ================================================
     */
 
     if (
-      text.length < 120
+      text.length <=
+      MAX_CHUNK_LENGTH
     ) {
 
       return [text];
@@ -648,45 +670,60 @@ window.TTSEngine = (() => {
 
     /*
     ================================================
-    SPLIT BY PUNCTUATION
+    SPLIT BY HINDI SEMANTICS
     ================================================
     */
 
-    const chunks = [];
-
-    const parts =
+    const semanticParts =
       text.split(
-        /([,.!?।])/g
+        /(,|।|!|\?|…|\.)/g
       );
+
+    const chunks = [];
 
     let current =
       "";
 
     for (
       let i = 0;
-      i < parts.length;
+      i < semanticParts.length;
       i++
     ) {
 
-      current +=
-        parts[i];
+      const part =
+        semanticParts[i];
 
       /*
       ==============================================
-      SAFE LENGTH
+      BUILD CHUNK
       ==============================================
       */
 
       if (
-        current.length > 90
+        (
+          current + part
+        ).length <
+        MAX_CHUNK_LENGTH
       ) {
 
-        chunks.push(
+        current += part;
+
+      }
+
+      else {
+
+        if (
           current.trim()
-        );
+        ) {
+
+          chunks.push(
+            current.trim()
+          );
+
+        }
 
         current =
-          "";
+          part;
 
       }
 
@@ -702,7 +739,76 @@ window.TTSEngine = (() => {
 
     }
 
-    return chunks;
+    /*
+    ================================================
+    REMOVE EMPTY
+    ================================================
+    */
+
+    return chunks.filter(Boolean);
+
+  }
+
+  /*
+  ====================================================
+  ADAPTIVE PAUSE
+  ====================================================
+  */
+
+  function getAdaptivePause(
+    text
+  ) {
+
+    /*
+    ================================================
+    LONG DRAMATIC
+    ================================================
+    */
+
+    if (
+      text.includes("...")
+    ) {
+
+      return 1300;
+
+    }
+
+    /*
+    ================================================
+    FULL STOP
+    ================================================
+    */
+
+    if (
+      text.includes("।") ||
+      text.includes(".")
+    ) {
+
+      return 950;
+
+    }
+
+    /*
+    ================================================
+    COMMA
+    ================================================
+    */
+
+    if (
+      text.includes(",")
+    ) {
+
+      return 550;
+
+    }
+
+    /*
+    ================================================
+    DEFAULT
+    ================================================
+    */
+
+    return 700;
 
   }
 
@@ -712,25 +818,18 @@ window.TTSEngine = (() => {
   ====================================================
   */
 
-  function startSpeechWatchdog(
+  function startWatchdog(
     text,
-    resolve,
-    completed
+    resolve
   ) {
 
-    const estimatedTime =
+    const estimated =
       Math.max(
         5000,
-        text.length * 110
+        text.length * 125
       );
 
     setTimeout(() => {
-
-      /*
-      ================================================
-      MOBILE RANDOM STOP FIX
-      ================================================
-      */
 
       if (
         speaking &&
@@ -738,7 +837,7 @@ window.TTSEngine = (() => {
       ) {
 
         console.warn(
-          "Watchdog recovered speech."
+          "Speech recovered by watchdog."
         );
 
         cleanupSpeech();
@@ -747,7 +846,31 @@ window.TTSEngine = (() => {
 
       }
 
-    }, estimatedTime);
+    }, estimated);
+
+  }
+
+  /*
+  ====================================================
+  SOFT RECOVERY
+  ====================================================
+  */
+
+  function softRecover() {
+
+    try {
+
+      synth.pause();
+
+      synth.resume();
+
+    } catch (error) {
+
+      console.warn(
+        error
+      );
+
+    }
 
   }
 
@@ -777,7 +900,7 @@ window.TTSEngine = (() => {
 
           }
 
-        }, 100);
+        }, 120);
 
     });
 
