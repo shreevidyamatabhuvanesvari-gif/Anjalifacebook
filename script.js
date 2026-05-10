@@ -415,12 +415,58 @@ Responsibilities:
 
   function splitLines(text) {
 
-    return text
-      .split("\n")
-      .map(line => line.trim())
-      .filter(Boolean);
+  if (!text) {
+
+    return [];
 
   }
+
+  /*
+  ================================================
+  NORMALIZE
+  ================================================
+  */
+
+  const normalized =
+    text
+      .replace(/\n+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  /*
+  ================================================
+  SPLIT BY HINDI SEMANTIC PUNCTUATION
+  ================================================
+  */
+
+  const parts =
+    normalized.match(
+      /[^।!?]+[।!?]?|[^,]+,/g
+    );
+
+  if (!parts) {
+
+    return [normalized];
+
+  }
+
+  /*
+  ================================================
+  CLEAN
+  ================================================
+  */
+
+  return parts
+    .map(part => {
+
+      return part
+        .replace(/,+$/, "")
+        .trim();
+
+    })
+    .filter(Boolean);
+
+}
 
   /*
   ====================================================
